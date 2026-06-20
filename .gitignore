@@ -1,5 +1,6 @@
 # 生成数据（由 update_etl.py 重建）
 /data/
+!/data/.gitkeep
 
 # 原始厂商下载数据，但保留 raw/index_gz
 /raw/*
@@ -7,6 +8,7 @@
 
 # 日志
 /log/
+!/log/.gitkeep
 
 # 密钥 / 环境
 .env
