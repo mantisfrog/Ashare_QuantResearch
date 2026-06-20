@@ -1,29 +1,31 @@
-"""Factor diagnostics: coverage, rank IC, and quantile group returns.
+"""Factor diagnostics: forward returns and Spearman rank IC.
 
-Uses forward returns over :data:`factor_config.FORWARD_HORIZONS_MONTHS`
-rebalance steps. Implemented alongside the value factors in Phase 3+.
+Forward returns use month-end-to-month-end adjusted prices over
+:data:`factor_config.FORWARD_HORIZONS_MONTHS` rebalance steps. Coverage is
+computed directly in the build script from the universe + exposure counts.
 """
 from __future__ import annotations
 
 import pandas as pd
 
-from factor_config import FORWARD_HORIZONS_MONTHS
+
+def forward_returns(adj_pivot: pd.DataFrame, horizons) -> dict[int, pd.DataFrame]:
+    """Forward returns over each horizon (in rebalance steps).
+
+    ``adj_pivot`` is indexed by rebalance ``date_id`` (ascending) with one column
+    per stock holding the adjusted close. Returns {horizon: date x stock returns}.
+    """
+    return {int(h): adj_pivot.shift(-int(h)) / adj_pivot - 1.0 for h in horizons}
 
 
-def coverage(exposure: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Per (date_id, factor_code): universe_count, valid_count, coverage. (Phase 3)"""
-    raise NotImplementedError("Phase 3: diagnostics")
+def spearman_ic(signal: pd.Series, forward: pd.Series, min_names: int = 5) -> float:
+    """Spearman rank correlation between a signal and forward returns.
 
+    Computed as the Pearson correlation of ranks to avoid a scipy dependency.
+    """
+    pair = pd.concat([signal, forward], axis=1).dropna()
+    if len(pair) < min_names:
+        return float("nan")
+    ranked = pair.rank()
+    return float(ranked.iloc[:, 0].corr(ranked.iloc[:, 1]))
 
-def rank_ic(exposure: pd.DataFrame, forward_returns: pd.DataFrame) -> pd.DataFrame:
-    """Spearman rank IC per (date_id, factor_code) for each forward horizon. (Phase 3)"""
-    raise NotImplementedError("Phase 3: diagnostics")
-
-
-def group_returns(
-    exposure: pd.DataFrame,
-    forward_returns: pd.DataFrame,
-    groups: int = 10,
-) -> pd.DataFrame:
-    """Forward returns by factor quantile group. (Phase 3)"""
-    raise NotImplementedError("Phase 3: diagnostics")

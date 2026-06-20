@@ -31,7 +31,15 @@ from build_postgres_from_csv import (
     execute_statements,
     load_env,
 )
-from paths import ENV_FILE, FACTOR_CATALOG_FILE, FACTOR_UNIVERSE_DIR
+from paths import (
+    ENV_FILE,
+    FACTOR_CATALOG_FILE,
+    FACTOR_COMPOSITE_DIR,
+    FACTOR_DIAGNOSTICS_DIR,
+    FACTOR_EXPOSURE_DIR,
+    FACTOR_RAW_DIR,
+    FACTOR_UNIVERSE_DIR,
+)
 from factor_config import START_YEAR
 
 DATE_RANGE_FACTOR_TABLES = (
@@ -237,6 +245,94 @@ def load_universe(cur) -> None:
         print(f"loaded {path.name} ({len(dates)} month(s))", flush=True)
 
 
+RAW_COLUMNS = ["date_id", "stock_code", "factor_code", "factor_value", "calc_version"]
+EXPOSURE_COLUMNS = [
+    "date_id", "stock_code", "factor_code", "calc_version",
+    "raw_value", "winsorized_value", "zscore_value",
+    "neutralized_value", "percentile_rank",
+]
+COMPOSITE_COLUMNS = [
+    "date_id", "stock_code", "calc_version",
+    "value_score", "quality_score", "growth_score",
+    "momentum_score", "risk_score", "total_score",
+]
+DIAGNOSTICS_COLUMNS = [
+    "date_id", "factor_code", "calc_version",
+    "universe_count", "valid_count", "coverage",
+    "rank_ic_1m", "rank_ic_3m", "rank_ic_6m",
+]
+
+
+def _load_per_factor_dir(cur, base_dir, table, columns) -> None:
+    """Incrementally load per-factor subdir CSVs (delete by factor_code + date)."""
+    files = sorted(base_dir.glob("*/*.csv"))
+    if not files:
+        print(f"no {table} CSVs found; skipping", flush=True)
+        return
+    column_sql = ", ".join(columns)
+    copy_sql = f"COPY {table} ({column_sql}) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '')"
+    for path in files:
+        meta = pd.read_csv(path, usecols=["date_id", "factor_code"])
+        factor_code = str(meta["factor_code"].iloc[0])
+        dates = sorted({int(value) for value in meta["date_id"].unique()})
+        if dates:
+            cur.execute(
+                f"DELETE FROM {table} WHERE factor_code = %s AND date_id = ANY(%s)",
+                (factor_code, dates),
+            )
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            cur.copy_expert(copy_sql, handle)
+    print(f"{table}: loaded {len(files)} file(s)", flush=True)
+
+
+def load_factor_raw(cur) -> None:
+    _load_per_factor_dir(cur, FACTOR_RAW_DIR, "fact_factor_raw", RAW_COLUMNS)
+
+
+def load_factor_exposure(cur) -> None:
+    _load_per_factor_dir(cur, FACTOR_EXPOSURE_DIR, "fact_factor_exposure", EXPOSURE_COLUMNS)
+
+
+def load_factor_composite(cur) -> None:
+    """Incrementally load composite_*.csv into fact_factor_composite (delete by date_id)."""
+    files = sorted(FACTOR_COMPOSITE_DIR.glob("composite_*.csv"))
+    if not files:
+        print("no composite CSVs found; skipping", flush=True)
+        return
+    column_sql = ", ".join(COMPOSITE_COLUMNS)
+    copy_sql = (
+        f"COPY fact_factor_composite ({column_sql}) "
+        "FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '')"
+    )
+    for path in files:
+        dates = sorted({int(value) for value in pd.read_csv(path, usecols=["date_id"])["date_id"].unique()})
+        if dates:
+            cur.execute("DELETE FROM fact_factor_composite WHERE date_id = ANY(%s)", (dates,))
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            cur.copy_expert(copy_sql, handle)
+    print(f"fact_factor_composite: loaded {len(files)} file(s)", flush=True)
+
+
+def load_factor_diagnostics(cur) -> None:
+    """Incrementally load diagnostics_*.csv (delete by date_id; all factors regen)."""
+    files = sorted(FACTOR_DIAGNOSTICS_DIR.glob("diagnostics_*.csv"))
+    if not files:
+        print("no diagnostics CSVs found; skipping", flush=True)
+        return
+    column_sql = ", ".join(DIAGNOSTICS_COLUMNS)
+    copy_sql = (
+        f"COPY fact_factor_diagnostics ({column_sql}) "
+        "FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '')"
+    )
+    for path in files:
+        dates = sorted({int(value) for value in pd.read_csv(path, usecols=["date_id"])["date_id"].unique()})
+        if dates:
+            cur.execute("DELETE FROM fact_factor_diagnostics WHERE date_id = ANY(%s)", (dates,))
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            cur.copy_expert(copy_sql, handle)
+    print(f"fact_factor_diagnostics: loaded {len(files)} file(s)", flush=True)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create factor-library PostgreSQL tables.")
     parser.add_argument(
@@ -275,8 +371,19 @@ def main() -> int:
             print("loading fact_stock_universe", flush=True)
             load_universe(cur)
             conn.commit()
+            print("loading fact_factor_raw", flush=True)
+            load_factor_raw(cur)
+            conn.commit()
+            print("loading fact_factor_exposure", flush=True)
+            load_factor_exposure(cur)
+            conn.commit()
+            print("loading fact_factor_composite", flush=True)
+            load_factor_composite(cur)
+            conn.commit()
+            print("loading fact_factor_diagnostics", flush=True)
+            load_factor_diagnostics(cur)
+            conn.commit()
     print("factor schema ready", flush=True)
-    # TODO(later phase): COPY raw/exposure/composite/diagnostics CSVs (incremental).
     return 0
 
 

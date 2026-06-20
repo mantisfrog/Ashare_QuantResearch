@@ -35,6 +35,7 @@ def write_year_partitioned_csv(
     directory: Path,
     prefix: str,
     subdir: str | None = None,
+    sort_cols: tuple[str, ...] = ("date_id", "stock_code"),
 ) -> list[Path]:
     """Write ``df`` to ``<directory>/[subdir/]<prefix>_<year>.csv`` per year.
 
@@ -45,6 +46,7 @@ def write_year_partitioned_csv(
     out_dir = Path(directory) if subdir is None else Path(directory) / subdir
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    order = [column for column in sort_cols if column in df.columns]
     work = df.copy()
     work["__year"] = work["date_id"].astype(int) // 10000
     written: list[Path] = []
@@ -61,10 +63,34 @@ def write_year_partitioned_csv(
             )
         else:
             combined = chunk
-        combined = combined.sort_values(["date_id", "stock_code"]).reset_index(drop=True)
+        if order:
+            combined = combined.sort_values(order)
+        combined = combined.reset_index(drop=True)
         combined.to_csv(path, index=False)
         written.append(path)
     return written
+
+
+def read_year_partitioned_csv(
+    directory: Path,
+    prefix: str,
+    subdir: str | None = None,
+    date_ids=None,
+    usecols=None,
+) -> pd.DataFrame:
+    """Read and concatenate ``<prefix>_*.csv`` files, optionally filtered by date."""
+    out_dir = Path(directory) if subdir is None else Path(directory) / subdir
+    if not out_dir.exists():
+        return pd.DataFrame()
+    wanted = {int(value) for value in date_ids} if date_ids is not None else None
+    frames: list[pd.DataFrame] = []
+    for path in sorted(out_dir.glob(f"{prefix}_*.csv")):
+        frame = pd.read_csv(path, usecols=usecols)
+        if wanted is not None and "date_id" in frame.columns:
+            frame = frame[frame["date_id"].isin(wanted)]
+        if not frame.empty:
+            frames.append(frame)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
 def done_date_ids(directory: Path, prefix: str, subdir: str | None = None) -> set[int]:

@@ -13,6 +13,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 # Allow `from paths import ...` / `from build_postgres_from_csv import ...`
@@ -107,20 +108,126 @@ def load_universe_window(conn, window_start_date_id: int, t_date_id: int) -> pd.
     return pd.DataFrame(rows, columns=columns)
 
 
-def load_financial_metrics(date_id: int, metric_codes):
-    """PIT financials at ``date_id`` pivoted to columns by FN metric_code. (Phase 3)
+def load_financial_metrics(conn, date_id: int, metric_codes) -> pd.DataFrame:
+    """Point-in-time financials at ``date_id``, pivoted wide by FN metric_code.
 
-    Join chain: bridge_trade_day_financial_report -> fact_financial_report ->
-    fact_financial_value, filtered to ``metric_codes`` and pivoted wide.
+    Uses the latest report visible on ``date_id`` per stock (the bridge), so no
+    look-ahead. Returns a frame indexed by stock_code with one column per code
+    in ``metric_codes`` (missing values are NaN).
     """
-    raise NotImplementedError("Phase 3: fundamental factors")
+    codes = list(metric_codes)
+    query = """
+        SELECT b.stock_code, v.metric_code, v.metric_value
+        FROM bridge_trade_day_financial_report b
+        JOIN fact_financial_value v ON v.report_id = b.report_id
+        WHERE b.date_id = %(t)s AND v.metric_code = ANY(%(codes)s)
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, {"t": date_id, "codes": codes})
+        rows = cur.fetchall()
+    if not rows:
+        return pd.DataFrame(columns=codes, dtype="float64")
+    long = pd.DataFrame(rows, columns=["stock_code", "metric_code", "metric_value"])
+    long["metric_value"] = pd.to_numeric(long["metric_value"], errors="coerce")
+    wide = long.pivot_table(
+        index="stock_code", columns="metric_code", values="metric_value", aggfunc="first"
+    )
+    return wide.reindex(columns=codes)
 
 
-def load_adjusted_price_panel(start_date_id: int, end_date_id: int):
-    """Back-adjusted close panel (close * adjust_factor) for price factors. (Phase 4)"""
-    raise NotImplementedError("Phase 4: price factors")
+def load_daily_snapshot(conn, date_id: int) -> pd.DataFrame:
+    """close + market_cap on ``date_id`` indexed by stock_code."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT stock_code, close, market_cap FROM fact_daily WHERE date_id = %s",
+            (date_id,),
+        )
+        rows = cur.fetchall()
+    frame = pd.DataFrame(rows, columns=["stock_code", "close", "market_cap"]).set_index("stock_code")
+    frame["close"] = pd.to_numeric(frame["close"], errors="coerce")
+    frame["market_cap"] = pd.to_numeric(frame["market_cap"], errors="coerce")
+    return frame
 
 
-def load_trailing_dividends(date_id: int):
-    """Trailing-12m cash dividend per share (sum of bonus/10). (Phase 3)"""
-    raise NotImplementedError("Phase 3: dividend yield")
+def load_trailing_dividends(conn, date_id: int) -> pd.Series:
+    """Trailing-12m cash dividend per share (sum of bonus/10) indexed by stock_code."""
+    query = """
+        SELECT stock_code, SUM(bonus) / 10.0 AS dps_ttm
+        FROM fact_dividend
+        WHERE action_type = 1 AND bonus > 0
+          AND date_id > %(t)s - 10000 AND date_id <= %(t)s
+        GROUP BY stock_code
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, {"t": date_id})
+        rows = cur.fetchall()
+    return pd.Series(
+        {code: float(value) for code, value in rows}, name="dps_ttm", dtype="float64"
+    )
+
+
+def load_stock_industry(conn) -> pd.Series:
+    """Return stock_code -> tdx_sector_code as a Series (for neutralization)."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT stock_code, tdx_sector_code FROM dim_stock")
+        rows = cur.fetchall()
+    return pd.Series({code: sector for code, sector in rows}, name="industry")
+
+
+def load_financial_sector_codes(conn, keywords) -> set[str]:
+    """tdx_sector_code values whose name matches any financial keyword."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT tdx_sector_code, tdx_sector_name FROM dim_tdx_industry")
+        rows = cur.fetchall()
+    return {
+        code
+        for code, name in rows
+        if name and any(keyword in name for keyword in keywords)
+    }
+
+
+def load_rebalance_adjusted_close(conn, date_ids) -> pd.DataFrame:
+    """Back-adjusted close (close * adjust_factor) at the given rebalance dates.
+
+    Returns long rows (date_id, stock_code, adj_close) for diagnostics.
+    """
+    query = """
+        SELECT f.date_id, f.stock_code, f.close * a.adjust_factor AS adj_close
+        FROM fact_daily f
+        JOIN fact_adjustment_factor_period a
+          ON a.stock_code = f.stock_code
+         AND f.date_id BETWEEN a.valid_from_date_id AND a.valid_to_date_id
+        WHERE f.date_id = ANY(%s)
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, (list(date_ids),))
+        rows = cur.fetchall()
+    frame = pd.DataFrame(rows, columns=["date_id", "stock_code", "adj_close"])
+    frame["adj_close"] = pd.to_numeric(frame["adj_close"], errors="coerce")
+    return frame
+
+
+def load_price_window(conn, window_start_date_id: int, t_date_id: int) -> pd.DataFrame:
+    """Back-adjusted daily prices + volume over [window_start, t] for price factors.
+
+    Long rows (date_id, stock_code, adj_close, vol, float_shares). adj_close =
+    close * adjust_factor handles splits/dividends within the window.
+    """
+    query = """
+        SELECT f.date_id, f.stock_code,
+               f.close * a.adjust_factor AS adj_close,
+               f.vol, f.float_shares
+        FROM fact_daily f
+        JOIN fact_adjustment_factor_period a
+          ON a.stock_code = f.stock_code
+         AND f.date_id BETWEEN a.valid_from_date_id AND a.valid_to_date_id
+        WHERE f.date_id BETWEEN %(win)s AND %(t)s
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, {"win": window_start_date_id, "t": t_date_id})
+        rows = cur.fetchall()
+        columns = [desc[0] for desc in cur.description]
+    frame = pd.DataFrame(rows, columns=columns)
+    for column in ("adj_close", "vol", "float_shares"):
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    return frame
