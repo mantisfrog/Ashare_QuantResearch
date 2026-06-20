@@ -1,0 +1,16 @@
+factor_code,factor_name,style,direction,unit,formula_text,source_metrics,financial_na,version
+ep_ttm,盈利收益率,value,1,ratio,"FN308 / market_cap","FN308; fact_daily.market_cap",false,v1
+bp_mrq,账面市值比,value,1,ratio,"FN271 / (market_cap * 1e4)","FN271; fact_daily.market_cap",false,v1
+sp_ttm,销售收益率,value,1,ratio,"FN319 / market_cap","FN319; fact_daily.market_cap",false,v1
+cfp_ttm,经营现金流收益率,value,1,ratio,"FN307 / (market_cap * 1e4)","FN307; fact_daily.market_cap",false,v1
+div_yield_ttm,股息率,value,1,ratio,"sum(bonus/10, trailing 12m, action_type=1) / close","fact_dividend.bonus; fact_daily.close",false,v1
+roe_ttm,净资产收益率TTM,quality,1,ratio,"FN308 * 1e4 / FN271","FN308; FN271",false,v1
+roa_ttm,总资产收益率TTM,quality,1,ratio,"FN276 / FN40","FN276; FN40",false,v1
+gross_margin,毛利率,quality,1,pct,"FN202","FN202",true,v1
+accruals,应计利润率,quality,-1,ratio,"(FN276 - FN307) / FN40","FN276; FN307; FN40",true,v1
+revenue_growth_yoy,营收同比增长,growth,1,pct,"FN183","FN183",false,v1
+profit_growth_yoy,净利同比增长,growth,1,pct,"FN184","FN184",false,v1
+mom_12_1,12减1月动量,momentum,1,return,"adj_close[t-21] / adj_close[t-252] - 1","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
+reversal_1m,短期反转,momentum,1,return,"-(adj_close[t] / adj_close[t-21] - 1)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
+volatility_252d,波动率,risk,-1,std,"std(daily_return, trailing 252 td)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
+turnover_21d,换手率,risk,-1,turnover,"mean(vol / float_shares, trailing 21 td)","fact_daily.vol; fact_daily.float_shares",false,v1
