@@ -1,5 +1,4 @@
 import csv
-import html
 import math
 import re
 import struct
@@ -14,7 +13,7 @@ from paths import DATA_DIR, RAW_DIR, KNOWLEDGE_DIR
 
 BASE_DIR = Path(__file__).resolve().parent
 CW_DIR = RAW_DIR / "vipdoc" / "cw"
-TQDOC_PATH = KNOWLEDGE_DIR / "TdxQuant.md"
+FINVALUE_CSV_PATH = KNOWLEDGE_DIR / "FINVALUE.csv"
 DIM_STOCK_PATH = DATA_DIR / "dim_stock.csv"
 DIM_DATE_PATH = DATA_DIR / "dim_date.csv"
 
@@ -62,15 +61,63 @@ def print_progress(
 
 
 def load_metric_definitions() -> dict[str, str]:
-    text = TQDOC_PATH.read_text(encoding="utf-8")
-    pattern = re.compile(
-        r"<td>(FN[0-9]+)</td><td>double</td><td></td><td>(.*?)</td>"
-    )
+    required_columns = {
+        "finvalue_id",
+        "metric_code",
+        "record_index",
+        "field_kind",
+        "metric_name",
+    }
     metrics: dict[str, str] = {}
-    for code, name in pattern.findall(text):
-        number = int(code.removeprefix("FN"))
-        if 1 <= number <= FLOAT_COUNT:
-            metrics[code] = html.unescape(name.strip())
+    with FINVALUE_CSV_PATH.open("r", newline="", encoding="utf-8-sig") as csv_file:
+        reader = csv.DictReader(csv_file)
+        fieldnames = set(reader.fieldnames or [])
+        missing_columns = required_columns.difference(fieldnames)
+        if missing_columns:
+            missing = ", ".join(sorted(missing_columns))
+            raise ValueError(f"{FINVALUE_CSV_PATH.name} missing columns: {missing}")
+
+        for line_number, row in enumerate(reader, start=2):
+            if row["field_kind"].strip() != "metric":
+                continue
+
+            metric_code = row["metric_code"].strip()
+            metric_name = row["metric_name"].strip()
+            if not re.fullmatch(r"FN[0-9]+", metric_code):
+                raise ValueError(
+                    f"{FINVALUE_CSV_PATH.name}:{line_number}: "
+                    f"invalid metric_code {metric_code!r}"
+                )
+            if not metric_name:
+                raise ValueError(
+                    f"{FINVALUE_CSV_PATH.name}:{line_number}: empty metric_name"
+                )
+
+            finvalue_id = int(row["finvalue_id"])
+            metric_number = int(metric_code.removeprefix("FN"))
+            record_index = int(row["record_index"])
+            if metric_number != finvalue_id:
+                raise ValueError(
+                    f"{FINVALUE_CSV_PATH.name}:{line_number}: "
+                    f"{metric_code} does not match finvalue_id {finvalue_id}"
+                )
+            if not 1 <= metric_number <= FLOAT_COUNT:
+                raise ValueError(
+                    f"{FINVALUE_CSV_PATH.name}:{line_number}: "
+                    f"metric id {metric_number} outside 1..{FLOAT_COUNT}"
+                )
+            if record_index != metric_number - 1:
+                raise ValueError(
+                    f"{FINVALUE_CSV_PATH.name}:{line_number}: "
+                    f"record_index {record_index} does not match {metric_code}"
+                )
+            if metric_code in metrics:
+                raise ValueError(
+                    f"{FINVALUE_CSV_PATH.name}:{line_number}: "
+                    f"duplicate metric_code {metric_code}"
+                )
+
+            metrics[metric_code] = metric_name
 
     if not metrics:
         raise ValueError("no financial metric definitions found")

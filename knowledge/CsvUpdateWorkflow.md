@@ -94,6 +94,7 @@ python update_etl.py --database tdx_quant --create-db
      - `fact_financial_report.csv`
      - `fact_financial_value.csv`
      - `bridge_trade_day_financial_report.csv`
+   - 财务指标定义来自 `knowledge/FINVALUE.csv` 中 `field_kind=metric` 的行。
    - 不在 `dim_stock.csv` 中的 raw 代码数量和样例写入 summary log。
 
 ## 常用参数

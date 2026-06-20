@@ -160,7 +160,7 @@ date_id BETWEEN valid_from_date_id AND valid_to_date_id
 | 字段 | 类型 | 含义 |
 |---|---|---|
 | `metric_code` | `VARCHAR(10)` | 通达信指标代码，例如 `FN40` |
-| `metric_name` | `VARCHAR(500)` | `TdxQuant.md` 中对应的完整指标名称和说明 |
+| `metric_name` | `VARCHAR(500)` | `knowledge/FINVALUE.csv` 中对应的完整指标名称和说明 |
 
 `.dat` 文件没有可靠的指标分类、累计属性或独立单位字段，因此 MVP 不保存
 `category`、`is_cumulative`、`unit_name` 和额外 `description`。如果名称中
@@ -1037,7 +1037,7 @@ FN230 -> 营业收入
 FN312 -> 营业总收入(单季度)(万元)
 ```
 
-指标名称来自 `TdxQuant.md` 的专业财务字段表。MVP 不从名称中推断单位、
+指标名称来自 `knowledge/FINVALUE.csv` 的 `field_kind=metric` 行。MVP 不从名称中推断单位、
 财务报表分类或累计属性。
 
 #### `fact_financial_report`
@@ -1089,7 +1089,7 @@ date_id + stock_code
 
 ### 8.3 数据加载流程
 
-1. 从 `TdxQuant.md` 提取有效的 `FN` 代码和完整名称，加载
+1. 从 `knowledge/FINVALUE.csv` 提取 `field_kind=metric` 的有效 `FN` 代码和完整名称，加载
    `dim_financial_metric`。
 2. 遍历有效的 `gpcwYYYYMMDD.dat` 文件。
 3. 将文件名日期解析为 `report_period`。
@@ -1098,7 +1098,7 @@ date_id + stock_code
 5. 从每只股票的数据块获取实际公告日期，转换为 `announce_date_id`。
 6. 确保公告日期存在于 `dim_date`；如超出当前范围，先扩展自然日维度。
 7. 生成稳定的 `report_id`，写入 `fact_financial_report`。
-8. 将有文档定义且为有限数的财务指标写入 `fact_financial_value`。
+8. 将 `knowledge/FINVALUE.csv` 中定义且为有限数的财务指标写入 `fact_financial_value`。
 9. 不导入只有文件头、没有有效股票记录的占位 `.dat` 文件。
 10. 基于 `fact_financial_report` 重建
     `bridge_trade_day_financial_report`。
