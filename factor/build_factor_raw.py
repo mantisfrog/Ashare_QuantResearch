@@ -33,12 +33,6 @@ from factor_config import (
     MOMENTUM_LONG_TRADE_DAYS,
     MOMENTUM_SKIP_TRADE_DAYS,
     REVERSAL_TRADE_DAYS,
-    ROIC_DEBT_CODES_WAN,
-    ROIC_DEBT_CODES_YUAN,
-    ROIC_EBIT_CODE,
-    ROIC_EQUITY_CODE,
-    ROIC_HISTORY_YEARS,
-    ROIC_TAX_RETENTION,
     TURNOVER_TRADE_DAYS,
     VOLATILITY_TRADE_DAYS,
 )
@@ -60,7 +54,6 @@ COMPUTE = {
     "cfp_ttm": lambda b: b["FN307"] / (b["market_cap"] * 1e4),
     "div_yield_ttm": lambda b: b["dps_ttm"] / b["close"],
     "roe_ttm": lambda b: b["FN308"] * 1e4 / b["FN271"],
-    "roa_ttm": lambda b: b["FN276"] / b["FN40"],
     "gross_margin": lambda b: b["FN202"],
     "accruals": lambda b: (b["FN276"] - b["FN307"]) / b["FN40"],
     "revenue_growth_yoy": lambda b: b["FN183"],
@@ -73,11 +66,7 @@ PRICE_FACTORS = ["mom_12_1", "reversal_1m", "volatility_252d", "turnover_21d"]
 GROWTH_ACCEL_METRIC = "FN324"  # 净利润(单季度)(万元)
 GROWTH_ACCEL_FACTORS = ["earnings_accel"]
 
-# ROIC TTM (point-in-time quarterly history; EBIT is cumulative, IC is a balance).
-ROIC_FACTORS = ["roic_ttm"]
-ROIC_METRIC_CODES = [ROIC_EBIT_CODE, ROIC_EQUITY_CODE, *ROIC_DEBT_CODES_YUAN, *ROIC_DEBT_CODES_WAN]
-
-ALL_FACTORS = list(COMPUTE) + PRICE_FACTORS + GROWTH_ACCEL_FACTORS + ROIC_FACTORS
+ALL_FACTORS = list(COMPUTE) + PRICE_FACTORS + GROWTH_ACCEL_FACTORS
 
 
 def _long(date_id: int, code: str, series: pd.Series, calc_version: str) -> pd.DataFrame:
@@ -169,76 +158,6 @@ def compute_growth_acceleration(
     return pd.Series(scores, dtype="float64")
 
 
-def compute_roic_ttm(
-    history: pd.DataFrame, members, *, ebit_code, equity_code,
-    debt_codes_yuan, debt_codes_wan, tax_retention,
-) -> pd.Series:
-    """Trailing-twelve-month ROIC ~= tax_retention * EBIT_TTM / avg invested capital.
-
-    ``history`` is long (stock_code, report_period, metric_code, metric_value),
-    point-in-time. EBIT (``ebit_code``) is a cumulative (YTD) flow, so for an
-    interim latest period P:
-        EBIT_TTM = EBIT[P] + EBIT[last FY] - EBIT[P - 1 year]
-    and for an annual P (Dec 31): EBIT_TTM = EBIT[P]. Invested capital is a
-    balance: equity + interest-bearing debt (lease debt is 万元 -> *1e4), averaged
-    across P and the year-ago balance. NOPAT is approximated as ``tax_retention *
-    EBIT`` (no reliable tax-expense field). Returns a Series indexed by stock_code
-    (in-universe members only).
-    """
-    if history.empty:
-        return pd.Series(dtype="float64")
-    codes = [ebit_code, equity_code, *debt_codes_yuan, *debt_codes_wan]
-    wide = history.pivot_table(
-        index=["stock_code", "report_period"], columns="metric_code",
-        values="metric_value", aggfunc="first",
-    ).reindex(columns=codes)
-    member_set = set(members)
-    scores: dict[str, float] = {}
-
-    def invested_capital(row) -> float:
-        equity = row.get(equity_code, np.nan)
-        if not np.isfinite(equity):
-            return np.nan
-        total = float(equity)
-        for code in debt_codes_yuan:
-            value = row.get(code, np.nan)
-            if np.isfinite(value):
-                total += float(value)
-        for code in debt_codes_wan:
-            value = row.get(code, np.nan)
-            if np.isfinite(value):
-                total += float(value) * 1e4
-        return total
-
-    for stock, group in wide.groupby(level="stock_code"):
-        if stock not in member_set:
-            continue
-        g = group.droplevel("stock_code").sort_index()
-        period = g.index[-1]
-        year_ago = period - pd.DateOffset(years=1)
-        last_fy = pd.Timestamp(period.year - 1, 12, 31)
-        if year_ago not in g.index:
-            continue
-        ebit = g[ebit_code]
-        if period.month == 12 and period.day == 31:
-            ebit_ttm = ebit.get(period, np.nan)
-        elif last_fy in g.index:
-            ebit_ttm = ebit.get(period, np.nan) + ebit.get(last_fy, np.nan) - ebit.get(year_ago, np.nan)
-        else:
-            continue
-        if not np.isfinite(ebit_ttm):
-            continue
-        ic_now = invested_capital(g.loc[period])
-        ic_prev = invested_capital(g.loc[year_ago])
-        if not (np.isfinite(ic_now) and np.isfinite(ic_prev)):
-            continue
-        avg_ic = (ic_now + ic_prev) / 2.0
-        if avg_ic <= 0:
-            continue
-        scores[stock] = tax_retention * ebit_ttm / avg_ic
-    return pd.Series(scores, dtype="float64")
-
-
 def month_bound_date_id(month: str, *, upper: bool) -> int:
     value = int(month)
     return value * 100 + (31 if upper else 1)
@@ -263,7 +182,6 @@ def main() -> int:
     snapshot_requested = [code for code in implemented if code in COMPUTE]
     price_requested = [code for code in implemented if code in PRICE_FACTORS]
     accel_requested = [code for code in implemented if code in GROWTH_ACCEL_FACTORS]
-    roic_requested = [code for code in implemented if code in ROIC_FACTORS]
     if skipped:
         print(f"[factor] build_factor_raw: not implemented: {', '.join(skipped)}", flush=True)
     if not implemented:
@@ -327,19 +245,6 @@ def main() -> int:
                 if not accel.empty:
                     code = GROWTH_ACCEL_FACTORS[0]
                     frames[code].append(_long(date_id, code, accel, args.calc_version))
-            if roic_requested:
-                history = loaders.load_quarterly_metrics_history(
-                    conn, date_id, ROIC_METRIC_CODES, ROIC_HISTORY_YEARS
-                )
-                roic = compute_roic_ttm(
-                    history, stocks,
-                    ebit_code=ROIC_EBIT_CODE, equity_code=ROIC_EQUITY_CODE,
-                    debt_codes_yuan=ROIC_DEBT_CODES_YUAN, debt_codes_wan=ROIC_DEBT_CODES_WAN,
-                    tax_retention=ROIC_TAX_RETENTION,
-                ).replace([np.inf, -np.inf], np.nan).dropna()
-                if not roic.empty:
-                    code = ROIC_FACTORS[0]
-                    frames[code].append(_long(date_id, code, roic, args.calc_version))
             if price_requested:
                 tdi_t = dateid_to_tdi.get(date_id)
                 window_start = tdi_to_dateid.get(tdi_t - MOMENTUM_LONG_TRADE_DAYS) if tdi_t is not None else None

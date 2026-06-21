@@ -41,16 +41,6 @@ GROWTH_ACCEL_LOOKBACK_QUARTERS = 8   # the "past 8 periods" baseline window
 GROWTH_ACCEL_YOY_QUARTERS = 4        # 4 quarters back = the year-ago quarter
 GROWTH_ACCEL_HISTORY_YEARS = 5       # trailing years of reports to pull (PIT)
 
-# ROIC (TTM): EBIT (FN207) is a cumulative YTD flow, so TTM = YTD + last FY - year-ago
-# YTD (annual period: the FY value). Invested capital = equity + interest-bearing debt,
-# averaged with the year-ago balance. NOPAT ~= 0.80 * EBIT (no reliable tax field).
-ROIC_EBIT_CODE = "FN207"           # 息税前利润 EBIT (元, cumulative YTD)
-ROIC_EQUITY_CODE = "FN72"          # 所有者权益合计 (元)
-ROIC_DEBT_CODES_YUAN = ("FN41", "FN52", "FN55", "FN56")  # 短借/一年内到期/长借/应付债券 (元)
-ROIC_DEBT_CODES_WAN = ("FN439",)   # 租赁负债 (万元 -> *1e4)
-ROIC_TAX_RETENTION = 0.80
-ROIC_HISTORY_YEARS = 3
-
 # Composite styles (must match the ``style`` column in factor_catalog.csv).
 STYLES = ("value", "quality", "growth", "momentum", "risk")
 

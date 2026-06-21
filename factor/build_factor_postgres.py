@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 _ETL_DIR = Path(__file__).resolve().parents[1] / "etl"
 if str(_ETL_DIR) not in sys.path:
@@ -47,6 +48,11 @@ DATE_RANGE_FACTOR_TABLES = (
     "fact_factor_raw",
     "fact_factor_exposure",
     "fact_factor_composite",
+    "fact_factor_diagnostics",
+)
+FACTOR_CODE_TABLES = (
+    "fact_factor_raw",
+    "fact_factor_exposure",
     "fact_factor_diagnostics",
 )
 
@@ -180,6 +186,12 @@ def _to_bool(value: object) -> bool:
     return str(value).strip().lower() in ("true", "1", "t", "yes")
 
 
+def active_factor_codes() -> set[str]:
+    """Current factor codes from factor_catalog.csv."""
+    catalog = pd.read_csv(FACTOR_CATALOG_FILE, usecols=["factor_code"])
+    return {str(code).strip() for code in catalog["factor_code"].dropna()}
+
+
 def load_dim_factor(cur) -> None:
     """Upsert factor definitions from factor_catalog.csv into dim_factor."""
     catalog = pd.read_csv(FACTOR_CATALOG_FILE)
@@ -191,6 +203,7 @@ def load_dim_factor(cur) -> None:
         )
         for row in catalog.itertuples(index=False)
     ]
+    active_codes = [row[0] for row in rows]
     execute_values(
         cur,
         """
@@ -206,11 +219,36 @@ def load_dim_factor(cur) -> None:
             formula_text = EXCLUDED.formula_text,
             source_metrics = EXCLUDED.source_metrics,
             financial_na = EXCLUDED.financial_na,
-            version = EXCLUDED.version
+            version = EXCLUDED.version,
+            is_active = TRUE
         """,
         rows,
     )
+    if active_codes:
+        cur.execute(
+            "UPDATE dim_factor SET is_active = FALSE WHERE NOT (factor_code = ANY(%s))",
+            (active_codes,),
+        )
     print(f"dim_factor upserted: {len(rows)} rows", flush=True)
+
+
+def prune_inactive_factor_rows(cur) -> None:
+    """Delete fact rows for factor codes that are no longer active in the catalog."""
+    total_deleted = 0
+    for table in FACTOR_CODE_TABLES:
+        cur.execute(
+            f"""
+            DELETE FROM {table}
+            WHERE factor_code IN (
+                SELECT factor_code
+                FROM dim_factor
+                WHERE is_active = FALSE
+            )
+            """
+        )
+        if cur.rowcount and cur.rowcount > 0:
+            total_deleted += cur.rowcount
+    print(f"inactive factor fact rows pruned: {total_deleted}", flush=True)
 
 
 UNIVERSE_COLUMNS = [
@@ -263,7 +301,13 @@ DIAGNOSTICS_COLUMNS = [
 ]
 
 
-def _load_per_factor_dir(cur, base_dir, table, columns) -> None:
+def _load_per_factor_dir(
+    cur,
+    base_dir,
+    table,
+    columns,
+    allowed_factor_codes: set[str] | None = None,
+) -> None:
     """Incrementally load per-factor subdir CSVs (delete by factor_code + date)."""
     files = sorted(base_dir.glob("*/*.csv"))
     if not files:
@@ -271,9 +315,14 @@ def _load_per_factor_dir(cur, base_dir, table, columns) -> None:
         return
     column_sql = ", ".join(columns)
     copy_sql = f"COPY {table} ({column_sql}) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '')"
+    loaded = 0
+    skipped = 0
     for path in files:
         meta = pd.read_csv(path, usecols=["date_id", "factor_code"])
         factor_code = str(meta["factor_code"].iloc[0])
+        if allowed_factor_codes is not None and factor_code not in allowed_factor_codes:
+            skipped += 1
+            continue
         dates = sorted({int(value) for value in meta["date_id"].unique()})
         if dates:
             cur.execute(
@@ -282,15 +331,21 @@ def _load_per_factor_dir(cur, base_dir, table, columns) -> None:
             )
         with path.open("r", encoding="utf-8", newline="") as handle:
             cur.copy_expert(copy_sql, handle)
-    print(f"{table}: loaded {len(files)} file(s)", flush=True)
+        loaded += 1
+    suffix = f", skipped {skipped} inactive file(s)" if skipped else ""
+    print(f"{table}: loaded {loaded} file(s){suffix}", flush=True)
 
 
 def load_factor_raw(cur) -> None:
-    _load_per_factor_dir(cur, FACTOR_RAW_DIR, "fact_factor_raw", RAW_COLUMNS)
+    _load_per_factor_dir(
+        cur, FACTOR_RAW_DIR, "fact_factor_raw", RAW_COLUMNS, active_factor_codes()
+    )
 
 
 def load_factor_exposure(cur) -> None:
-    _load_per_factor_dir(cur, FACTOR_EXPOSURE_DIR, "fact_factor_exposure", EXPOSURE_COLUMNS)
+    _load_per_factor_dir(
+        cur, FACTOR_EXPOSURE_DIR, "fact_factor_exposure", EXPOSURE_COLUMNS, active_factor_codes()
+    )
 
 
 def load_factor_composite(cur) -> None:
@@ -324,13 +379,30 @@ def load_factor_diagnostics(cur) -> None:
         f"COPY fact_factor_diagnostics ({column_sql}) "
         "FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '')"
     )
+    allowed = active_factor_codes()
+    skipped_rows = 0
+    loaded = 0
     for path in files:
-        dates = sorted({int(value) for value in pd.read_csv(path, usecols=["date_id"])["date_id"].unique()})
+        frame = pd.read_csv(path)
+        dates = sorted({int(value) for value in frame["date_id"].unique()})
         if dates:
             cur.execute("DELETE FROM fact_factor_diagnostics WHERE date_id = ANY(%s)", (dates,))
-        with path.open("r", encoding="utf-8", newline="") as handle:
-            cur.copy_expert(copy_sql, handle)
-    print(f"fact_factor_diagnostics: loaded {len(files)} file(s)", flush=True)
+        before = len(frame)
+        frame = frame[frame["factor_code"].astype(str).isin(allowed)]
+        skipped_rows += before - len(frame)
+        if frame.empty:
+            continue
+        with NamedTemporaryFile("w", encoding="utf-8", newline="", suffix=".csv", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+            frame.to_csv(tmp, index=False, columns=DIAGNOSTICS_COLUMNS)
+        try:
+            with tmp_path.open("r", encoding="utf-8", newline="") as handle:
+                cur.copy_expert(copy_sql, handle)
+        finally:
+            tmp_path.unlink(missing_ok=True)
+        loaded += 1
+    suffix = f", skipped {skipped_rows} inactive row(s)" if skipped_rows else ""
+    print(f"fact_factor_diagnostics: loaded {loaded} file(s){suffix}", flush=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -367,6 +439,7 @@ def main() -> int:
             conn.commit()
             print("loading dim_factor from catalog", flush=True)
             load_dim_factor(cur)
+            prune_inactive_factor_rows(cur)
             conn.commit()
             print("loading fact_stock_universe", flush=True)
             load_universe(cur)
