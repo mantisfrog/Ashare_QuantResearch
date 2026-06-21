@@ -2,7 +2,9 @@
 
 Per (rebalance date, factor): universe_count, valid_count, coverage, and the
 rank IC of the neutralized exposure against 1m/3m/6m forward returns (month-end
-to month-end, back-adjusted). Output: data/factor/diagnostics/.
+to month-end, back-adjusted). Also writes wide display matrices of average
+cross-sectional factor rank correlations.
+Output: data/factor/diagnostics/.
 """
 from __future__ import annotations
 
@@ -36,6 +38,9 @@ DIAG_COLUMNS = [
     "rank_ic_1m", "rank_ic_3m", "rank_ic_6m",
 ]
 HORIZON_COLUMN = {1: "rank_ic_1m", 3: "rank_ic_3m", 6: "rank_ic_6m"}
+RANK_CORR_MEAN_FILE = FACTOR_DIAGNOSTICS_DIR / "rank_corr_mean.csv"
+RANK_CORR_ROLLING_12M_FILE = FACTOR_DIAGNOSTICS_DIR / "rank_corr_rolling_12m.csv"
+RANK_CORR_ROLLING_MONTHS = 12
 
 
 def month_bound_date_id(month: str, *, upper: bool) -> int:
@@ -51,6 +56,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--calc-version", default=CALC_VERSION, help="calc_version stamp.")
     parser.add_argument("--rebuild", action="store_true", help="Accepted for a uniform CLI; diagnostics always recompute.")
     return parser.parse_args()
+
+
+def write_rank_corr_matrix(matrix: pd.DataFrame, path: Path) -> None:
+    """Write a factor x factor display matrix for manual diagnostics."""
+    if matrix.empty:
+        return
+    output = matrix.copy()
+    output.index.name = "factor_code"
+    output.to_csv(path, float_format="%.4f")
+
+
+def write_rank_corr_mean(matrix: pd.DataFrame) -> None:
+    """Write the full-sample factor rank-correlation display matrix."""
+    write_rank_corr_matrix(matrix, RANK_CORR_MEAN_FILE)
 
 
 def main() -> int:
@@ -87,6 +106,24 @@ def main() -> int:
     if not implemented:
         print("[factor] build_factor_diagnostics: no exposures found; run build_factor_exposure first", flush=True)
         return 0
+
+    rank_corr_mean = diagnostics.mean_rank_corr_matrix(exposure_cross, implemented, targets)
+    write_rank_corr_matrix(rank_corr_mean, RANK_CORR_MEAN_FILE)
+    print(
+        f"[factor] rank_corr_mean: wrote {RANK_CORR_MEAN_FILE} "
+        f"factors={len(rank_corr_mean)}",
+        flush=True,
+    )
+    rolling_dates = targets[-RANK_CORR_ROLLING_MONTHS:]
+    rank_corr_rolling_12m = diagnostics.mean_rank_corr_matrix(
+        exposure_cross, implemented, rolling_dates
+    )
+    write_rank_corr_matrix(rank_corr_rolling_12m, RANK_CORR_ROLLING_12M_FILE)
+    print(
+        f"[factor] rank_corr_rolling_12m: wrote {RANK_CORR_ROLLING_12M_FILE} "
+        f"dates={len(rolling_dates)} factors={len(rank_corr_rolling_12m)}",
+        flush=True,
+    )
 
     # Universe counts per date.
     universe = factor_io.read_year_partitioned_csv(
