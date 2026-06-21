@@ -135,6 +135,40 @@ def load_financial_metrics(conn, date_id: int, metric_codes) -> pd.DataFrame:
     return wide.reindex(columns=codes)
 
 
+def load_quarterly_metrics_history(
+    conn, date_id: int, metric_codes, history_years: int
+) -> pd.DataFrame:
+    """Point-in-time quarterly history of several FN metrics as of ``date_id``.
+
+    Returns long rows (stock_code, report_period, metric_code, metric_value) for
+    reports announced on or before ``date_id`` whose period falls within the
+    trailing ``history_years`` calendar years. ``report_period`` is the period-end
+    date, so callers can build single-quarter / YoY / TTM series. No look-ahead:
+    filtered by ``announce_date_id <= date_id``.
+    """
+    codes = list(metric_codes)
+    min_period = f"{date_id // 10000 - history_years}-01-01"
+    query = """
+        SELECT r.stock_code, r.report_period, v.metric_code, v.metric_value
+        FROM fact_financial_report r
+        JOIN fact_financial_value v
+          ON v.report_id = r.report_id AND v.metric_code = ANY(%(codes)s)
+        WHERE r.announce_date_id <= %(t)s
+          AND r.report_period >= %(minp)s
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, {"codes": codes, "t": date_id, "minp": min_period})
+        rows = cur.fetchall()
+    frame = pd.DataFrame(
+        rows, columns=["stock_code", "report_period", "metric_code", "metric_value"]
+    )
+    if frame.empty:
+        return frame
+    frame["report_period"] = pd.to_datetime(frame["report_period"])
+    frame["metric_value"] = pd.to_numeric(frame["metric_value"], errors="coerce")
+    return frame
+
+
 def load_daily_snapshot(conn, date_id: int) -> pd.DataFrame:
     """close + market_cap on ``date_id`` indexed by stock_code."""
     with conn.cursor() as cur:

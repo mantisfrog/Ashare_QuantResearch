@@ -14,3 +14,5 @@ mom_12_1,12减1月动量,momentum,1,return,"adj_close[t-21] / adj_close[t-252] -
 reversal_1m,短期反转,momentum,1,return,"-(adj_close[t] / adj_close[t-21] - 1)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
 volatility_252d,波动率,risk,-1,std,"std(daily_return, trailing 252 td)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
 turnover_21d,换手率,risk,-1,turnover,"mean(vol / float_shares, trailing 21 td)","fact_daily.vol; fact_daily.float_shares",false,v1
+roic_ttm,投入资本回报率TTM,quality,1,ratio,"0.8 * EBIT_TTM / avg(InvestedCapital); EBIT_TTM = FN207 cumulative (YTD + last FY - year-ago YTD); InvestedCapital = FN72 + FN41 + FN52 + FN55 + FN56 + FN439*1e4","FN207; FN72; FN41; FN52; FN55; FN56; FN439",true,v1
+earnings_accel,单季净利加速度,growth,1,zscore,"(alpha_t - mean(past 8 alpha)) / std(past 8 alpha); alpha = single-quarter net profit (FN324) YoY change","FN324",false,v1
