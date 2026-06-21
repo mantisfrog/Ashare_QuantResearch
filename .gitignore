@@ -12,9 +12,11 @@
 
 # 密钥 / 环境
 .env
+google_sheet_service_account.json
 
 # Python / 工具
 .venv/
 .vscode/
 __pycache__/
 *.pyc
+google_sheet_service_account.json

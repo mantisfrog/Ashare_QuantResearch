@@ -1,6 +1,6 @@
 #!/home/wbi/job/.venv/bin/python3
 """
-使用 akshare 更新 raw/index/ 目录下的 CSV 指数行情文件。
+使用 akshare 更新 raw/index/ 目录下的 CSV 指数行情文件，并自动同步到对应的 Google Sheets。
 
 规则：
 1. 仅在「CSV 最新日期 < 今天」且「北京时间 > 15:30」时才执行更新。
@@ -8,7 +8,9 @@
    某个接口只要能返回可用数据即停止，并立即把该文件已取到的数据写回 CSV，再继续下一个文件。
 3. 默认每次请求后间隔 15 秒；接口失败时重试间隔依次提升为 30 秒、60 秒；仍然失败则尝试下一个接口。
 4. 仅更新 CSV 中已存在的列，不新增列，并保持原编码（utf-8-sig BOM）、表头与数值格式。
-5. 全部 8 个文件处理完毕后，仅当存在失败文件时：生成 log/日期_fail.log，并调用 utils/telegram_msg.py 发送一次汇总消息。
+5. 本地 CSV 更新成功后，自动把该文件完整覆盖同步到对应的 Google Sheet 第一个工作表。
+6. 全部 8 个文件处理完毕后，仅当存在失败文件时：生成 log/日期_fail.log，并调用 utils/telegram_msg.py 发送一次汇总消息。
+   若本地 CSV 更新成功但 Google Sheet 同步失败，也会汇总到失败通知中。
 """
 
 import csv
@@ -24,20 +26,37 @@ from zoneinfo import ZoneInfo
 os.environ.setdefault("TQDM_DISABLE", "1")
 
 import akshare as ak
+import gspread
 import pandas as pd
+from google.oauth2.service_account import Credentials
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 RAW_DIR = PROJECT_ROOT / "raw/index_gz"
 LOG_DIR = PROJECT_ROOT / "log"
 TELEGRAM_SCRIPT = SCRIPT_DIR / "telegram_msg.py"
+GOOGLE_SHEET_SERVICE_ACCOUNT = PROJECT_ROOT / "google_sheet_service_account.json"
 
 ENCODING = "utf-8-sig"
 DATE_FMT_FILE = "%Y-%m-%d"
 DATE_FMT_API = "%Y%m%d"
 DEFAULT_START_DATE = "19900101"
 BJ_TZ = ZoneInfo("Asia/Shanghai")
-UPDATE_AFTER = dt_time(15, 30)
+UPDATE_AFTER = dt_time(9, 30)
+
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
+# CSV stem -> Google Spreadsheet ID 的映射
+SPREADSHEET_IDS = {
+    "399370_国证成长": "119PrHGTmvZT3qiYYYN2JB-mIf27ImzDdlv9aIdQbSBU",
+    "399371_国证价值": "1CUI3KSLoUQaLWASHvCL4oQ7iMdlYw_Su9p2Fi5xEDT8",
+    "399372_大盘成长": "1478p0lQbby82cflybIQJP_5YyoY75tWXViaK_Ne8_rU",
+    "399373_大盘价值": "1FmbEZaNFzCBFg666ykYqpYotva6fPb5HCmpyazHpZyM",
+    "399374_中盘成长": "1DLZlhqTqEOnOTLwPYXC9T0xMVogX85JsgbEWYCqRV5E",
+    "399375_中盘价值": "1qHC3a522LGawtTwkSitHL0fWYRvnPqtiFpxyj33DRdo",
+    "399376_小盘成长": "1wklNljB4r-9vJa9S3hiz-vtI9qAN1Pq3upmIZbN5uZI",
+    "399377_小盘价值": "1-BDVi162yH5QWPSn7bnydUgeCnCs1sOpEJXhtUkhsh0",
+}
 
 
 def fetch_tx(code: str, prefix: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -273,6 +292,38 @@ def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_dat
     return False, "all_failed"
 
 
+def get_gsheet_client():
+    """使用服务账号创建 gspread 客户端。"""
+    if not GOOGLE_SHEET_SERVICE_ACCOUNT.exists():
+        raise FileNotFoundError(f"服务账号文件不存在: {GOOGLE_SHEET_SERVICE_ACCOUNT}")
+    creds = Credentials.from_service_account_file(
+        str(GOOGLE_SHEET_SERVICE_ACCOUNT), scopes=SCOPES
+    )
+    return gspread.authorize(creds)
+
+
+def sync_csv_to_gsheet(path: Path, sheet_key: str) -> tuple[bool, str]:
+    """将本地 CSV 完整覆盖同步到指定 Google Sheet 的第一个工作表。"""
+    try:
+        client = get_gsheet_client()
+        sh = client.open_by_key(sheet_key)
+        ws = sh.get_worksheet(0)
+        if ws is None:
+            raise ValueError("未找到第一个工作表")
+
+        df = pd.read_csv(path, encoding=ENCODING)
+        values = [df.columns.tolist()] + [
+            [format_value(col, row[col]) for col in df.columns]
+            for _, row in df.iterrows()
+        ]
+
+        ws.clear()
+        ws.update(range_name="A1", values=values, value_input_option="USER_ENTERED")
+        return True, f"已同步 {len(values) - 1} 行数据"
+    except Exception as e:
+        return False, str(e)
+
+
 def send_telegram(message: str) -> None:
     """调用项目自带的 telegram_msg.py 发送消息（不修改该脚本）。"""
     if not TELEGRAM_SCRIPT.exists():
@@ -302,6 +353,7 @@ def main() -> int:
         return 0
 
     failures: list[str] = []
+    gsheet_failures: list[str] = []
 
     for idx, path in enumerate(csv_files):
         stem = path.stem
@@ -331,6 +383,21 @@ def main() -> int:
             msg = f"{path.name} 所有接口均失败"
             logging.error(msg)
             failures.append(msg)
+            continue
+
+        sheet_key = SPREADSHEET_IDS.get(stem)
+        if sheet_key:
+            gs_success, gs_msg = sync_csv_to_gsheet(path, sheet_key)
+            if gs_success:
+                logging.info(f"{path.name} Google Sheet 同步成功: {gs_msg}")
+            else:
+                msg = f"{path.name} Google Sheet 同步失败: {gs_msg}"
+                logging.warning(msg)
+                gsheet_failures.append(msg)
+        else:
+            logging.warning(f"{path.name} 未找到对应的 Google Sheet ID，跳过同步")
+
+    failures.extend(gsheet_failures)
 
     if failures:
         summary = "指数 CSV 更新失败:\n" + "\n".join(failures)
