@@ -104,9 +104,9 @@ def _configured_weights_frame() -> pd.DataFrame:
     for style, weights in COMPOSITE_FACTOR_WEIGHTS.items():
         for factor_code, weight in weights.items():
             value = float(weight)
-            if not value > 0:
+            if not value >= 0:
                 raise ValueError(
-                    f"composite weight must be positive for style={style!r} "
+                    f"composite weight must be non-negative for style={style!r} "
                     f"factor={factor_code!r}: {value}"
                 )
             rows.append({
