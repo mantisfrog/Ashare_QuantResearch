@@ -25,6 +25,7 @@ sys.path.insert(0, str(BASE_DIR / "etl"))
 sys.path.insert(0, str(BASE_DIR / "factor"))
 
 from etl_logging import append_summary
+from factor_config import factor_config_snapshot_lines
 
 LOG_DIR = BASE_DIR / "log"
 FACTOR_DIR = BASE_DIR / "factor"
@@ -63,6 +64,13 @@ def run_step(
     append_summary(
         "factor",
         f"complete step={step_no}/{total_steps} label={label} duration={elapsed}",
+    )
+
+
+def append_config_snapshot() -> None:
+    append_summary(
+        "factor_config",
+        "current config\n" + "\n".join(factor_config_snapshot_lines()),
     )
 
 
@@ -106,6 +114,7 @@ def main() -> int:
     os.environ["ETL_SUMMARY_LOG"] = str(log_path)
     env = os.environ.copy()
     append_summary("factor", "run_start")
+    append_config_snapshot()
     print(f"summary log: {log_path}", flush=True)
 
     steps = [
