@@ -95,6 +95,7 @@ def main() -> int:
         expo = factor_io.read_year_partitioned_csv(
             FACTOR_EXPOSURE_DIR, code, subdir=code, date_ids=target_set,
             usecols=["date_id", "stock_code", "neutralized_value"],
+            calc_version=args.calc_version,
         )
         if expo.empty:
             continue
@@ -129,6 +130,7 @@ def main() -> int:
     universe = factor_io.read_year_partitioned_csv(
         FACTOR_UNIVERSE_DIR, "universe", date_ids=target_set,
         usecols=["date_id", "stock_code", "in_universe"],
+        calc_version=args.calc_version,
     )
     universe = universe[universe["in_universe"].astype(bool)]
     universe_count = universe.groupby("date_id")["stock_code"].count().to_dict()

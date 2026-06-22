@@ -8,7 +8,7 @@ Examples
 --------
     python update_factors.py --skip-db                 # CSV only
     python update_factors.py --start 201501 --end 202506
-    python update_factors.py --factors ep_ttm,bp_mrq --rebuild
+    python update_factors.py --start 201501 --end 202506 --rebuild
 """
 from __future__ import annotations
 
@@ -95,6 +95,12 @@ def step_args(args: argparse.Namespace) -> list[str]:
 
 def main() -> int:
     args = parse_args()
+    if args.factors != "all":
+        raise SystemExit(
+            "--factors is only supported on individual factor build scripts. "
+            "The full update_factors.py pipeline builds composite/diagnostics "
+            "and requires --factors all."
+        )
     LOG_DIR.mkdir(exist_ok=True)
     log_path = LOG_DIR / f"factor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     os.environ["ETL_SUMMARY_LOG"] = str(log_path)

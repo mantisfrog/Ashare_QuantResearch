@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS fact_factor_composite (
     quality_score  NUMERIC(12, 6),
     growth_score   NUMERIC(12, 6),
     momentum_score NUMERIC(12, 6),
+    reversal_score NUMERIC(12, 6),
     risk_score     NUMERIC(12, 6),
     total_score    NUMERIC(12, 6),
     created_at     TIMESTAMP NOT NULL DEFAULT now(),
@@ -152,6 +153,11 @@ CREATE TABLE IF NOT EXISTS fact_factor_diagnostics (
     CONSTRAINT fk_factor_diag_date FOREIGN KEY (date_id) REFERENCES dim_date (date_id),
     CONSTRAINT fk_factor_diag_factor FOREIGN KEY (factor_code) REFERENCES dim_factor (factor_code)
 ) PARTITION BY RANGE (date_id);
+"""
+
+FACTOR_SCHEMA_MIGRATIONS_SQL = """
+ALTER TABLE fact_factor_composite
+    ADD COLUMN IF NOT EXISTS reversal_score NUMERIC(12, 6);
 """
 
 FACTOR_INDEXES_SQL = """
@@ -292,7 +298,7 @@ EXPOSURE_COLUMNS = [
 COMPOSITE_COLUMNS = [
     "date_id", "stock_code", "calc_version",
     "value_score", "quality_score", "growth_score",
-    "momentum_score", "risk_score", "total_score",
+    "momentum_score", "reversal_score", "risk_score", "total_score",
 ]
 DIAGNOSTICS_COLUMNS = [
     "date_id", "factor_code", "calc_version",
@@ -360,11 +366,19 @@ def load_factor_composite(cur) -> None:
         "FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '')"
     )
     for path in files:
-        dates = sorted({int(value) for value in pd.read_csv(path, usecols=["date_id"])["date_id"].unique()})
+        frame = pd.read_csv(path)
+        dates = sorted({int(value) for value in frame["date_id"].unique()})
         if dates:
             cur.execute("DELETE FROM fact_factor_composite WHERE date_id = ANY(%s)", (dates,))
-        with path.open("r", encoding="utf-8", newline="") as handle:
-            cur.copy_expert(copy_sql, handle)
+        frame = frame.reindex(columns=COMPOSITE_COLUMNS)
+        with NamedTemporaryFile("w", encoding="utf-8", newline="", suffix=".csv", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+            frame.to_csv(tmp, index=False, columns=COMPOSITE_COLUMNS)
+        try:
+            with tmp_path.open("r", encoding="utf-8", newline="") as handle:
+                cur.copy_expert(copy_sql, handle)
+        finally:
+            tmp_path.unlink(missing_ok=True)
     print(f"fact_factor_composite: loaded {len(files)} file(s)", flush=True)
 
 
@@ -430,6 +444,9 @@ def main() -> int:
         with conn.cursor() as cur:
             print("creating factor tables", flush=True)
             execute_statements(cur, CREATE_FACTOR_TABLES_SQL)
+            conn.commit()
+            print("applying factor schema migrations", flush=True)
+            execute_statements(cur, FACTOR_SCHEMA_MIGRATIONS_SQL)
             conn.commit()
             print("creating factor partitions", flush=True)
             execute_statements(cur, partition_sql)

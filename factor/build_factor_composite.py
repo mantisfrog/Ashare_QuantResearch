@@ -1,7 +1,7 @@
 """Build composite style scores (Phase 5).
 
 Per rebalance cross-section, aggregates the neutralized factor exposures into
-one score per style (value / quality / growth / momentum / risk) and an
+one score per style (value / quality / growth / momentum / reversal / risk) and an
 equal-weighted ``total_score``. Output: data/factor/composite/.
 """
 from __future__ import annotations
@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build composite style scores.")
     parser.add_argument("--start", default="201501", help="First rebalance month YYYYMM.")
     parser.add_argument("--end", default="latest", help="Last rebalance month YYYYMM or 'latest'.")
-    parser.add_argument("--factors", default="all", help="Accepted for a uniform CLI; unused here.")
+    parser.add_argument("--factors", default="all", help="Must be 'all'; composites require the full catalog.")
     parser.add_argument("--calc-version", default=CALC_VERSION, help="calc_version stamp.")
     parser.add_argument("--rebuild", action="store_true", help="Recompute months already present.")
     return parser.parse_args()
@@ -49,6 +49,9 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.factors != "all":
+        print("[factor] build_factor_composite: --factors must be 'all' for composite builds", flush=True)
+        return 1
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     catalog = pd.read_csv(FACTOR_CATALOG_FILE).set_index("factor_code")
 
@@ -62,7 +65,9 @@ def main() -> int:
     if args.rebuild:
         compute_dates = set(target_set)
     else:
-        compute_dates = target_set - factor_io.done_date_ids(FACTOR_COMPOSITE_DIR, "composite")
+        compute_dates = target_set - factor_io.done_date_ids(
+            FACTOR_COMPOSITE_DIR, "composite", calc_version=args.calc_version
+        )
     append_summary(
         "factor_composite",
         f"range={args.start}..{args.end} months={len(compute_dates)} version={args.calc_version}",
@@ -78,6 +83,7 @@ def main() -> int:
         expo = factor_io.read_year_partitioned_csv(
             FACTOR_EXPOSURE_DIR, code, subdir=code, date_ids=compute_dates,
             usecols=["date_id", "stock_code", "neutralized_value"],
+            calc_version=args.calc_version,
         )
         if expo.empty:
             continue

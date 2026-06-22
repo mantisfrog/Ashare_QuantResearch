@@ -192,7 +192,12 @@ def main() -> int:
     end_id = 99999999 if args.end == "latest" else month_bound_date_id(args.end, upper=True)
     targets = loaders.rebalance_date_ids(start_id, end_id)
     if not args.rebuild:
-        done_sets = [factor_io.done_date_ids(FACTOR_RAW_DIR, code, subdir=code) for code in implemented]
+        done_sets = [
+            factor_io.done_date_ids(
+                FACTOR_RAW_DIR, code, subdir=code, calc_version=args.calc_version
+            )
+            for code in implemented
+        ]
         fully_done = set.intersection(*done_sets) if done_sets else set()
         targets = [date_id for date_id in targets if date_id not in fully_done]
 
@@ -207,6 +212,7 @@ def main() -> int:
     universe = factor_io.read_year_partitioned_csv(
         FACTOR_UNIVERSE_DIR, "universe", date_ids=targets,
         usecols=["date_id", "stock_code", "in_universe"],
+        calc_version=args.calc_version,
     )
     if universe.empty:
         print("[factor] build_factor_raw: no universe found; run build_universe first", flush=True)

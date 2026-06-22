@@ -42,7 +42,7 @@ GROWTH_ACCEL_YOY_QUARTERS = 4        # 4 quarters back = the year-ago quarter
 GROWTH_ACCEL_HISTORY_YEARS = 5       # trailing years of reports to pull (PIT)
 
 # Composite styles (must match the ``style`` column in factor_catalog.csv).
-STYLES = ("value", "quality", "growth", "momentum", "risk")
+STYLES = ("value", "quality", "growth", "momentum", "reversal", "risk")
 
 # Industry-name keywords (dim_tdx_industry.tdx_sector_name) used to NULL out
 # margin / accruals-type factors for financials before neutralization.

@@ -69,7 +69,10 @@ def main() -> int:
     for code in requested:
         if code not in catalog.index:
             continue
-        raw = factor_io.read_year_partitioned_csv(FACTOR_RAW_DIR, code, subdir=code, date_ids=target_set)
+        raw = factor_io.read_year_partitioned_csv(
+            FACTOR_RAW_DIR, code, subdir=code, date_ids=target_set,
+            calc_version=args.calc_version,
+        )
         if raw.empty:
             continue
         implemented.append(code)
@@ -84,7 +87,12 @@ def main() -> int:
     if args.rebuild:
         fully_done: set[int] = set()
     else:
-        done_sets = [factor_io.done_date_ids(FACTOR_EXPOSURE_DIR, code, subdir=code) for code in implemented]
+        done_sets = [
+            factor_io.done_date_ids(
+                FACTOR_EXPOSURE_DIR, code, subdir=code, calc_version=args.calc_version
+            )
+            for code in implemented
+        ]
         fully_done = set.intersection(*done_sets) if done_sets else set()
 
     dates = sorted(

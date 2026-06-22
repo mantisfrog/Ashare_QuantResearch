@@ -1,7 +1,7 @@
 """Composite style scores from neutralized factor exposures.
 
 Combines per-factor neutralized exposures into one score per style
-(value / quality / growth / momentum / risk) and an equal-weighted total.
+(value / quality / growth / momentum / reversal / risk) and an equal-weighted total.
 
 Method (per rebalance cross-section):
   1. within-style equal weight: average the neutralized exposures of the

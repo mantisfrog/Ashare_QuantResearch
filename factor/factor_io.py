@@ -49,6 +49,7 @@ def write_year_partitioned_csv(
     order = [column for column in sort_cols if column in df.columns]
     work = df.copy()
     work["__year"] = work["date_id"].astype(int) // 10000
+    output_columns = [column for column in work.columns if column != "__year"]
     written: list[Path] = []
     for year, chunk in work.groupby("__year"):
         chunk = chunk.drop(columns="__year")
@@ -56,13 +57,20 @@ def write_year_partitioned_csv(
         new_dates = {int(value) for value in chunk["date_id"].unique()}
         if path.exists():
             existing = pd.read_csv(path)
-            columns = list(existing.columns)
-            existing = existing[~existing["date_id"].isin(new_dates)]
+            replace_mask = existing["date_id"].isin(new_dates)
+            if "calc_version" in existing.columns and "calc_version" in chunk.columns:
+                new_versions = {str(value) for value in chunk["calc_version"].dropna().unique()}
+                replace_mask &= existing["calc_version"].astype(str).isin(new_versions)
+            existing = existing[~replace_mask]
             combined = pd.concat(
-                [existing, chunk.reindex(columns=columns)], ignore_index=True
+                [
+                    existing.reindex(columns=output_columns),
+                    chunk.reindex(columns=output_columns),
+                ],
+                ignore_index=True,
             )
         else:
-            combined = chunk
+            combined = chunk.reindex(columns=output_columns)
         if order:
             combined = combined.sort_values(order)
         combined = combined.reset_index(drop=True)
@@ -77,23 +85,44 @@ def read_year_partitioned_csv(
     subdir: str | None = None,
     date_ids=None,
     usecols=None,
+    calc_version: str | None = None,
 ) -> pd.DataFrame:
     """Read and concatenate ``<prefix>_*.csv`` files, optionally filtered by date."""
     out_dir = Path(directory) if subdir is None else Path(directory) / subdir
     if not out_dir.exists():
         return pd.DataFrame()
     wanted = {int(value) for value in date_ids} if date_ids is not None else None
+    requested_usecols = list(usecols) if usecols is not None else None
+    read_usecols = requested_usecols
+    if calc_version is not None and read_usecols is not None and "calc_version" not in read_usecols:
+        read_usecols = [*read_usecols, "calc_version"]
     frames: list[pd.DataFrame] = []
     for path in sorted(out_dir.glob(f"{prefix}_*.csv")):
-        frame = pd.read_csv(path, usecols=usecols)
+        try:
+            frame = pd.read_csv(path, usecols=read_usecols)
+        except ValueError:
+            if calc_version is not None:
+                continue
+            raise
         if wanted is not None and "date_id" in frame.columns:
             frame = frame[frame["date_id"].isin(wanted)]
+        if calc_version is not None:
+            if "calc_version" not in frame.columns:
+                continue
+            frame = frame[frame["calc_version"].astype(str) == str(calc_version)]
+            if requested_usecols is not None and "calc_version" not in requested_usecols:
+                frame = frame.drop(columns=["calc_version"])
         if not frame.empty:
             frames.append(frame)
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
-def done_date_ids(directory: Path, prefix: str, subdir: str | None = None) -> set[int]:
+def done_date_ids(
+    directory: Path,
+    prefix: str,
+    subdir: str | None = None,
+    calc_version: str | None = None,
+) -> set[int]:
     """Union of ``date_id`` values already present in matching per-year CSVs."""
     out_dir = Path(directory) if subdir is None else Path(directory) / subdir
     if not out_dir.exists():
@@ -101,9 +130,15 @@ def done_date_ids(directory: Path, prefix: str, subdir: str | None = None) -> se
     ids: set[int] = set()
     for path in sorted(out_dir.glob(f"{prefix}_*.csv")):
         try:
-            values = pd.read_csv(path, usecols=["date_id"])["date_id"].unique()
+            usecols = ["date_id", "calc_version"] if calc_version is not None else ["date_id"]
+            frame = pd.read_csv(path, usecols=usecols)
         except (ValueError, KeyError):
             continue
+        if calc_version is not None:
+            if "calc_version" not in frame.columns:
+                continue
+            frame = frame[frame["calc_version"].astype(str) == str(calc_version)]
+        values = frame["date_id"].unique()
         ids |= {int(value) for value in values}
     return ids
 

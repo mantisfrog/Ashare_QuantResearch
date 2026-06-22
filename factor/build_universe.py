@@ -125,7 +125,9 @@ def main() -> int:
 
     targets = loaders.rebalance_date_ids(start_id, end_id)
     if not args.rebuild:
-        done = factor_io.done_date_ids(FACTOR_UNIVERSE_DIR, "universe")
+        done = factor_io.done_date_ids(
+            FACTOR_UNIVERSE_DIR, "universe", calc_version=args.calc_version
+        )
         targets = [date_id for date_id in targets if date_id not in done]
 
     append_summary(
