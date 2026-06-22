@@ -64,9 +64,12 @@ PRICE_FACTORS = ["mom_12_1", "reversal_1m", "volatility_252d", "turnover_21d"]
 
 # Growth acceleration (point-in-time quarterly history, not a snapshot).
 GROWTH_ACCEL_METRIC = "FN324"  # 净利润(单季度)(万元)
-GROWTH_ACCEL_FACTORS = ["earnings_accel"]
+GROWTH_ACCEL_FACTORS = ["earnings_accel_2q_avg"]
+GROSS_MARGIN_YOY_METRIC = "FN202"
+GROSS_MARGIN_YOY_FACTORS = ["gross_margin_yoy_chg_2q_avg"]
+QUARTERLY_HISTORY_FACTORS = GROWTH_ACCEL_FACTORS + GROSS_MARGIN_YOY_FACTORS
 
-ALL_FACTORS = list(COMPUTE) + PRICE_FACTORS + GROWTH_ACCEL_FACTORS
+ALL_FACTORS = list(COMPUTE) + PRICE_FACTORS + QUARTERLY_HISTORY_FACTORS
 
 
 def _long(date_id: int, code: str, series: pd.Series, calc_version: str) -> pd.DataFrame:
@@ -115,47 +118,105 @@ def compute_price_factors(window, tdi_t, dateid_to_tdi, members, requested) -> d
     return result
 
 
-def compute_growth_acceleration(
+def compute_earnings_accel_2q_avg(
     history: pd.DataFrame, members, *, lookback: int, yoy_lag: int
 ) -> pd.Series:
-    """Standardized single-quarter net-profit YoY-change acceleration.
+    """Average the latest two consecutive earnings-acceleration scores.
 
-    ``history`` is long (stock_code, report_period, metric_code, metric_value)
-    point-in-time single-quarter net profit. Per stock: ``alpha`` = single-quarter
-    net profit YoY change (difference vs the same quarter one year earlier); the
-    factor is ``(alpha_t - mean(last `lookback` alpha)) / std(last `lookback`
-    alpha)`` -- how far the latest YoY change sits above its own recent history.
-    The outer standardization is per stock, so the absolute unit does not matter.
-    Returns a Series indexed by stock_code (in-universe members only).
+    For each reported quarter, alpha is single-quarter net-profit YoY change:
+    ``FN324_q - FN324_q-4``. Each of the latest two consecutive alpha values is
+    standardized against its own preceding ``lookback`` alpha history, then the
+    two standardized scores are averaged.
     """
     if history.empty:
         return pd.Series(dtype="float64")
-    wide = (
-        history.pivot_table(
-            index="report_period", columns="stock_code",
-            values="metric_value", aggfunc="first",
-        )
-        .sort_index()
-    )
-    # Complete quarter-end grid so shift(yoy_lag) lands on the year-ago quarter.
-    grid = pd.date_range(wide.index.min(), wide.index.max(), freq="QE")
-    wide = wide.reindex(grid)
+    wide = _quarterly_metric_wide(history, GROWTH_ACCEL_METRIC)
+    if wide.empty:
+        return pd.Series(dtype="float64")
     yoy = wide - wide.shift(yoy_lag)
     member_set = set(members)
     scores: dict[str, float] = {}
     for stock in wide.columns:
         if stock not in member_set:
             continue
-        series = yoy[stock].dropna()
-        if len(series) < lookback + 1:
+        consecutive_scores = _standardized_recent_yoy_scores(
+            yoy[stock], lookback=lookback, periods=2
+        )
+        if len(consecutive_scores) == 2:
+            scores[stock] = float(np.mean(consecutive_scores))
+    return pd.Series(scores, dtype="float64")
+
+
+def compute_gross_margin_yoy_change(
+    history: pd.DataFrame, members, *, yoy_lag: int
+) -> pd.Series:
+    """Average the latest two consecutive gross-margin YoY changes."""
+    if history.empty:
+        return pd.Series(dtype="float64")
+    wide = _quarterly_metric_wide(history, GROSS_MARGIN_YOY_METRIC)
+    if wide.empty:
+        return pd.Series(dtype="float64")
+    yoy_change = wide - wide.shift(yoy_lag)
+    member_set = set(members)
+    scores: dict[str, float] = {}
+    for stock in wide.columns:
+        if stock not in member_set:
             continue
-        current = series.iloc[-1]
-        past = series.iloc[-(lookback + 1):-1]
+        values = _recent_consecutive_values(yoy_change[stock], periods=2)
+        if len(values) == 2:
+            scores[stock] = float(np.mean(values))
+    return pd.Series(scores, dtype="float64")
+
+
+def _quarterly_metric_wide(history: pd.DataFrame, metric_code: str) -> pd.DataFrame:
+    metric = history[history["metric_code"] == metric_code]
+    if metric.empty:
+        return pd.DataFrame()
+    wide = (
+        metric.pivot_table(
+            index="report_period", columns="stock_code",
+            values="metric_value", aggfunc="first",
+        )
+        .sort_index()
+    )
+    grid = pd.date_range(wide.index.min(), wide.index.max(), freq="QE")
+    return wide.reindex(grid)
+
+
+def _standardized_recent_yoy_scores(
+    series: pd.Series, *, lookback: int, periods: int
+) -> list[float]:
+    valid = series.dropna()
+    if len(valid) < lookback + periods:
+        return []
+    recent_index = valid.index[-periods:]
+    for previous, current in zip(recent_index[:-1], recent_index[1:]):
+        if previous.to_period("Q") != current.to_period("Q") - 1:
+            return []
+
+    scores: list[float] = []
+    start = len(valid) - periods
+    for position in range(start, len(valid)):
+        past = valid.iloc[position - lookback:position]
+        if len(past) < lookback:
+            return []
         std = past.std(ddof=1)
         if not np.isfinite(std) or std == 0:
-            continue
-        scores[stock] = (current - past.mean()) / std
-    return pd.Series(scores, dtype="float64")
+            return []
+        scores.append(float((valid.iloc[position] - past.mean()) / std))
+    return scores
+
+
+def _recent_consecutive_values(series: pd.Series, *, periods: int) -> list[float]:
+    valid = series.dropna()
+    if len(valid) < periods:
+        return []
+    recent = valid.iloc[-periods:]
+    recent_index = recent.index
+    for previous, current in zip(recent_index[:-1], recent_index[1:]):
+        if previous.to_period("Q") != current.to_period("Q") - 1:
+            return []
+    return [float(value) for value in recent.to_numpy()]
 
 
 def month_bound_date_id(month: str, *, upper: bool) -> int:
@@ -182,6 +243,8 @@ def main() -> int:
     snapshot_requested = [code for code in implemented if code in COMPUTE]
     price_requested = [code for code in implemented if code in PRICE_FACTORS]
     accel_requested = [code for code in implemented if code in GROWTH_ACCEL_FACTORS]
+    gross_margin_yoy_requested = [code for code in implemented if code in GROSS_MARGIN_YOY_FACTORS]
+    quarterly_history_requested = accel_requested + gross_margin_yoy_requested
     if skipped:
         print(f"[factor] build_factor_raw: not implemented: {', '.join(skipped)}", flush=True)
     if not implemented:
@@ -240,17 +303,30 @@ def main() -> int:
                     series = COMPUTE[code](base).replace([np.inf, -np.inf], np.nan).dropna()
                     if not series.empty:
                         frames[code].append(_long(date_id, code, series, args.calc_version))
-            if accel_requested:
+            if quarterly_history_requested:
+                metric_codes = []
+                if accel_requested:
+                    metric_codes.append(GROWTH_ACCEL_METRIC)
+                if gross_margin_yoy_requested:
+                    metric_codes.append(GROSS_MARGIN_YOY_METRIC)
                 history = loaders.load_quarterly_metrics_history(
-                    conn, date_id, [GROWTH_ACCEL_METRIC], GROWTH_ACCEL_HISTORY_YEARS
+                    conn, date_id, list(dict.fromkeys(metric_codes)), GROWTH_ACCEL_HISTORY_YEARS
                 )
-                accel = compute_growth_acceleration(
-                    history, stocks,
-                    lookback=GROWTH_ACCEL_LOOKBACK_QUARTERS, yoy_lag=GROWTH_ACCEL_YOY_QUARTERS,
-                ).replace([np.inf, -np.inf], np.nan).dropna()
-                if not accel.empty:
-                    code = GROWTH_ACCEL_FACTORS[0]
-                    frames[code].append(_long(date_id, code, accel, args.calc_version))
+                if accel_requested:
+                    accel = compute_earnings_accel_2q_avg(
+                        history, stocks,
+                        lookback=GROWTH_ACCEL_LOOKBACK_QUARTERS, yoy_lag=GROWTH_ACCEL_YOY_QUARTERS,
+                    ).replace([np.inf, -np.inf], np.nan).dropna()
+                    for code in accel_requested:
+                        if not accel.empty:
+                            frames[code].append(_long(date_id, code, accel, args.calc_version))
+                if gross_margin_yoy_requested:
+                    gross_margin_yoy = compute_gross_margin_yoy_change(
+                        history, stocks, yoy_lag=GROWTH_ACCEL_YOY_QUARTERS,
+                    ).replace([np.inf, -np.inf], np.nan).dropna()
+                    if not gross_margin_yoy.empty:
+                        code = GROSS_MARGIN_YOY_FACTORS[0]
+                        frames[code].append(_long(date_id, code, gross_margin_yoy, args.calc_version))
             if price_requested:
                 tdi_t = dateid_to_tdi.get(date_id)
                 window_start = tdi_to_dateid.get(tdi_t - MOMENTUM_LONG_TRADE_DAYS) if tdi_t is not None else None

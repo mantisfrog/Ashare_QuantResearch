@@ -67,7 +67,8 @@ COMPOSITE_FACTOR_WEIGHTS: dict[str, dict[str, float]] = {
     "growth": {
         "revenue_growth_yoy": 1.0,
         "profit_growth_yoy": 1.0,
-        "earnings_accel": 2.0,
+        "gross_margin_yoy_chg_2q_avg": 1.0,
+        "earnings_accel_2q_avg": 1.0,
     },
     "momentum": {
         "mom_12_1": 1.0,

@@ -79,7 +79,8 @@ def load_data():
     style_map = {
         'ep_ttm': 'value', 'bp_mrq': 'value', 'sp_ttm': 'value', 'cfp_ttm': 'value', 'div_yield_ttm': 'value',
         'roe_ttm': 'quality', 'gross_margin': 'quality', 'accruals': 'quality',
-        'revenue_growth_yoy': 'growth', 'profit_growth_yoy': 'growth', 'earnings_accel': 'growth',
+        'revenue_growth_yoy': 'growth', 'profit_growth_yoy': 'growth',
+        'gross_margin_yoy_chg_2q_avg': 'growth', 'earnings_accel_2q_avg': 'growth',
         'mom_12_1': 'momentum', 'reversal_1m': 'reversal',
         'volatility_252d': 'risk', 'turnover_21d': 'risk',
     }
