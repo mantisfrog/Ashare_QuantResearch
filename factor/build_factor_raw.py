@@ -30,6 +30,7 @@ from factor_config import (
     GROWTH_ACCEL_HISTORY_YEARS,
     GROWTH_ACCEL_LOOKBACK_QUARTERS,
     GROWTH_ACCEL_YOY_QUARTERS,
+    MOMENTUM_HALF_TRADE_DAYS,
     MOMENTUM_LONG_TRADE_DAYS,
     MOMENTUM_SKIP_TRADE_DAYS,
     REVERSAL_TRADE_DAYS,
@@ -40,13 +41,13 @@ from paths import FACTOR_RAW_DIR, FACTOR_UNIVERSE_DIR
 
 # FN metrics pulled once per cross-section for the snapshot (point-in-time) factors.
 FUNDAMENTAL_FN_CODES = [
-    "FN308", "FN271", "FN319", "FN307", "FN276", "FN40", "FN202", "FN183", "FN184",
+    "FN308", "FN271", "FN319", "FN307", "FN276", "FN40", "FN183", "FN184",
 ]
 RAW_COLUMNS = ["date_id", "stock_code", "factor_code", "factor_value", "calc_version"]
 
 # Snapshot factors: each maps a per-date feature frame -> factor Series (by stock).
 # Units (verified): market_cap, FN308, FN319 are 万元; FN271/FN307/FN276/FN40 are 元;
-# FN202/FN183/FN184 are %/ratios used directly (rank-invariant to scale).
+# FN183/FN184 are %/ratios used directly (rank-invariant to scale).
 COMPUTE = {
     "ep_ttm": lambda b: b["FN308"] / b["market_cap"],
     "bp_mrq": lambda b: b["FN271"] / (b["market_cap"] * 1e4),
@@ -54,22 +55,18 @@ COMPUTE = {
     "cfp_ttm": lambda b: b["FN307"] / (b["market_cap"] * 1e4),
     "div_yield_ttm": lambda b: b["dps_ttm"] / b["close"],
     "roe_ttm": lambda b: b["FN308"] * 1e4 / b["FN271"],
-    "gross_margin": lambda b: b["FN202"],
     "accruals": lambda b: (b["FN276"] - b["FN307"]) / b["FN40"],
     "revenue_growth_yoy": lambda b: b["FN183"],
     "profit_growth_yoy": lambda b: b["FN184"],
 }
 
-PRICE_FACTORS = ["mom_12_1", "reversal_1m", "volatility_252d", "turnover_21d"]
+PRICE_FACTORS = ["mom_6_1", "reversal_1m", "volatility_252d", "turnover_21d"]
 
 # Growth acceleration (point-in-time quarterly history, not a snapshot).
 GROWTH_ACCEL_METRIC = "FN324"  # 净利润(单季度)(万元)
 GROWTH_ACCEL_FACTORS = ["earnings_accel_2q_avg"]
-GROSS_MARGIN_YOY_METRIC = "FN202"
-GROSS_MARGIN_YOY_FACTORS = ["gross_margin_yoy_chg_2q_avg"]
-QUARTERLY_HISTORY_FACTORS = GROWTH_ACCEL_FACTORS + GROSS_MARGIN_YOY_FACTORS
 
-ALL_FACTORS = list(COMPUTE) + PRICE_FACTORS + QUARTERLY_HISTORY_FACTORS
+ALL_FACTORS = list(COMPUTE) + PRICE_FACTORS + GROWTH_ACCEL_FACTORS
 
 
 def _long(date_id: int, code: str, series: pd.Series, calc_version: str) -> pd.DataFrame:
@@ -95,9 +92,9 @@ def compute_price_factors(window, tdi_t, dateid_to_tdi, members, requested) -> d
         .ffill()
     )
     raw: dict[str, pd.Series] = {}
-    if "mom_12_1" in requested:
-        raw["mom_12_1"] = (
-            price.loc[tdi_t - MOMENTUM_SKIP_TRADE_DAYS] / price.loc[tdi_t - MOMENTUM_LONG_TRADE_DAYS] - 1.0
+    if "mom_6_1" in requested:
+        raw["mom_6_1"] = (
+            price.loc[tdi_t - MOMENTUM_SKIP_TRADE_DAYS] / price.loc[tdi_t - MOMENTUM_HALF_TRADE_DAYS] - 1.0
         )
     if "reversal_1m" in requested:
         raw["reversal_1m"] = -(price.loc[tdi_t] / price.loc[tdi_t - REVERSAL_TRADE_DAYS] - 1.0)
@@ -147,27 +144,6 @@ def compute_earnings_accel_2q_avg(
     return pd.Series(scores, dtype="float64")
 
 
-def compute_gross_margin_yoy_change(
-    history: pd.DataFrame, members, *, yoy_lag: int
-) -> pd.Series:
-    """Average the latest two consecutive gross-margin YoY changes."""
-    if history.empty:
-        return pd.Series(dtype="float64")
-    wide = _quarterly_metric_wide(history, GROSS_MARGIN_YOY_METRIC)
-    if wide.empty:
-        return pd.Series(dtype="float64")
-    yoy_change = wide - wide.shift(yoy_lag)
-    member_set = set(members)
-    scores: dict[str, float] = {}
-    for stock in wide.columns:
-        if stock not in member_set:
-            continue
-        values = _recent_consecutive_values(yoy_change[stock], periods=2)
-        if len(values) == 2:
-            scores[stock] = float(np.mean(values))
-    return pd.Series(scores, dtype="float64")
-
-
 def _quarterly_metric_wide(history: pd.DataFrame, metric_code: str) -> pd.DataFrame:
     metric = history[history["metric_code"] == metric_code]
     if metric.empty:
@@ -207,18 +183,6 @@ def _standardized_recent_yoy_scores(
     return scores
 
 
-def _recent_consecutive_values(series: pd.Series, *, periods: int) -> list[float]:
-    valid = series.dropna()
-    if len(valid) < periods:
-        return []
-    recent = valid.iloc[-periods:]
-    recent_index = recent.index
-    for previous, current in zip(recent_index[:-1], recent_index[1:]):
-        if previous.to_period("Q") != current.to_period("Q") - 1:
-            return []
-    return [float(value) for value in recent.to_numpy()]
-
-
 def month_bound_date_id(month: str, *, upper: bool) -> int:
     value = int(month)
     return value * 100 + (31 if upper else 1)
@@ -243,8 +207,6 @@ def main() -> int:
     snapshot_requested = [code for code in implemented if code in COMPUTE]
     price_requested = [code for code in implemented if code in PRICE_FACTORS]
     accel_requested = [code for code in implemented if code in GROWTH_ACCEL_FACTORS]
-    gross_margin_yoy_requested = [code for code in implemented if code in GROSS_MARGIN_YOY_FACTORS]
-    quarterly_history_requested = accel_requested + gross_margin_yoy_requested
     if skipped:
         print(f"[factor] build_factor_raw: not implemented: {', '.join(skipped)}", flush=True)
     if not implemented:
@@ -303,30 +265,17 @@ def main() -> int:
                     series = COMPUTE[code](base).replace([np.inf, -np.inf], np.nan).dropna()
                     if not series.empty:
                         frames[code].append(_long(date_id, code, series, args.calc_version))
-            if quarterly_history_requested:
-                metric_codes = []
-                if accel_requested:
-                    metric_codes.append(GROWTH_ACCEL_METRIC)
-                if gross_margin_yoy_requested:
-                    metric_codes.append(GROSS_MARGIN_YOY_METRIC)
+            if accel_requested:
                 history = loaders.load_quarterly_metrics_history(
-                    conn, date_id, list(dict.fromkeys(metric_codes)), GROWTH_ACCEL_HISTORY_YEARS
+                    conn, date_id, [GROWTH_ACCEL_METRIC], GROWTH_ACCEL_HISTORY_YEARS
                 )
-                if accel_requested:
-                    accel = compute_earnings_accel_2q_avg(
-                        history, stocks,
-                        lookback=GROWTH_ACCEL_LOOKBACK_QUARTERS, yoy_lag=GROWTH_ACCEL_YOY_QUARTERS,
-                    ).replace([np.inf, -np.inf], np.nan).dropna()
-                    for code in accel_requested:
-                        if not accel.empty:
-                            frames[code].append(_long(date_id, code, accel, args.calc_version))
-                if gross_margin_yoy_requested:
-                    gross_margin_yoy = compute_gross_margin_yoy_change(
-                        history, stocks, yoy_lag=GROWTH_ACCEL_YOY_QUARTERS,
-                    ).replace([np.inf, -np.inf], np.nan).dropna()
-                    if not gross_margin_yoy.empty:
-                        code = GROSS_MARGIN_YOY_FACTORS[0]
-                        frames[code].append(_long(date_id, code, gross_margin_yoy, args.calc_version))
+                accel = compute_earnings_accel_2q_avg(
+                    history, stocks,
+                    lookback=GROWTH_ACCEL_LOOKBACK_QUARTERS, yoy_lag=GROWTH_ACCEL_YOY_QUARTERS,
+                ).replace([np.inf, -np.inf], np.nan).dropna()
+                for code in accel_requested:
+                    if not accel.empty:
+                        frames[code].append(_long(date_id, code, accel, args.calc_version))
             if price_requested:
                 tdi_t = dateid_to_tdi.get(date_id)
                 window_start = tdi_to_dateid.get(tdi_t - MOMENTUM_LONG_TRADE_DAYS) if tdi_t is not None else None

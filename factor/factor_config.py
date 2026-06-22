@@ -31,6 +31,7 @@ FORWARD_HORIZONS_MONTHS = (1, 3, 6)
 
 # Price-factor lookback windows, in trading days.
 MOMENTUM_LONG_TRADE_DAYS = 252
+MOMENTUM_HALF_TRADE_DAYS = 126
 MOMENTUM_SKIP_TRADE_DAYS = 21
 REVERSAL_TRADE_DAYS = 21
 VOLATILITY_TRADE_DAYS = 252
@@ -61,17 +62,15 @@ COMPOSITE_FACTOR_WEIGHTS: dict[str, dict[str, float]] = {
     },
     "quality": {
         "roe_ttm": 1.0,
-        "gross_margin": 1.0,
         "accruals": 1.0,
     },
     "growth": {
         "revenue_growth_yoy": 1.0,
         "profit_growth_yoy": 1.0,
-        "gross_margin_yoy_chg_2q_avg": 1.0,
         "earnings_accel_2q_avg": 1.0,
     },
     "momentum": {
-        "mom_12_1": 1.0,
+        "mom_6_1": 1.0,
     },
     "reversal": {
         "reversal_1m": 1.0,
@@ -105,6 +104,7 @@ def factor_config_snapshot_lines() -> list[str]:
         f"    FORWARD_HORIZONS_MONTHS: {FORWARD_HORIZONS_MONTHS}",
         "  price_windows:",
         f"    MOMENTUM_LONG_TRADE_DAYS: {MOMENTUM_LONG_TRADE_DAYS}",
+        f"    MOMENTUM_HALF_TRADE_DAYS: {MOMENTUM_HALF_TRADE_DAYS}",
         f"    MOMENTUM_SKIP_TRADE_DAYS: {MOMENTUM_SKIP_TRADE_DAYS}",
         f"    REVERSAL_TRADE_DAYS: {REVERSAL_TRADE_DAYS}",
         f"    VOLATILITY_TRADE_DAYS: {VOLATILITY_TRADE_DAYS}",
