@@ -20,3 +20,5 @@ google_sheet_service_account.json
 __pycache__/
 *.pyc
 google_sheet_service_account.json
+.codex/skills/factor-pipeline-minimal-checks/agents/openai.yaml
+.codex/skills/factor-pipeline-minimal-checks/SKILL.md
