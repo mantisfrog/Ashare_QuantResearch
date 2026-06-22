@@ -19,6 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--size-frac", type=float, default=0.30, help="Market cap top fraction.")
     parser.add_argument("--growth-frac", type=float, default=0.10, help="Growth score top fraction.")
     parser.add_argument("--quality-bottom", type=float, default=0.50, help="Quality score bottom fraction to exclude.")
+    parser.add_argument("--value-bottom", type=float, default=None, help="Optional value score bottom fraction to exclude.")
     parser.add_argument("--weight-method", type=str, default="mcap_x_growth",
                         choices=["equal", "mcap", "growth", "mcap_x_growth"],
                         help="Portfolio weighting method.")
@@ -26,6 +27,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rebalance", type=str, default="monthly", choices=["monthly", "quarterly"],
                         help="Rebalancing frequency.")
     parser.add_argument("--start", type=int, default=20250530, help="First rebalance date.")
+    parser.add_argument("--sequential", action="store_true",
+                        help="Use sequential filtering: size -> growth -> quality, recalculating ranks at each step.")
     return parser.parse_args()
 
 
@@ -60,6 +63,8 @@ def select_stocks(
     size_frac: float,
     growth_frac: float,
     quality_bottom_frac: float,
+    sequential: bool = False,
+    value_bottom_frac: float | None = None,
 ) -> pd.DataFrame:
     scores = comp[comp["date_id"] == date_id].copy()
     uni_t = uni[(uni["date_id"] == date_id) & (uni["in_universe"].astype(bool))]["stock_code"].unique()
@@ -72,19 +77,54 @@ def select_stocks(
     if scores.empty:
         return pd.DataFrame()
 
-    size_threshold = scores["market_cap"].quantile(1 - size_frac)
-    size_top = scores[scores["market_cap"] >= size_threshold]
+    if sequential:
+        # Step 1: select size top within full universe
+        size_threshold = scores["market_cap"].quantile(1 - size_frac)
+        candidates = scores[scores["market_cap"] >= size_threshold].copy()
+        if candidates.empty:
+            return pd.DataFrame()
 
-    n_growth = max(1, int(len(scores) * growth_frac))
-    growth_top = set(scores.nlargest(n_growth, "growth_score")["stock_code"])
+        # Step 2: from size-filtered group, select growth top
+        n_growth = max(1, int(len(candidates) * growth_frac))
+        candidates = candidates.nlargest(n_growth, "growth_score").copy()
+        if candidates.empty:
+            return pd.DataFrame()
 
-    quality_threshold = scores["quality_score"].quantile(quality_bottom_frac)
-    quality_ok = set(scores[scores["quality_score"] > quality_threshold]["stock_code"])
+        # Step 3: from growth-filtered group, keep quality top
+        n_quality = max(1, int(len(candidates) * (1 - quality_bottom_frac)))
+        candidates = candidates.nlargest(n_quality, "quality_score").copy()
+        if candidates.empty:
+            return pd.DataFrame()
 
-    selected = size_top[
-        size_top["stock_code"].isin(growth_top) & size_top["stock_code"].isin(quality_ok)
-    ].copy()
-    return selected
+        # Optional Step 4: value filter
+        if value_bottom_frac is not None:
+            n_value = max(1, int(len(candidates) * (1 - value_bottom_frac)))
+            selected = candidates.nlargest(n_value, "value_score").copy()
+        else:
+            selected = candidates.copy()
+        return selected
+    else:
+        # Intersection approach: compute thresholds on full universe
+        size_threshold = scores["market_cap"].quantile(1 - size_frac)
+        size_top = scores[scores["market_cap"] >= size_threshold]
+
+        n_growth = max(1, int(len(scores) * growth_frac))
+        growth_top = set(scores.nlargest(n_growth, "growth_score")["stock_code"])
+
+        quality_threshold = scores["quality_score"].quantile(quality_bottom_frac)
+        quality_ok = set(scores[scores["quality_score"] > quality_threshold]["stock_code"])
+
+        masks = [
+            size_top["stock_code"].isin(growth_top),
+            size_top["stock_code"].isin(quality_ok),
+        ]
+        if value_bottom_frac is not None:
+            value_threshold = scores["value_score"].quantile(value_bottom_frac)
+            value_ok = set(scores[scores["value_score"] > value_threshold]["stock_code"])
+            masks.append(size_top["stock_code"].isin(value_ok))
+
+        selected = size_top[np.all(masks, axis=0)].copy()
+        return selected
 
 
 def apply_weights(selected_df: pd.DataFrame, method: str, cap: float) -> dict[str, float]:
@@ -160,6 +200,8 @@ def main() -> int:
         selected = select_stocks(
             comp, uni, daily_adj, date_t,
             args.size_frac, args.growth_frac, args.quality_bottom,
+            args.sequential,
+            args.value_bottom,
         )
         weights = apply_weights(selected, args.weight_method, args.cap)
         if not weights:
