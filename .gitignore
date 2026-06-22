@@ -2,9 +2,9 @@
 /data/*
 !/data/.gitkeep
 
-# 原始厂商下载数据，但保留 raw/index_gz
+# 原始厂商下载数据，但保留raw文件夹
 /raw/*
-!/raw/index_gz/
+!/raw/.gitkeep
 
 # 日志
 /log/*
