@@ -57,7 +57,7 @@ STYLES = ("value", "quality", "growth", "momentum", "reversal", "risk")
 # within a style receives equal weight and the mapping below is only documented
 # for review. Set it to False to use the configured weights within each style;
 # weights are re-normalized across the factors available for each stock/date.
-COMPOSITE_EQUAL_WEIGHT = False
+COMPOSITE_EQUAL_WEIGHT = True
 COMPOSITE_FACTOR_WEIGHTS: dict[str, dict[str, float]] = {
     "value": {
         "ep_ttm": 1.0,
