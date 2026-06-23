@@ -2,14 +2,17 @@ factor_code,factor_name,style,direction,unit,formula_text,source_metrics,financi
 ep_ttm,盈利收益率,value,1,ratio,"FN308 / market_cap","FN308; fact_daily.market_cap",false,v1
 bp_mrq,账面市值比,value,1,ratio,"FN271 / (market_cap * 1e4)","FN271; fact_daily.market_cap",false,v1
 sp_ttm,销售收益率,value,1,ratio,"FN319 / market_cap","FN319; fact_daily.market_cap",false,v1
-cfp_ttm,经营现金流收益率,value,1,ratio,"FN307 / (market_cap * 1e4)","FN307; fact_daily.market_cap",false,v1
+cfp_ttm,经营现金流收益率,value,1,ratio,"FN307 / (market_cap * 1e4)","FN307; fact_daily.market_cap",true,v1
 div_yield_ttm,股息率,value,1,ratio,"sum(bonus/10, trailing 12m, action_type=1) / close","fact_dividend.bonus; fact_daily.close",false,v1
-roe_ttm,净资产收益率TTM,quality,1,ratio,"FN308 * 1e4 / FN271","FN308; FN271",false,v1
+roe_ttm_12q_avg,12季平均ROE_TTM,quality,1,ratio,"mean(latest 12 consecutive quarterly FN308 * 1e4 / FN271)","FN308; FN271",false,v1
+roe_stability_12q,12季ROE_TTM稳定性,quality,-1,std,"std(latest 12 consecutive quarterly FN308 * 1e4 / FN271)","FN308; FN271",false,v1
+fcfe_to_equity,股东自由现金流净资产比,quality,1,ratio,"FN322 * (market_cap * 1e4 / close) / FN271","FN322; FN271; fact_daily.market_cap; fact_daily.close",true,v1
 accruals,应计利润率,quality,-1,ratio,"(FN276 - FN307) / FN40","FN276; FN307; FN40",true,v1
 revenue_growth_yoy,营收同比增长,growth,1,pct,"FN183","FN183",false,v1
 profit_growth_yoy,净利同比增长,growth,1,pct,"FN184","FN184",false,v1
 mom_6_1,6减1月动量,momentum,1,return,"adj_close[t-21] / adj_close[t-126] - 1","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
 reversal_1m,短期反转,reversal,1,return,"-(adj_close[t] / adj_close[t-21] - 1)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
+reversal_3y_6m,3年减6月长期反转,reversal,1,return,"-(adj_close[t-126] / adj_close[t-756] - 1)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
 volatility_252d,波动率,risk,-1,std,"std(daily_return, trailing 252 td)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
 turnover_21d,换手率,risk,-1,turnover,"mean(vol / float_shares, trailing 21 td)","fact_daily.vol; fact_daily.float_shares",false,v1
 earnings_accel_2q_avg,双季净利加速度均值,growth,1,zscore,"average of latest two consecutive standardized net-profit acceleration scores; each alpha = FN324_q - FN324_q-4","FN324",false,v1

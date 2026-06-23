@@ -34,7 +34,6 @@ EXPOSURE_COLUMNS = [
     "neutralized_value", "percentile_rank",
 ]
 
-
 def month_bound_date_id(month: str, *, upper: bool) -> int:
     value = int(month)
     return value * 100 + (31 if upper else 1)
@@ -65,7 +64,6 @@ def main() -> int:
     target_set = set(loaders.rebalance_date_ids(start_id, end_id))
 
     raw_cross: dict[str, dict[int, pd.Series]] = {}
-    implemented: list[str] = []
     for code in requested:
         if code not in catalog.index:
             continue
@@ -75,11 +73,11 @@ def main() -> int:
         )
         if raw.empty:
             continue
-        implemented.append(code)
         raw_cross[code] = {
             int(date_id): group.set_index("stock_code")["factor_value"]
             for date_id, group in raw.groupby("date_id")
         }
+    implemented = [code for code in requested if code in raw_cross]
     if not implemented:
         print("[factor] build_factor_exposure: no raw factors found; run build_factor_raw first", flush=True)
         return 0
@@ -111,6 +109,7 @@ def main() -> int:
         for index, date_id in enumerate(dates, start=1):
             market_cap = loaders.load_daily_snapshot(conn, date_id)["market_cap"]
             log_mc = np.log(market_cap.where(market_cap > 0))
+            date_frames: dict[str, pd.DataFrame] = {}
             for code in implemented:
                 cross = raw_cross[code].get(date_id)
                 if cross is None or cross.empty:
@@ -127,7 +126,7 @@ def main() -> int:
                 neutralized = neutralize(
                     zscore, log_mc.reindex(cross.index), industry.reindex(cross.index)
                 )
-                out_frames[code].append(pd.DataFrame({
+                date_frames[code] = pd.DataFrame({
                     "date_id": date_id,
                     "stock_code": cross.index,
                     "factor_code": code,
@@ -137,7 +136,11 @@ def main() -> int:
                     "zscore_value": zscore.to_numpy(),
                     "neutralized_value": neutralized.reindex(cross.index).to_numpy(),
                     "percentile_rank": percentile.to_numpy(),
-                }))
+                })
+            for code in implemented:
+                frame = date_frames.get(code)
+                if frame is not None and not frame.empty:
+                    out_frames[code].append(frame)
             if index % 12 == 0 or index == len(dates):
                 print(f"  [{index}/{len(dates)}] {date_id}", flush=True)
     finally:

@@ -209,17 +209,17 @@ CREATE TABLE IF NOT EXISTS bridge_trade_day_financial_report (
 """
 
 DROP_SQL = """
-DROP TABLE IF EXISTS bridge_trade_day_financial_report;
-DROP TABLE IF EXISTS fact_financial_value;
-DROP TABLE IF EXISTS fact_financial_report;
-DROP TABLE IF EXISTS fact_adjustment_factor_period;
-DROP TABLE IF EXISTS fact_adjustment_factor;
-DROP TABLE IF EXISTS fact_daily;
-DROP TABLE IF EXISTS fact_dividend;
-DROP TABLE IF EXISTS dim_financial_metric;
-DROP TABLE IF EXISTS dim_date;
-DROP TABLE IF EXISTS dim_stock;
-DROP TABLE IF EXISTS dim_tdx_industry;
+DROP TABLE IF EXISTS bridge_trade_day_financial_report CASCADE;
+DROP TABLE IF EXISTS fact_financial_value CASCADE;
+DROP TABLE IF EXISTS fact_financial_report CASCADE;
+DROP TABLE IF EXISTS fact_adjustment_factor_period CASCADE;
+DROP TABLE IF EXISTS fact_adjustment_factor CASCADE;
+DROP TABLE IF EXISTS fact_daily CASCADE;
+DROP TABLE IF EXISTS fact_dividend CASCADE;
+DROP TABLE IF EXISTS dim_financial_metric CASCADE;
+DROP TABLE IF EXISTS dim_date CASCADE;
+DROP TABLE IF EXISTS dim_stock CASCADE;
+DROP TABLE IF EXISTS dim_tdx_industry CASCADE;
 """
 
 CONSTRAINTS_AND_INDEXES_SQL = """

@@ -4,8 +4,9 @@ For each rebalance date and in-universe stock, evaluate the value factors
 straight from their formulas, point-in-time via the bridge. No cleaning: only
 NaN / inf are dropped. Output: data/factor/raw/<factor>/<factor>_<year>.csv.
 
-Units (verified): market_cap is 万元; FN308/FN319 are 万元; FN271/FN307 are 元;
-bonus is per 10 shares (dps = bonus/10).
+Units (verified): market_cap is 万元; FN308/FN319/FN276/FN40 are 万元;
+FN271/FN307 are 元; FN322 is 元/share; bonus is per 10 shares
+(dps = bonus/10).
 """
 from __future__ import annotations
 
@@ -33,6 +34,10 @@ from factor_config import (
     MOMENTUM_HALF_TRADE_DAYS,
     MOMENTUM_LONG_TRADE_DAYS,
     MOMENTUM_SKIP_TRADE_DAYS,
+    QUALITY_HISTORY_YEARS,
+    QUALITY_ROE_PERIODS,
+    REVERSAL_LONG_SKIP_TRADE_DAYS,
+    REVERSAL_LONG_TRADE_DAYS,
     REVERSAL_TRADE_DAYS,
     TURNOVER_TRADE_DAYS,
     VOLATILITY_TRADE_DAYS,
@@ -41,32 +46,64 @@ from paths import FACTOR_RAW_DIR, FACTOR_UNIVERSE_DIR
 
 # FN metrics pulled once per cross-section for the snapshot (point-in-time) factors.
 FUNDAMENTAL_FN_CODES = [
-    "FN308", "FN271", "FN319", "FN307", "FN276", "FN40", "FN183", "FN184",
+    "FN308", "FN271", "FN319", "FN307", "FN276", "FN40",
+    "FN183", "FN184", "FN322",
 ]
 RAW_COLUMNS = ["date_id", "stock_code", "factor_code", "factor_value", "calc_version"]
 
 # Snapshot factors: each maps a per-date feature frame -> factor Series (by stock).
-# Units (verified): market_cap, FN308, FN319 are 万元; FN271/FN307/FN276/FN40 are 元;
-# FN183/FN184 are %/ratios used directly (rank-invariant to scale).
+# Units (verified): market_cap, FN308, FN319, FN276, FN40 are 万元;
+# FN271/FN307 are 元; FN322 is 元/share; FN183/FN184 are % used directly
+# (rank-invariant to scale).
 COMPUTE = {
-    "ep_ttm": lambda b: b["FN308"] / b["market_cap"],
+    "ep_ttm": lambda b: b["FN308"] / b["market_cap"].where(b["market_cap"] > 0),
     "bp_mrq": lambda b: b["FN271"] / (b["market_cap"] * 1e4),
     "sp_ttm": lambda b: b["FN319"] / b["market_cap"],
     "cfp_ttm": lambda b: b["FN307"] / (b["market_cap"] * 1e4),
     "div_yield_ttm": lambda b: b["dps_ttm"] / b["close"],
-    "roe_ttm": lambda b: b["FN308"] * 1e4 / b["FN271"],
-    "accruals": lambda b: (b["FN276"] - b["FN307"]) / b["FN40"],
+    "fcfe_to_equity": lambda b: (
+        b["FN322"]
+        * (b["market_cap"] * 1e4 / b["close"].where(b["close"] > 0))
+        / b["FN271"].where(b["FN271"] > 0)
+    ),
+    "accruals": lambda b: (b["FN276"] - b["FN307"]) / b["FN40"].where(b["FN40"] > 0),
     "revenue_growth_yoy": lambda b: b["FN183"],
     "profit_growth_yoy": lambda b: b["FN184"],
 }
 
-PRICE_FACTORS = ["mom_6_1", "reversal_1m", "volatility_252d", "turnover_21d"]
+PRICE_FACTORS = [
+    "mom_6_1", "reversal_1m", "reversal_3y_6m",
+    "volatility_252d", "turnover_21d",
+]
+PRICE_FACTOR_LOOKBACKS = {
+    "mom_6_1": MOMENTUM_HALF_TRADE_DAYS,
+    "reversal_1m": REVERSAL_TRADE_DAYS,
+    "reversal_3y_6m": REVERSAL_LONG_TRADE_DAYS,
+    "volatility_252d": VOLATILITY_TRADE_DAYS,
+    "turnover_21d": TURNOVER_TRADE_DAYS,
+}
 
 # Growth acceleration (point-in-time quarterly history, not a snapshot).
 GROWTH_ACCEL_METRIC = "FN324"  # 净利润(单季度)(万元)
 GROWTH_ACCEL_FACTORS = ["earnings_accel_2q_avg"]
 
-ALL_FACTORS = list(COMPUTE) + PRICE_FACTORS + GROWTH_ACCEL_FACTORS
+# Quality history factors.
+QUALITY_ROE_METRICS = ["FN308", "FN271"]  # TTM net profit, latest equity
+QUALITY_ROE_FACTORS = {
+    "roe_ttm_12q_avg": ("mean", 12),
+    "roe_stability_12q": ("std", 12),
+}
+if sorted(periods for _, periods in QUALITY_ROE_FACTORS.values()) != sorted(
+    [p for p in QUALITY_ROE_PERIODS for _ in (0, 1)]
+):
+    raise RuntimeError("QUALITY_ROE_FACTORS must match QUALITY_ROE_PERIODS.")
+
+ALL_FACTORS = (
+    list(COMPUTE)
+    + PRICE_FACTORS
+    + GROWTH_ACCEL_FACTORS
+    + list(QUALITY_ROE_FACTORS)
+)
 
 
 def _long(date_id: int, code: str, series: pd.Series, calc_version: str) -> pd.DataFrame:
@@ -79,13 +116,17 @@ def _long(date_id: int, code: str, series: pd.Series, calc_version: str) -> pd.D
     })
 
 
+def _price_lookback_trade_days(requested) -> int:
+    return max(PRICE_FACTOR_LOOKBACKS[code] for code in requested if code in PRICE_FACTOR_LOOKBACKS)
+
+
 def compute_price_factors(window, tdi_t, dateid_to_tdi, members, requested) -> dict[str, pd.Series]:
     """Compute price factors from a trailing daily window keyed by trade-day index."""
     df = window.copy()
     df["tdi"] = df["date_id"].map(dateid_to_tdi)
     df = df.dropna(subset=["tdi"])
     df["tdi"] = df["tdi"].astype(int)
-    full_tdi = list(range(tdi_t - MOMENTUM_LONG_TRADE_DAYS, tdi_t + 1))
+    full_tdi = list(range(tdi_t - _price_lookback_trade_days(requested), tdi_t + 1))
     price = (
         df.pivot_table(index="tdi", columns="stock_code", values="adj_close", aggfunc="first")
         .reindex(full_tdi)
@@ -98,6 +139,12 @@ def compute_price_factors(window, tdi_t, dateid_to_tdi, members, requested) -> d
         )
     if "reversal_1m" in requested:
         raw["reversal_1m"] = -(price.loc[tdi_t] / price.loc[tdi_t - REVERSAL_TRADE_DAYS] - 1.0)
+    if "reversal_3y_6m" in requested:
+        raw["reversal_3y_6m"] = -(
+            price.loc[tdi_t - REVERSAL_LONG_SKIP_TRADE_DAYS]
+            / price.loc[tdi_t - REVERSAL_LONG_TRADE_DAYS]
+            - 1.0
+        )
     if "volatility_252d" in requested:
         returns = price.pct_change()
         raw["volatility_252d"] = returns.iloc[-VOLATILITY_TRADE_DAYS:].std()
@@ -144,6 +191,41 @@ def compute_earnings_accel_2q_avg(
     return pd.Series(scores, dtype="float64")
 
 
+def compute_roe_ttm_history_factor(
+    history: pd.DataFrame, members, *, periods: int, statistic: str
+) -> pd.Series:
+    """Summarize the latest consecutive ROE_TTM observations.
+
+    ``FN308`` is trailing-12m parent net profit in 万元; ``FN271`` is latest
+    parent equity in 元. The factor requires ``periods`` consecutive quarterly
+    observations with positive equity.
+    """
+    if history.empty:
+        return pd.Series(dtype="float64")
+    profit = _quarterly_metric_wide(history, "FN308")
+    equity = _quarterly_metric_wide(history, "FN271")
+    if profit.empty or equity.empty:
+        return pd.Series(dtype="float64")
+    profit, equity = profit.align(equity, join="inner", axis=0)
+    roe = profit * 1e4 / equity.where(equity > 0)
+    member_set = set(members)
+    scores: dict[str, float] = {}
+    for stock in roe.columns:
+        if stock not in member_set:
+            continue
+        values = _recent_consecutive_values(roe[stock], periods=periods)
+        if len(values) == periods:
+            if statistic == "mean":
+                scores[stock] = float(np.mean(values))
+            elif statistic == "std":
+                std = float(np.std(values, ddof=1))
+                if np.isfinite(std):
+                    scores[stock] = std
+            else:
+                raise ValueError(f"Unsupported ROE statistic: {statistic}")
+    return pd.Series(scores, dtype="float64")
+
+
 def _quarterly_metric_wide(history: pd.DataFrame, metric_code: str) -> pd.DataFrame:
     metric = history[history["metric_code"] == metric_code]
     if metric.empty:
@@ -183,6 +265,18 @@ def _standardized_recent_yoy_scores(
     return scores
 
 
+def _recent_consecutive_values(series: pd.Series, *, periods: int) -> list[float]:
+    valid = series.dropna()
+    if len(valid) < periods:
+        return []
+    recent = valid.iloc[-periods:]
+    recent_index = recent.index
+    for previous, current in zip(recent_index[:-1], recent_index[1:]):
+        if previous.to_period("Q") != current.to_period("Q") - 1:
+            return []
+    return [float(value) for value in recent.to_numpy()]
+
+
 def month_bound_date_id(month: str, *, upper: bool) -> int:
     value = int(month)
     return value * 100 + (31 if upper else 1)
@@ -207,6 +301,9 @@ def main() -> int:
     snapshot_requested = [code for code in implemented if code in COMPUTE]
     price_requested = [code for code in implemented if code in PRICE_FACTORS]
     accel_requested = [code for code in implemented if code in GROWTH_ACCEL_FACTORS]
+    quality_roe_requested = [code for code in implemented if code in QUALITY_ROE_FACTORS]
+    needs_snapshot_base = bool(snapshot_requested)
+    needs_quality_roe = bool(quality_roe_requested)
     if skipped:
         print(f"[factor] build_factor_raw: not implemented: {', '.join(skipped)}", flush=True)
     if not implemented:
@@ -257,18 +354,41 @@ def main() -> int:
             if not stocks:
                 continue
             idx = pd.Index(sorted(stocks), name="stock_code")
-            if snapshot_requested:
+            base = pd.DataFrame()
+            if needs_snapshot_base:
                 financials = loaders.load_financial_metrics(conn, date_id, FUNDAMENTAL_FN_CODES).reindex(idx)
                 base = loaders.load_daily_snapshot(conn, date_id).reindex(idx).join(financials)
-                base["dps_ttm"] = loaders.load_trailing_dividends(conn, date_id).reindex(idx).fillna(0.0)
+                if "div_yield_ttm" in snapshot_requested:
+                    base["dps_ttm"] = loaders.load_trailing_dividends(conn, date_id).reindex(idx).fillna(0.0)
                 for code in snapshot_requested:
                     series = COMPUTE[code](base).replace([np.inf, -np.inf], np.nan).dropna()
                     if not series.empty:
                         frames[code].append(_long(date_id, code, series, args.calc_version))
-            if accel_requested:
+
+            history = pd.DataFrame()
+            if accel_requested or needs_quality_roe:
+                metric_codes = []
+                history_years = 0
+                if accel_requested:
+                    metric_codes.append(GROWTH_ACCEL_METRIC)
+                    history_years = max(history_years, GROWTH_ACCEL_HISTORY_YEARS)
+                if needs_quality_roe:
+                    metric_codes.extend(QUALITY_ROE_METRICS)
+                    history_years = max(history_years, QUALITY_HISTORY_YEARS)
                 history = loaders.load_quarterly_metrics_history(
-                    conn, date_id, [GROWTH_ACCEL_METRIC], GROWTH_ACCEL_HISTORY_YEARS
+                    conn, date_id, list(dict.fromkeys(metric_codes)), history_years
                 )
+
+            if needs_quality_roe:
+                for code in quality_roe_requested:
+                    statistic, periods = QUALITY_ROE_FACTORS[code]
+                    roe_factor = compute_roe_ttm_history_factor(
+                        history, stocks, periods=periods, statistic=statistic
+                    ).replace([np.inf, -np.inf], np.nan).dropna()
+                    if not roe_factor.empty:
+                        frames[code].append(_long(date_id, code, roe_factor, args.calc_version))
+
+            if accel_requested:
                 accel = compute_earnings_accel_2q_avg(
                     history, stocks,
                     lookback=GROWTH_ACCEL_LOOKBACK_QUARTERS, yoy_lag=GROWTH_ACCEL_YOY_QUARTERS,
@@ -278,7 +398,11 @@ def main() -> int:
                         frames[code].append(_long(date_id, code, accel, args.calc_version))
             if price_requested:
                 tdi_t = dateid_to_tdi.get(date_id)
-                window_start = tdi_to_dateid.get(tdi_t - MOMENTUM_LONG_TRADE_DAYS) if tdi_t is not None else None
+                window_start = (
+                    tdi_to_dateid.get(tdi_t - _price_lookback_trade_days(price_requested))
+                    if tdi_t is not None
+                    else None
+                )
                 if window_start is not None:
                     window = loaders.load_price_window(conn, window_start, date_id)
                     priced = compute_price_factors(window, tdi_t, dateid_to_tdi, stocks, price_requested)

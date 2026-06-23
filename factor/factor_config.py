@@ -34,6 +34,8 @@ MOMENTUM_LONG_TRADE_DAYS = 252
 MOMENTUM_HALF_TRADE_DAYS = 126
 MOMENTUM_SKIP_TRADE_DAYS = 21
 REVERSAL_TRADE_DAYS = 21
+REVERSAL_LONG_TRADE_DAYS = 756
+REVERSAL_LONG_SKIP_TRADE_DAYS = 126
 VOLATILITY_TRADE_DAYS = 252
 TURNOVER_TRADE_DAYS = 21
 
@@ -43,6 +45,10 @@ TURNOVER_TRADE_DAYS = 21
 GROWTH_ACCEL_LOOKBACK_QUARTERS = 8   # the "past 8 periods" baseline window
 GROWTH_ACCEL_YOY_QUARTERS = 4        # 4 quarters back = the year-ago quarter
 GROWTH_ACCEL_HISTORY_YEARS = 5       # trailing years of reports to pull (PIT)
+
+# Quality stability: average and dispersion of the latest consecutive ROE_TTM observations.
+QUALITY_ROE_PERIODS = (12,)
+QUALITY_HISTORY_YEARS = 5
 
 # Composite styles (must match the ``style`` column in factor_catalog.csv).
 STYLES = ("value", "quality", "growth", "momentum", "reversal", "risk")
@@ -61,7 +67,9 @@ COMPOSITE_FACTOR_WEIGHTS: dict[str, dict[str, float]] = {
         "div_yield_ttm": 1.0,
     },
     "quality": {
-        "roe_ttm": 1.0,
+        "roe_ttm_12q_avg": 1.0,
+        "roe_stability_12q": 1.0,
+        "fcfe_to_equity": 1.0,
         "accruals": 1.0,
     },
     "growth": {
@@ -74,6 +82,7 @@ COMPOSITE_FACTOR_WEIGHTS: dict[str, dict[str, float]] = {
     },
     "reversal": {
         "reversal_1m": 1.0,
+        "reversal_3y_6m": 1.0,
     },
     "risk": {
         "volatility_252d": 1.0,
@@ -82,7 +91,7 @@ COMPOSITE_FACTOR_WEIGHTS: dict[str, dict[str, float]] = {
 }
 
 # Industry-name keywords (dim_tdx_industry.tdx_sector_name) used to NULL out
-# margin / accruals-type factors for financials before neutralization.
+# financial-sensitive factors before neutralization.
 # TODO(Phase 3): verify these against the actual dim_tdx_industry names.
 FINANCIAL_SECTOR_KEYWORDS = ("银行", "证券", "保险", "多元金融", "信托")
 
@@ -107,12 +116,17 @@ def factor_config_snapshot_lines() -> list[str]:
         f"    MOMENTUM_HALF_TRADE_DAYS: {MOMENTUM_HALF_TRADE_DAYS}",
         f"    MOMENTUM_SKIP_TRADE_DAYS: {MOMENTUM_SKIP_TRADE_DAYS}",
         f"    REVERSAL_TRADE_DAYS: {REVERSAL_TRADE_DAYS}",
+        f"    REVERSAL_LONG_TRADE_DAYS: {REVERSAL_LONG_TRADE_DAYS}",
+        f"    REVERSAL_LONG_SKIP_TRADE_DAYS: {REVERSAL_LONG_SKIP_TRADE_DAYS}",
         f"    VOLATILITY_TRADE_DAYS: {VOLATILITY_TRADE_DAYS}",
         f"    TURNOVER_TRADE_DAYS: {TURNOVER_TRADE_DAYS}",
         "  growth_acceleration:",
         f"    GROWTH_ACCEL_LOOKBACK_QUARTERS: {GROWTH_ACCEL_LOOKBACK_QUARTERS}",
         f"    GROWTH_ACCEL_YOY_QUARTERS: {GROWTH_ACCEL_YOY_QUARTERS}",
         f"    GROWTH_ACCEL_HISTORY_YEARS: {GROWTH_ACCEL_HISTORY_YEARS}",
+        "  quality_history:",
+        f"    QUALITY_ROE_PERIODS: {QUALITY_ROE_PERIODS}",
+        f"    QUALITY_HISTORY_YEARS: {QUALITY_HISTORY_YEARS}",
         "  composite:",
         f"    STYLES: {STYLES}",
         f"    COMPOSITE_EQUAL_WEIGHT: {COMPOSITE_EQUAL_WEIGHT}",
