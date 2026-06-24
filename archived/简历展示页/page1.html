@@ -11,7 +11,8 @@
     type="module"
     src="https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js">
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/viz.js@2.1.2/viz.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/viz.js@2.1.2/full.render.js"></script>
   <script src="./factor_panel_data.js"></script>
 
   <style>
@@ -261,9 +262,49 @@
       font-size: 18px;
     }
 
+    .erd-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .erd-view-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .erd-view-tab {
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #374151;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .erd-view-tab:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .erd-view-tab.active {
+      background: #111827;
+      color: #ffffff;
+      border-color: #111827;
+    }
+
     .erd-frame {
       flex: 1;
-      min-height: 620px;
+      min-height: 580px;
       overflow: auto;
       position: relative;
       border: 1px solid #e5e7eb;
@@ -271,17 +312,27 @@
       background: #fbfcfd;
     }
 
-    .erd-frame .mermaid {
-      min-width: 1180px;
+    .erd-output {
+      display: grid;
+      justify-items: center;
+      min-width: 100%;
       margin: 0;
-      padding: 16px;
+      padding: 18px;
     }
 
-    .erd-section svg {
-      width: auto;
-      height: auto;
-      max-width: none;
+    .erd-output.is-wide {
+      justify-items: start;
+    }
+
+    .erd-output svg {
+      width: auto !important;
+      max-width: none !important;
+      height: auto !important;
       display: block;
+    }
+
+    .erd-output svg text {
+      font-family: Arial, "Microsoft YaHei", sans-serif !important;
     }
 
     .erd-error {
@@ -531,6 +582,16 @@
         flex-direction: column;
       }
 
+      .erd-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .erd-view-tabs {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
       .stat-tile,
       .erd-section {
         padding: 16px;
@@ -618,128 +679,17 @@
             </div>
 
             <section class="erd-section">
-              <h3>数据库 ERD</h3>
+              <div class="erd-toolbar">
+                <h3>数据库 ERD</h3>
+                <div class="erd-view-tabs" aria-label="ERD 视图">
+                  <button class="erd-view-tab active" type="button" data-erd-view="overview">总览</button>
+                  <button class="erd-view-tab" type="button" data-erd-view="market">行情事件</button>
+                  <button class="erd-view-tab" type="button" data-erd-view="financial">财务桥表</button>
+                  <button class="erd-view-tab" type="button" data-erd-view="factor">因子库</button>
+                </div>
+              </div>
               <div class="erd-frame">
-                <pre id="databaseErd" class="mermaid erd-diagram">erDiagram
-    DIM_TDX_INDUSTRY ||--o{ DIM_STOCK : tdx_sector_code
-    DIM_STOCK ||--o{ FACT_DAILY : stock_code
-    DIM_DATE ||--o{ FACT_DAILY : date_id
-    FACT_DAILY ||--o{ FACT_ADJUSTMENT_FACTOR_PERIOD : valid_from
-    FACT_DAILY ||--o{ FACT_ADJUSTMENT_FACTOR_PERIOD : valid_to
-    DIM_STOCK ||--o{ FACT_DIVIDEND : stock_code
-    DIM_DATE ||--o{ FACT_DIVIDEND : date_id
-    DIM_STOCK ||--o{ FACT_FINANCIAL_REPORT : stock_code
-    DIM_DATE ||--o{ FACT_FINANCIAL_REPORT : announce_date_id
-    FACT_FINANCIAL_REPORT ||--o{ FACT_FINANCIAL_VALUE : report_id
-    DIM_FINANCIAL_METRIC ||--o{ FACT_FINANCIAL_VALUE : metric_code
-    DIM_STOCK ||--o{ BRIDGE_TRADE_DAY_FINANCIAL_REPORT : stock_code
-    DIM_DATE ||--o{ BRIDGE_TRADE_DAY_FINANCIAL_REPORT : date_id
-    FACT_FINANCIAL_REPORT ||--o{ BRIDGE_TRADE_DAY_FINANCIAL_REPORT : report_id
-    DIM_STOCK ||--o{ FACT_STOCK_UNIVERSE : stock_code
-    DIM_DATE ||--o{ FACT_STOCK_UNIVERSE : date_id
-    DIM_STOCK ||--o{ FACT_FACTOR_RAW : stock_code
-    DIM_DATE ||--o{ FACT_FACTOR_RAW : date_id
-    DIM_FACTOR ||--o{ FACT_FACTOR_RAW : factor_code
-    DIM_STOCK ||--o{ FACT_FACTOR_EXPOSURE : stock_code
-    DIM_DATE ||--o{ FACT_FACTOR_EXPOSURE : date_id
-    DIM_FACTOR ||--o{ FACT_FACTOR_EXPOSURE : factor_code
-    DIM_STOCK ||--o{ FACT_FACTOR_COMPOSITE : stock_code
-    DIM_DATE ||--o{ FACT_FACTOR_COMPOSITE : date_id
-    DIM_DATE ||--o{ FACT_FACTOR_DIAGNOSTICS : date_id
-    DIM_FACTOR ||--o{ FACT_FACTOR_DIAGNOSTICS : factor_code
-
-    DIM_TDX_INDUSTRY {
-        varchar tdx_sector_code PK
-        varchar tdx_sector_name
-    }
-    DIM_STOCK {
-        varchar stock_code PK
-        varchar stock_name
-        varchar tdx_sector_code FK
-    }
-    DIM_DATE {
-        integer date_id PK
-        date date UK
-        boolean is_trade_day
-        integer trade_day_index
-    }
-    DIM_FINANCIAL_METRIC {
-        varchar metric_code PK
-        varchar metric_name
-    }
-    FACT_DAILY {
-        varchar stock_code PK, FK
-        integer date_id PK, FK
-        numeric close
-        bigint vol
-        numeric market_cap
-    }
-    FACT_DIVIDEND {
-        varchar stock_code PK, FK
-        integer date_id PK, FK
-        smallint action_type PK
-    }
-    FACT_ADJUSTMENT_FACTOR_PERIOD {
-        varchar stock_code PK, FK
-        integer valid_from_date_id PK, FK
-        integer valid_to_date_id FK
-        numeric adjust_factor
-    }
-    FACT_FINANCIAL_REPORT {
-        bigint report_id PK
-        varchar stock_code FK
-        date report_period
-        integer announce_date_id FK
-    }
-    FACT_FINANCIAL_VALUE {
-        bigint report_id PK, FK
-        varchar metric_code PK, FK
-        numeric metric_value
-    }
-    BRIDGE_TRADE_DAY_FINANCIAL_REPORT {
-        integer date_id PK, FK
-        varchar stock_code PK, FK
-        bigint report_id FK
-    }
-    DIM_FACTOR {
-        varchar factor_code PK
-        varchar style
-        smallint direction
-        boolean is_active
-    }
-    FACT_STOCK_UNIVERSE {
-        integer date_id PK, FK
-        varchar stock_code PK, FK
-        varchar calc_version PK
-        boolean in_universe
-    }
-    FACT_FACTOR_RAW {
-        integer date_id PK, FK
-        varchar stock_code PK, FK
-        varchar factor_code PK, FK
-        varchar calc_version PK
-        numeric factor_value
-    }
-    FACT_FACTOR_EXPOSURE {
-        integer date_id PK, FK
-        varchar stock_code PK, FK
-        varchar factor_code PK, FK
-        varchar calc_version PK
-        numeric neutralized_value
-        numeric percentile_rank
-    }
-    FACT_FACTOR_COMPOSITE {
-        integer date_id PK, FK
-        varchar stock_code PK, FK
-        varchar calc_version PK
-        numeric total_score
-    }
-    FACT_FACTOR_DIAGNOSTICS {
-        integer date_id PK, FK
-        varchar factor_code PK, FK
-        varchar calc_version PK
-        numeric rank_ic_1m
-    }</pre>
+                <div class="erd-output" id="erdOutput" aria-live="polite"></div>
                 <div class="erd-error" id="erdError" role="alert"></div>
               </div>
             </section>
@@ -787,73 +737,220 @@
   </main>
 
   <script>
-    if (window.mermaid) {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: "base",
-        securityLevel: "loose",
-        themeVariables: {
-          primaryColor: "#ffffff",
-          primaryTextColor: "#111827",
-          primaryBorderColor: "#9ca3af",
-          lineColor: "#4b5563",
-          fontFamily: "Arial, Microsoft YaHei, sans-serif"
-        }
-      });
+    const ERD_TABLES = {
+      DIM_TDX_INDUSTRY: [["str", "sector_code", "PK"], ["str", "sector_name", ""]],
+      DIM_STOCK: [["str", "stock_code", "PK"], ["str", "stock_name", ""], ["str", "sector_code", "FK"]],
+      DIM_DATE: [["int", "date_id", "PK"], ["date", "date", "UK"], ["bool", "is_trade_day", ""], ["int", "trade_index", ""]],
+      DIM_FINANCIAL_METRIC: [["str", "metric", "PK"], ["str", "metric_name", ""]],
+      DIM_FACTOR: [["str", "factor", "PK"], ["str", "factor_name", ""], ["str", "style", ""], ["int", "direction", ""], ["bool", "is_active", ""]],
+      FACT_DAILY: [["str", "stock_code", "PK,FK"], ["int", "date_id", "PK,FK"], ["num", "open", ""], ["num", "close", ""], ["big", "vol", ""], ["num", "market_cap", ""]],
+      FACT_DIVIDEND: [["str", "stock_code", "PK,FK"], ["int", "date_id", "PK,FK"], ["int", "action_type", "PK"], ["num", "bonus", ""]],
+      FACT_ADJUST_FACTOR_PERIOD: [["str", "stock_code", "PK,FK"], ["int", "from_date_id", "PK,FK"], ["int", "to_date_id", "FK"], ["num", "adj_factor", ""]],
+      FACT_FINANCIAL_REPORT: [["big", "report_id", "PK"], ["str", "stock_code", "FK"], ["date", "period", ""], ["int", "announce_date", "FK"]],
+      FACT_FINANCIAL_VALUE: [["big", "report_id", "PK,FK"], ["str", "metric", "PK,FK"], ["num", "value", ""]],
+      BRIDGE_FINANCIAL_REPORT: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["big", "report_id", "FK"]],
+      FACT_STOCK_UNIVERSE: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "calc_version", "PK"], ["bool", "in_universe", ""]],
+      FACT_FACTOR_RAW: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "factor", "PK,FK"], ["str", "calc_version", "PK"], ["num", "factor_value", ""]],
+      FACT_FACTOR_EXPOSURE: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "factor", "PK,FK"], ["str", "calc_version", "PK"], ["num", "neutralized", ""], ["num", "pct_rank", ""]],
+      FACT_FACTOR_COMPOSITE: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "calc_version", "PK"], ["num", "total_score", ""]],
+      FACT_FACTOR_DIAGNOSTICS: [["int", "date_id", "PK,FK"], ["str", "factor", "PK,FK"], ["str", "calc_version", "PK"], ["num", "rank_ic_1m", ""]]
+    };
+
+    const ERD_VIEWS = {
+      overview: {
+        rankdir: "TB",
+        tables: [
+          "DIM_TDX_INDUSTRY", "DIM_STOCK", "DIM_DATE", "FACT_DAILY",
+          "FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE",
+          "BRIDGE_FINANCIAL_REPORT", "DIM_FACTOR",
+          "FACT_FACTOR_EXPOSURE", "FACT_FACTOR_COMPOSITE"
+        ],
+        edges: [
+          ["DIM_TDX_INDUSTRY", "DIM_STOCK"], ["DIM_STOCK", "FACT_DAILY"],
+          ["DIM_DATE", "FACT_DAILY"], ["DIM_STOCK", "FACT_FINANCIAL_REPORT"],
+          ["FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE"],
+          ["FACT_FINANCIAL_REPORT", "BRIDGE_FINANCIAL_REPORT"],
+          ["DIM_FACTOR", "FACT_FACTOR_EXPOSURE"],
+          ["DIM_STOCK", "FACT_FACTOR_COMPOSITE"],
+          ["DIM_DATE", "FACT_FACTOR_COMPOSITE"]
+        ]
+      },
+      market: {
+        rankdir: "TB",
+        tables: [
+          "DIM_TDX_INDUSTRY", "DIM_STOCK", "DIM_DATE",
+          "FACT_DAILY", "FACT_DIVIDEND", "FACT_ADJUST_FACTOR_PERIOD"
+        ],
+        edges: [
+          ["DIM_TDX_INDUSTRY", "DIM_STOCK"], ["DIM_STOCK", "FACT_DAILY"],
+          ["DIM_DATE", "FACT_DAILY"], ["DIM_STOCK", "FACT_DIVIDEND"],
+          ["DIM_DATE", "FACT_DIVIDEND"], ["FACT_DAILY", "FACT_ADJUST_FACTOR_PERIOD"]
+        ]
+      },
+      financial: {
+        rankdir: "TB",
+        tables: [
+          "DIM_STOCK", "DIM_DATE", "DIM_FINANCIAL_METRIC",
+          "FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE",
+          "BRIDGE_FINANCIAL_REPORT"
+        ],
+        edges: [
+          ["DIM_STOCK", "FACT_FINANCIAL_REPORT"],
+          ["DIM_DATE", "FACT_FINANCIAL_REPORT"],
+          ["FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE"],
+          ["DIM_FINANCIAL_METRIC", "FACT_FINANCIAL_VALUE"],
+          ["DIM_STOCK", "BRIDGE_FINANCIAL_REPORT"],
+          ["DIM_DATE", "BRIDGE_FINANCIAL_REPORT"],
+          ["FACT_FINANCIAL_REPORT", "BRIDGE_FINANCIAL_REPORT"]
+        ]
+      },
+      factor: {
+        rankdir: "TB",
+        nodesep: 0.45,
+        ranksep: 1.05,
+        tables: [
+          "DIM_STOCK", "DIM_DATE", "DIM_FACTOR", "FACT_STOCK_UNIVERSE",
+          "FACT_FACTOR_RAW", "FACT_FACTOR_EXPOSURE",
+          "FACT_FACTOR_COMPOSITE", "FACT_FACTOR_DIAGNOSTICS"
+        ],
+        edges: [
+          ["DIM_STOCK", "FACT_STOCK_UNIVERSE"], ["DIM_DATE", "FACT_STOCK_UNIVERSE"],
+          ["DIM_STOCK", "FACT_FACTOR_RAW"], ["DIM_DATE", "FACT_FACTOR_RAW"],
+          ["DIM_FACTOR", "FACT_FACTOR_RAW"], ["DIM_STOCK", "FACT_FACTOR_EXPOSURE"],
+          ["DIM_DATE", "FACT_FACTOR_EXPOSURE"], ["DIM_FACTOR", "FACT_FACTOR_EXPOSURE"],
+          ["DIM_STOCK", "FACT_FACTOR_COMPOSITE"], ["DIM_DATE", "FACT_FACTOR_COMPOSITE"],
+          ["DIM_DATE", "FACT_FACTOR_DIAGNOSTICS"], ["DIM_FACTOR", "FACT_FACTOR_DIAGNOSTICS"]
+        ],
+        ranks: [
+          ["DIM_STOCK", "DIM_DATE", "DIM_FACTOR"],
+          ["FACT_STOCK_UNIVERSE", "FACT_FACTOR_RAW", "FACT_FACTOR_EXPOSURE"],
+          ["FACT_FACTOR_COMPOSITE", "FACT_FACTOR_DIAGNOSTICS"]
+        ],
+        invisibleEdges: [
+          ["DIM_DATE", "FACT_FACTOR_EXPOSURE"],
+          ["FACT_FACTOR_EXPOSURE", "FACT_FACTOR_COMPOSITE"]
+        ]
+      }
+    };
+
+    let currentErdView = "overview";
+    let renderedErdView = "";
+    let erdRenderPending = false;
+    let graphvizRenderer = null;
+
+    function recordEscape(value) {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/[{}|<>]/g, "\\$&");
     }
 
-    let erdRendered = false;
-    let erdRenderPending = false;
+    function erdTableDot(tableName) {
+      const rows = ERD_TABLES[tableName].map(([type, field, role]) => {
+        const suffix = role ? `  ${role.replace(",", "/")}` : "";
+        return `${recordEscape(type.padEnd(4, " "))} ${recordEscape(field)}${recordEscape(suffix)}\\l`;
+      }).join("");
+      return `"${tableName}" [label="{${recordEscape(tableName)}|${rows}}"];`;
+    }
+
+    function buildErdDot(viewKey) {
+      const view = ERD_VIEWS[viewKey] || ERD_VIEWS.overview;
+      const nodes = view.tables.map(erdTableDot).join("\n");
+      const edges = view.edges.map(([from, to]) => `"${from}" -> "${to}";`).join("\n");
+      const ranks = (view.ranks || [])
+        .map((items) => `{ rank=same; ${items.map((name) => `"${name}";`).join(" ")} }`)
+        .join("\n");
+      const invisibleEdges = (view.invisibleEdges || [])
+        .map(([from, to]) => `"${from}" -> "${to}" [style=invis, weight=20];`)
+        .join("\n");
+      return `digraph ERD {
+        graph [
+          rankdir=${view.rankdir},
+          bgcolor="transparent",
+          margin=0,
+          pad=0.25,
+          nodesep=${view.nodesep || 0.55},
+          ranksep=${view.ranksep || 0.75},
+          splines=ortho,
+          outputorder=edgesfirst
+        ];
+        node [
+          shape=record,
+          style="rounded,filled",
+          fillcolor="white",
+          color="#9ca3af",
+          penwidth=1.25,
+          fontname="Arial",
+          fontsize=13,
+          margin="0.10,0.08"
+        ];
+        edge [color="#6b7280", arrowsize=0.75, penwidth=1.35, arrowhead=vee];
+        ${ranks}
+        ${nodes}
+        ${edges}
+        ${invisibleEdges}
+      }`;
+    }
 
     function renderErdIfVisible() {
       const page2 = document.getElementById("page-2");
-      const mermaidEl = page2 && page2.querySelector(".mermaid");
+      const erdOutput = document.getElementById("erdOutput");
       const erdFrame = page2 && page2.querySelector(".erd-frame");
       const erdError = document.getElementById("erdError");
-      if (!mermaidEl || erdRendered || erdRenderPending) return;
+      if (!erdOutput || erdRenderPending || renderedErdView === currentErdView) return;
 
       const style = window.getComputedStyle(page2);
       if (style.display === "none") return;
 
-      if (!window.mermaid) {
+      if (!window.Viz) {
         if (erdFrame && erdError) {
           erdFrame.classList.add("has-error");
-          erdError.textContent = "ERD 渲染库未加载，请检查 Mermaid CDN。";
+          erdError.textContent = "ERD 渲染库未加载，请检查 Viz.js CDN。";
         }
         return;
       }
 
       erdRenderPending = true;
       window.requestAnimationFrame(() => {
-        mermaidEl.removeAttribute("data-processed");
-        let renderResult;
+        const viewKey = currentErdView;
+        const dot = buildErdDot(viewKey);
+        if (!graphvizRenderer) {
+          graphvizRenderer = new Viz();
+        }
         try {
-          renderResult = mermaid.run({ querySelector: "#page-2 .mermaid" });
+          graphvizRenderer.renderSVGElement(dot)
+            .then((svg) => {
+              erdOutput.replaceChildren(svg);
+              renderedErdView = viewKey;
+              erdRenderPending = false;
+              if (erdFrame) {
+                const svgWidth = svg.getBoundingClientRect().width;
+                erdOutput.classList.toggle("is-wide", svgWidth > erdFrame.clientWidth - 36);
+                erdFrame.scrollTo({ left: 0, top: 0 });
+              }
+              if (erdFrame) erdFrame.classList.remove("has-error");
+              if (erdError) erdError.textContent = "";
+              if (currentErdView !== viewKey) {
+                renderErdIfVisible();
+              }
+            })
+            .catch((error) => {
+              graphvizRenderer = new Viz();
+              erdRenderPending = false;
+              if (erdFrame && erdError) {
+                erdFrame.classList.add("has-error");
+                erdError.textContent = `ERD 渲染失败：${error && error.message ? error.message : "请检查 Graphviz DOT 定义。"}`;
+              }
+              console.error("Failed to render database ERD", error);
+            });
         } catch (error) {
+          graphvizRenderer = new Viz();
           erdRenderPending = false;
           if (erdFrame && erdError) {
             erdFrame.classList.add("has-error");
-            erdError.textContent = "ERD 渲染失败，请检查 Mermaid 语法。";
+            erdError.textContent = `ERD 渲染失败：${error && error.message ? error.message : "请检查 Graphviz DOT 定义。"}`;
           }
           console.error("Failed to render database ERD", error);
-          return;
         }
-
-        Promise.resolve(renderResult)
-          .then(() => {
-            erdRendered = true;
-            erdRenderPending = false;
-            if (erdFrame) erdFrame.classList.remove("has-error");
-            if (erdError) erdError.textContent = "";
-          })
-          .catch((error) => {
-            erdRenderPending = false;
-            if (erdFrame && erdError) {
-              erdFrame.classList.add("has-error");
-              erdError.textContent = "ERD 渲染失败，请检查 Mermaid 语法。";
-            }
-            console.error("Failed to render database ERD", error);
-          });
       });
     }
 
@@ -1001,31 +1098,57 @@
 
     const tabs = document.querySelectorAll(".nav-tab");
     const panels = document.querySelectorAll(".page-panel");
+    const erdViewTabs = document.querySelectorAll(".erd-view-tab");
+
+    function selectErdView(viewKey) {
+      currentErdView = ERD_VIEWS[viewKey] ? viewKey : "overview";
+      erdViewTabs.forEach((item) => {
+        item.classList.toggle("active", item.dataset.erdView === currentErdView);
+      });
+      renderedErdView = "";
+    }
+
+    function activatePage(targetId) {
+      tabs.forEach((item) => {
+        item.classList.toggle("active", item.dataset.target === targetId);
+      });
+
+      panels.forEach((panel) => {
+        panel.classList.toggle("active", panel.id === targetId);
+      });
+
+      if (targetId === "page-2") {
+        renderErdIfVisible();
+      }
+
+      if (targetId === "page-3") {
+        renderFactorPanel();
+      }
+    }
 
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => {
-        const targetId = tab.dataset.target;
-
-        tabs.forEach((item) => {
-          item.classList.toggle("active", item === tab);
-        });
-
-        panels.forEach((panel) => {
-          panel.classList.toggle("active", panel.id === targetId);
-        });
-
-        if (targetId === "page-2") {
-          renderErdIfVisible();
-        }
-
-        if (targetId === "page-3") {
-          renderFactorPanel();
-        }
+        activatePage(tab.dataset.target);
       });
     });
 
-    renderErdIfVisible();
-    renderFactorPanel();
+    erdViewTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        selectErdView(tab.dataset.erdView);
+        renderErdIfVisible();
+      });
+    });
+
+    const [initialTarget, initialErdView] = window.location.hash.replace("#", "").split(":");
+    if (initialErdView) {
+      selectErdView(initialErdView);
+    }
+    if (initialTarget && document.getElementById(initialTarget)) {
+      activatePage(initialTarget);
+    } else {
+      renderErdIfVisible();
+      renderFactorPanel();
+    }
   </script>
 </body>
 </html>
