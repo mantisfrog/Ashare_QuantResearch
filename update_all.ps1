@@ -18,5 +18,7 @@ function Run-Step($Name, $Script) {
 
 Run-Step "ETL" "update_etl.py"
 Run-Step "Factor update" "update_factors.py"
+Run-Step "Factor panel snapshot" "archived\简历展示页\build_factor_panel_snapshot.py"
+Run-Step "Tableau CSV" "archived\update_tableau_csv.py"
 
 Write-Host "Pipeline completed." -ForegroundColor Green

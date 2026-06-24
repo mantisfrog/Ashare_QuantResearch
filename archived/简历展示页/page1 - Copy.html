@@ -250,56 +250,28 @@
     .erd-section {
       display: flex;
       flex-direction: column;
-      gap: 10px;
       flex: 1;
       min-height: 360px;
     }
 
-    .erd-section h3 {
-      margin: 0;
-      color: #111827;
-      font-size: 18px;
-    }
-
     .erd-frame {
       flex: 1;
-      min-height: 620px;
+      min-height: 0;
       overflow: auto;
-      position: relative;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       background: #fbfcfd;
     }
 
     .erd-frame .mermaid {
-      min-width: 1180px;
+      min-width: 760px;
       margin: 0;
-      padding: 16px;
+      padding: 12px;
     }
 
     .erd-section svg {
-      width: auto;
+      width: 100%;
       height: auto;
-      max-width: none;
-      display: block;
-    }
-
-    .erd-error {
-      display: none;
-      position: sticky;
-      left: 0;
-      bottom: 0;
-      margin: 12px;
-      padding: 10px 12px;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      background: #fef2f2;
-      color: #991b1b;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .erd-frame.has-error .erd-error {
       display: block;
     }
 
@@ -326,14 +298,16 @@
       background: #ffffff;
     }
 
-    .section-heading {
+    .section-heading,
+    .factor-table-toolbar {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 16px;
     }
 
-    .section-heading h3 {
+    .section-heading h3,
+    .factor-table-toolbar h3 {
       margin: 0;
       color: #111827;
       font-size: 18px;
@@ -459,12 +433,212 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .factor-filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .factor-filter {
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #374151;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .factor-filter.active {
+      border-color: #111827;
+      background: #111827;
+      color: #ffffff;
+    }
+
+    .factor-table-wrap,
+    .factor-heatmap-wrap,
+    .build-table-wrap {
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .factor-table,
+    .factor-heatmap,
+    .build-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .factor-table {
+      min-width: 980px;
+    }
+
+    .factor-table th,
+    .factor-table td,
+    .factor-heatmap th,
+    .factor-heatmap td,
+    .build-table th,
+    .build-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eef2f7;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .factor-table th,
+    .factor-heatmap th,
+    .build-table th {
+      background: #f9fafb;
+      color: #4b5563;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .factor-table tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    .factor-code {
+      color: #111827;
+      font-weight: 800;
+      font-family: Consolas, "Courier New", monospace;
+      white-space: nowrap;
+    }
+
+    .factor-name {
+      color: #4b5563;
+      white-space: nowrap;
+    }
+
+    .style-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
     .metric-positive {
       color: #166534;
     }
 
     .metric-negative {
       color: #b91c1c;
+    }
+
+    .factor-two-column {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .factor-heatmap {
+      min-width: 980px;
+    }
+
+    .factor-heatmap .heat-factor {
+      min-width: 170px;
+      background: #ffffff;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    .heat-cell {
+      min-width: 54px;
+      text-align: center;
+      color: #111827;
+      font-weight: 800;
+    }
+
+    .heat-empty {
+      background: #f3f4f6;
+      color: #9ca3af;
+    }
+
+    .heat-pos-3 {
+      background: #0f766e;
+      color: #ffffff;
+    }
+
+    .heat-pos-2 {
+      background: #99f6e4;
+    }
+
+    .heat-pos-1 {
+      background: #ccfbf1;
+    }
+
+    .heat-flat {
+      background: #f3f4f6;
+    }
+
+    .heat-neg-1 {
+      background: #fed7aa;
+    }
+
+    .heat-neg-2 {
+      background: #f97316;
+      color: #ffffff;
+    }
+
+    .heat-neg-3 {
+      background: #b91c1c;
+      color: #ffffff;
+    }
+
+    .corr-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .corr-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .corr-pair {
+      min-width: 0;
+      color: #111827;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .corr-sub {
+      margin-top: 3px;
+      color: #6b7280;
+      font-size: 12px;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .corr-value {
+      min-width: 56px;
+      text-align: right;
+      color: #111827;
+      font-weight: 900;
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
     }
 
     .factor-empty {
@@ -523,12 +697,18 @@
       }
 
       .factor-kpi-grid,
-      .style-summary-grid {
+      .style-summary-grid,
+      .factor-two-column {
         grid-template-columns: 1fr;
       }
 
-      .section-heading {
+      .section-heading,
+      .factor-table-toolbar {
         flex-direction: column;
+      }
+
+      .factor-filter-group {
+        justify-content: flex-start;
       }
 
       .stat-tile,
@@ -620,7 +800,8 @@
             <section class="erd-section">
               <h3>数据库 ERD</h3>
               <div class="erd-frame">
-                <pre id="databaseErd" class="mermaid erd-diagram">erDiagram
+                <pre class="mermaid">
+erDiagram
     DIM_TDX_INDUSTRY ||--o{ DIM_STOCK : tdx_sector_code
     DIM_STOCK ||--o{ FACT_DAILY : stock_code
     DIM_DATE ||--o{ FACT_DAILY : date_id
@@ -635,23 +816,7 @@
     DIM_STOCK ||--o{ BRIDGE_TRADE_DAY_FINANCIAL_REPORT : stock_code
     DIM_DATE ||--o{ BRIDGE_TRADE_DAY_FINANCIAL_REPORT : date_id
     FACT_FINANCIAL_REPORT ||--o{ BRIDGE_TRADE_DAY_FINANCIAL_REPORT : report_id
-    DIM_STOCK ||--o{ FACT_STOCK_UNIVERSE : stock_code
-    DIM_DATE ||--o{ FACT_STOCK_UNIVERSE : date_id
-    DIM_STOCK ||--o{ FACT_FACTOR_RAW : stock_code
-    DIM_DATE ||--o{ FACT_FACTOR_RAW : date_id
-    DIM_FACTOR ||--o{ FACT_FACTOR_RAW : factor_code
-    DIM_STOCK ||--o{ FACT_FACTOR_EXPOSURE : stock_code
-    DIM_DATE ||--o{ FACT_FACTOR_EXPOSURE : date_id
-    DIM_FACTOR ||--o{ FACT_FACTOR_EXPOSURE : factor_code
-    DIM_STOCK ||--o{ FACT_FACTOR_COMPOSITE : stock_code
-    DIM_DATE ||--o{ FACT_FACTOR_COMPOSITE : date_id
-    DIM_DATE ||--o{ FACT_FACTOR_DIAGNOSTICS : date_id
-    DIM_FACTOR ||--o{ FACT_FACTOR_DIAGNOSTICS : factor_code
 
-    DIM_TDX_INDUSTRY {
-        varchar tdx_sector_code PK
-        varchar tdx_sector_name
-    }
     DIM_STOCK {
         varchar stock_code PK
         varchar stock_name
@@ -663,27 +828,12 @@
         boolean is_trade_day
         integer trade_day_index
     }
-    DIM_FINANCIAL_METRIC {
-        varchar metric_code PK
-        varchar metric_name
-    }
     FACT_DAILY {
         varchar stock_code PK, FK
         integer date_id PK, FK
         numeric close
         bigint vol
         numeric market_cap
-    }
-    FACT_DIVIDEND {
-        varchar stock_code PK, FK
-        integer date_id PK, FK
-        smallint action_type PK
-    }
-    FACT_ADJUSTMENT_FACTOR_PERIOD {
-        varchar stock_code PK, FK
-        integer valid_from_date_id PK, FK
-        integer valid_to_date_id FK
-        numeric adjust_factor
     }
     FACT_FINANCIAL_REPORT {
         bigint report_id PK
@@ -701,46 +851,26 @@
         varchar stock_code PK, FK
         bigint report_id FK
     }
-    DIM_FACTOR {
-        varchar factor_code PK
-        varchar style
-        smallint direction
-        boolean is_active
-    }
-    FACT_STOCK_UNIVERSE {
-        integer date_id PK, FK
+    FACT_ADJUSTMENT_FACTOR_PERIOD {
         varchar stock_code PK, FK
-        varchar calc_version PK
-        boolean in_universe
+        integer valid_from_date_id PK, FK
+        integer valid_to_date_id FK
+        numeric adjust_factor
     }
-    FACT_FACTOR_RAW {
-        integer date_id PK, FK
+    FACT_DIVIDEND {
         varchar stock_code PK, FK
-        varchar factor_code PK, FK
-        varchar calc_version PK
-        numeric factor_value
-    }
-    FACT_FACTOR_EXPOSURE {
         integer date_id PK, FK
-        varchar stock_code PK, FK
-        varchar factor_code PK, FK
-        varchar calc_version PK
-        numeric neutralized_value
-        numeric percentile_rank
+        smallint action_type PK
     }
-    FACT_FACTOR_COMPOSITE {
-        integer date_id PK, FK
-        varchar stock_code PK, FK
-        varchar calc_version PK
-        numeric total_score
+    DIM_TDX_INDUSTRY {
+        varchar tdx_sector_code PK
+        varchar tdx_sector_name
     }
-    FACT_FACTOR_DIAGNOSTICS {
-        integer date_id PK, FK
-        varchar factor_code PK, FK
-        varchar calc_version PK
-        numeric rank_ic_1m
-    }</pre>
-                <div class="erd-error" id="erdError" role="alert"></div>
+    DIM_FINANCIAL_METRIC {
+        varchar metric_code PK
+        varchar metric_name
+    }
+                </pre>
               </div>
             </section>
           </div>
@@ -751,7 +881,7 @@
             <div class="dashboard-header">
               <div>
                 <h2>因子库面板</h2>
-                <p>覆盖因子目录与风格健康度。</p>
+                <p>覆盖因子目录、风格健康度、单因子诊断、年度稳定性和构建状态。</p>
               </div>
               <span class="snapshot-badge" id="factorSnapshotBadge">快照加载中</span>
             </div>
@@ -768,6 +898,80 @@
               <div class="style-summary-grid" id="factorStyleSummary"></div>
             </section>
 
+            <section class="factor-section">
+              <div class="factor-table-toolbar">
+                <h3>单因子体检</h3>
+                <div class="factor-filter-group" id="factorStyleFilters" aria-label="因子风格筛选"></div>
+              </div>
+              <div class="factor-table-wrap">
+                <table class="factor-table">
+                  <thead>
+                    <tr>
+                      <th>因子</th>
+                      <th>名称</th>
+                      <th>风格</th>
+                      <th>方向</th>
+                      <th>覆盖率</th>
+                      <th>全样本 IC</th>
+                      <th>全样本 IR</th>
+                      <th>胜率</th>
+                      <th>近12月 IR</th>
+                      <th>近6月 IR</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody id="factorTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <div class="factor-two-column">
+              <section class="factor-section">
+                <div class="section-heading">
+                  <div>
+                    <h3>年度 IR 热力图</h3>
+                    <p>每年按月度 rank IC 计算 IR。</p>
+                  </div>
+                </div>
+                <div class="factor-heatmap-wrap" id="factorHeatmap"></div>
+              </section>
+
+              <section class="factor-section">
+                <div class="section-heading">
+                  <div>
+                    <h3>高相关因子对</h3>
+                    <p>按平均 rank 相关性绝对值排序。</p>
+                  </div>
+                </div>
+                <div class="corr-list" id="factorCorrPairs"></div>
+              </section>
+            </div>
+
+            <section class="factor-section">
+              <div class="section-heading">
+                <div>
+                  <h3>最近构建状态</h3>
+                  <p>来自因子流水线 manifest。</p>
+                </div>
+              </div>
+              <div class="build-table-wrap">
+                <table class="build-table">
+                  <thead>
+                    <tr>
+                      <th>层</th>
+                      <th>起始</th>
+                      <th>结束</th>
+                      <th>行数</th>
+                      <th>有效数</th>
+                      <th>覆盖率</th>
+                      <th>状态</th>
+                      <th>时间</th>
+                    </tr>
+                  </thead>
+                  <tbody id="factorBuildBody"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -803,61 +1007,23 @@
     }
 
     let erdRendered = false;
-    let erdRenderPending = false;
 
     function renderErdIfVisible() {
       const page2 = document.getElementById("page-2");
       const mermaidEl = page2 && page2.querySelector(".mermaid");
-      const erdFrame = page2 && page2.querySelector(".erd-frame");
-      const erdError = document.getElementById("erdError");
-      if (!mermaidEl || erdRendered || erdRenderPending) return;
+      if (!mermaidEl || erdRendered) return;
 
       const style = window.getComputedStyle(page2);
       if (style.display === "none") return;
 
-      if (!window.mermaid) {
-        if (erdFrame && erdError) {
-          erdFrame.classList.add("has-error");
-          erdError.textContent = "ERD 渲染库未加载，请检查 Mermaid CDN。";
-        }
-        return;
+      if (window.mermaid) {
+        mermaid.run({ querySelector: "#page-2 .mermaid" });
+        erdRendered = true;
       }
-
-      erdRenderPending = true;
-      window.requestAnimationFrame(() => {
-        mermaidEl.removeAttribute("data-processed");
-        let renderResult;
-        try {
-          renderResult = mermaid.run({ querySelector: "#page-2 .mermaid" });
-        } catch (error) {
-          erdRenderPending = false;
-          if (erdFrame && erdError) {
-            erdFrame.classList.add("has-error");
-            erdError.textContent = "ERD 渲染失败，请检查 Mermaid 语法。";
-          }
-          console.error("Failed to render database ERD", error);
-          return;
-        }
-
-        Promise.resolve(renderResult)
-          .then(() => {
-            erdRendered = true;
-            erdRenderPending = false;
-            if (erdFrame) erdFrame.classList.remove("has-error");
-            if (erdError) erdError.textContent = "";
-          })
-          .catch((error) => {
-            erdRenderPending = false;
-            if (erdFrame && erdError) {
-              erdFrame.classList.add("has-error");
-              erdError.textContent = "ERD 渲染失败，请检查 Mermaid 语法。";
-            }
-            console.error("Failed to render database ERD", error);
-          });
-      });
     }
 
     let factorPanelRendered = false;
+    let activeFactorStyle = "all";
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -981,6 +1147,136 @@
       `).join("");
     }
 
+    function renderFactorFilters(data) {
+      const filters = [{ style: "all", style_name: "全部" }, ...data.styles];
+      const container = document.getElementById("factorStyleFilters");
+      container.innerHTML = filters.map((item) => `
+        <button class="factor-filter${item.style === activeFactorStyle ? " active" : ""}" type="button" data-style="${escapeHtml(item.style)}">
+          ${escapeHtml(item.style_name)}
+        </button>
+      `).join("");
+
+      container.querySelectorAll(".factor-filter").forEach((button) => {
+        button.addEventListener("click", () => {
+          activeFactorStyle = button.dataset.style;
+          renderFactorFilters(data);
+          renderFactorTable(data);
+        });
+      });
+    }
+
+    function renderFactorTable(data) {
+      const body = document.getElementById("factorTableBody");
+      const rows = data.factors.filter((factor) => (
+        activeFactorStyle === "all" || factor.style === activeFactorStyle
+      ));
+
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="11">暂无数据</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map((factor) => `
+        <tr>
+          <td><span class="factor-code">${escapeHtml(factor.factor_code)}</span></td>
+          <td><span class="factor-name">${escapeHtml(factor.factor_name)}</span></td>
+          <td><span class="style-chip">${escapeHtml(factor.style_name)}</span></td>
+          <td>${factor.direction > 0 ? "+1" : "-1"}</td>
+          <td>${formatPercent(factor.latest_coverage)}</td>
+          <td class="${metricClass(factor.ic_mean)}">${formatSigned(factor.ic_mean, 3)}</td>
+          <td class="${metricClass(factor.ir)}">${formatSigned(factor.ir)}</td>
+          <td>${formatPercent(factor.win_rate)}</td>
+          <td class="${metricClass(factor.recent_12m_ir)}">${formatSigned(factor.recent_12m_ir)}</td>
+          <td class="${metricClass(factor.recent_6m_ir)}">${formatSigned(factor.recent_6m_ir)}</td>
+          <td><span class="factor-status ${statusClass(factor.label)}">${escapeHtml(factor.label)}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function heatClass(value) {
+      if (!isNumber(value)) return "heat-empty";
+      if (value >= 1) return "heat-pos-3";
+      if (value >= 0.5) return "heat-pos-2";
+      if (value > 0) return "heat-pos-1";
+      if (value > -0.2) return "heat-flat";
+      if (value > -0.5) return "heat-neg-1";
+      if (value > -1) return "heat-neg-2";
+      return "heat-neg-3";
+    }
+
+    function renderFactorHeatmap(data) {
+      const container = document.getElementById("factorHeatmap");
+      const years = data.heatmap.years;
+      const header = years.map((year) => `<th>${escapeHtml(year)}</th>`).join("");
+      const rows = data.heatmap.rows.map((row) => {
+        const cells = years.map((year) => {
+          const value = row.values[year];
+          return `<td class="heat-cell ${heatClass(value)}" title="${escapeHtml(row.factor_code)} ${escapeHtml(year)}">${formatSigned(value, 1)}</td>`;
+        }).join("");
+
+        return `
+          <tr>
+            <td class="heat-factor">
+              <div class="factor-code">${escapeHtml(row.factor_code)}</div>
+              <div class="factor-name">${escapeHtml(row.style_name)}</div>
+            </td>
+            ${cells}
+          </tr>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <table class="factor-heatmap">
+          <thead>
+            <tr>
+              <th class="heat-factor">因子</th>
+              ${header}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderCorrPairs(data) {
+      const container = document.getElementById("factorCorrPairs");
+      if (!data.corr_pairs.length) {
+        container.innerHTML = `<div class="factor-empty">暂无高相关因子对</div>`;
+        return;
+      }
+
+      container.innerHTML = data.corr_pairs.map((pair) => `
+        <div class="corr-item">
+          <div>
+            <div class="corr-pair">${escapeHtml(pair.factor_a_name)} / ${escapeHtml(pair.factor_b_name)}</div>
+            <div class="corr-sub">${escapeHtml(pair.factor_a)} × ${escapeHtml(pair.factor_b)}</div>
+          </div>
+          <div class="corr-value ${metricClass(pair.corr)}">${formatSigned(pair.corr, 2)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderBuildManifest(data) {
+      const body = document.getElementById("factorBuildBody");
+      if (!data.build_manifest.length) {
+        body.innerHTML = `<tr><td colspan="8">暂无构建记录</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = data.build_manifest.map((row) => `
+        <tr>
+          <td><span class="factor-code">${escapeHtml(row.layer)}</span></td>
+          <td>${escapeHtml(row.start_date)}</td>
+          <td>${escapeHtml(row.end_date)}</td>
+          <td>${formatInt(row.row_count)}</td>
+          <td>${formatInt(row.valid_count)}</td>
+          <td>${formatPercent(row.coverage)}</td>
+          <td><span class="factor-status ${row.status === "success" ? "good" : "bad"}">${escapeHtml(row.status)}</span></td>
+          <td>${escapeHtml(row.created_at)}</td>
+        </tr>
+      `).join("");
+    }
+
     function renderFactorPanel() {
       const panel = document.getElementById("factorPanel");
       if (!panel || factorPanelRendered) return;
@@ -996,6 +1292,11 @@
       document.getElementById("factorSnapshotBadge").textContent = `最近更新：${data.meta.latest_coverage_date_text}`;
       renderFactorKpis(data);
       renderStyleSummary(data);
+      renderFactorFilters(data);
+      renderFactorTable(data);
+      renderFactorHeatmap(data);
+      renderCorrPairs(data);
+      renderBuildManifest(data);
       factorPanelRendered = true;
     }
 
