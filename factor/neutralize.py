@@ -1,4 +1,4 @@
-"""Size / industry neutralization via cross-sectional regression residuals.
+"""Market-cap / industry neutralization via cross-sectional regression residuals.
 
 The standardized exposure is regressed on ``ln(market_cap)`` plus industry
 dummies (``tdx_sector_code``); the residual is the neutralized exposure.

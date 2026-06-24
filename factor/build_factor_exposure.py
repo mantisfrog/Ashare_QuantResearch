@@ -1,9 +1,11 @@
 """Build processed factor exposures (Phase 3).
 
 Per rebalance cross-section and factor: direction-align -> winsorize (MAD x3) ->
-z-score + percentile rank -> neutralize on ln(market_cap) + industry. For
-``financial_na`` factors, financial-sector stocks are excluded first. All
-intermediate values are kept. Output: data/factor/exposure/<factor>/.
+z-score + percentile rank -> neutralize on ln(market_cap) + industry. Factors
+listed in ``NEUTRALIZATION_EXEMPT_FACTORS`` keep their z-score as
+``neutralized_value``. For ``financial_na`` factors, financial-sector stocks are
+excluded first. All intermediate values are kept. Output:
+data/factor/exposure/<factor>/.
 """
 from __future__ import annotations
 
@@ -25,7 +27,11 @@ import loaders
 import preprocess
 from neutralize import neutralize
 from etl_logging import append_summary
-from factor_config import CALC_VERSION, FINANCIAL_SECTOR_KEYWORDS
+from factor_config import (
+    CALC_VERSION,
+    FINANCIAL_SECTOR_KEYWORDS,
+    NEUTRALIZATION_EXEMPT_FACTORS,
+)
 from paths import FACTOR_CATALOG_FILE, FACTOR_EXPOSURE_DIR, FACTOR_RAW_DIR
 
 EXPOSURE_COLUMNS = [
@@ -123,9 +129,12 @@ def main() -> int:
                 winsorized = preprocess.winsorize_mad(aligned)
                 zscore = preprocess.zscore(winsorized)
                 percentile = preprocess.percentile_rank(winsorized)
-                neutralized = neutralize(
-                    zscore, log_mc.reindex(cross.index), industry.reindex(cross.index)
-                )
+                if code in NEUTRALIZATION_EXEMPT_FACTORS:
+                    neutralized = zscore.copy()
+                else:
+                    neutralized = neutralize(
+                        zscore, log_mc.reindex(cross.index), industry.reindex(cross.index)
+                    )
                 date_frames[code] = pd.DataFrame({
                     "date_id": date_id,
                     "stock_code": cross.index,

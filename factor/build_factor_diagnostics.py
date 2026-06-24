@@ -1,9 +1,9 @@
 """Build factor diagnostics (Phase 3): coverage + Spearman rank IC.
 
 Per (rebalance date, factor): universe_count, valid_count, coverage, and the
-rank IC of the neutralized exposure against 1m/3m/6m forward returns (month-end
-to month-end, back-adjusted). Also writes wide display matrices of average
-cross-sectional factor rank correlations.
+rank IC of the neutralized and raw/non-neutralized exposure against 1m/3m/6m
+forward returns (month-end to month-end, back-adjusted). Also writes wide
+display matrices of average cross-sectional factor rank correlations.
 Output: data/factor/diagnostics/.
 """
 from __future__ import annotations
@@ -36,8 +36,10 @@ DIAG_COLUMNS = [
     "date_id", "factor_code", "calc_version",
     "universe_count", "valid_count", "coverage",
     "rank_ic_1m", "rank_ic_3m", "rank_ic_6m",
+    "raw_rank_ic_1m", "raw_rank_ic_3m", "raw_rank_ic_6m",
 ]
-HORIZON_COLUMN = {1: "rank_ic_1m", 3: "rank_ic_3m", 6: "rank_ic_6m"}
+NEUTRALIZED_IC_COLUMNS = {1: "rank_ic_1m", 3: "rank_ic_3m", 6: "rank_ic_6m"}
+RAW_IC_COLUMNS = {1: "raw_rank_ic_1m", 3: "raw_rank_ic_3m", 6: "raw_rank_ic_6m"}
 RANK_CORR_MEAN_FILE = FACTOR_DIAGNOSTICS_DIR / "rank_corr_mean.csv"
 RANK_CORR_ROLLING_12M_FILE = FACTOR_DIAGNOSTICS_DIR / "rank_corr_rolling_12m.csv"
 RANK_CORR_ROLLING_MONTHS = 12
@@ -86,29 +88,34 @@ def main() -> int:
         print("[factor] build_factor_diagnostics: no rebalance dates in range", flush=True)
         return 0
 
-    # Exposure (neutralized) per factor; only factors with data are processed.
-    exposure_cross: dict[str, dict[int, pd.Series]] = {}
+    # Exposure per factor; only factors with data are processed.
+    neutralized_cross: dict[str, dict[int, pd.Series]] = {}
+    raw_cross: dict[str, dict[int, pd.Series]] = {}
     implemented: list[str] = []
     for code in requested:
         if code not in catalog.index:
             continue
         expo = factor_io.read_year_partitioned_csv(
             FACTOR_EXPOSURE_DIR, code, subdir=code, date_ids=target_set,
-            usecols=["date_id", "stock_code", "neutralized_value"],
+            usecols=["date_id", "stock_code", "neutralized_value", "zscore_value"],
             calc_version=args.calc_version,
         )
         if expo.empty:
             continue
         implemented.append(code)
-        exposure_cross[code] = {
+        neutralized_cross[code] = {
             int(date_id): group.set_index("stock_code")["neutralized_value"]
+            for date_id, group in expo.groupby("date_id")
+        }
+        raw_cross[code] = {
+            int(date_id): group.set_index("stock_code")["zscore_value"]
             for date_id, group in expo.groupby("date_id")
         }
     if not implemented:
         print("[factor] build_factor_diagnostics: no exposures found; run build_factor_exposure first", flush=True)
         return 0
 
-    rank_corr_mean = diagnostics.mean_rank_corr_matrix(exposure_cross, implemented, targets)
+    rank_corr_mean = diagnostics.mean_rank_corr_matrix(neutralized_cross, implemented, targets)
     write_rank_corr_matrix(rank_corr_mean, RANK_CORR_MEAN_FILE)
     print(
         f"[factor] rank_corr_mean: wrote {RANK_CORR_MEAN_FILE} "
@@ -117,7 +124,7 @@ def main() -> int:
     )
     rolling_dates = targets[-RANK_CORR_ROLLING_MONTHS:]
     rank_corr_rolling_12m = diagnostics.mean_rank_corr_matrix(
-        exposure_cross, implemented, rolling_dates
+        neutralized_cross, implemented, rolling_dates
     )
     write_rank_corr_matrix(rank_corr_rolling_12m, RANK_CORR_ROLLING_12M_FILE)
     print(
@@ -148,9 +155,10 @@ def main() -> int:
     rows: list[dict] = []
     for code in implemented:
         for date_id in targets:
-            signal = exposure_cross[code].get(date_id)
+            signal = neutralized_cross[code].get(date_id)
             if signal is None:
                 continue
+            raw_signal = raw_cross[code].get(date_id)
             valid = int(signal.notna().sum())
             count = int(universe_count.get(date_id, 0))
             record = {
@@ -158,10 +166,17 @@ def main() -> int:
                 "universe_count": count, "valid_count": valid,
                 "coverage": round(valid / count, 6) if count else "",
             }
-            for horizon, column in HORIZON_COLUMN.items():
+            for horizon, column in NEUTRALIZED_IC_COLUMNS.items():
                 frame = forward.get(horizon)
                 if frame is not None and date_id in frame.index:
                     ic = diagnostics.spearman_ic(signal, frame.loc[date_id])
+                else:
+                    ic = float("nan")
+                record[column] = "" if pd.isna(ic) else round(ic, 6)
+            for horizon, column in RAW_IC_COLUMNS.items():
+                frame = forward.get(horizon)
+                if raw_signal is not None and frame is not None and date_id in frame.index:
+                    ic = diagnostics.spearman_ic(raw_signal, frame.loc[date_id])
                 else:
                     ic = float("nan")
                 record[column] = "" if pd.isna(ic) else round(ic, 6)
@@ -176,10 +191,20 @@ def main() -> int:
         result.assign(
             **{
                 column: pd.to_numeric(result[column], errors="coerce")
-                for column in ["coverage", "rank_ic_1m", "rank_ic_3m", "rank_ic_6m"]
+                for column in [
+                    "coverage",
+                    "rank_ic_1m", "rank_ic_3m", "rank_ic_6m",
+                    "raw_rank_ic_1m", "raw_rank_ic_3m", "raw_rank_ic_6m",
+                ]
             }
         )
-        .groupby("factor_code")[["coverage", "rank_ic_1m", "rank_ic_3m", "rank_ic_6m"]]
+        .groupby("factor_code")[
+            [
+                "coverage",
+                "rank_ic_1m", "rank_ic_3m", "rank_ic_6m",
+                "raw_rank_ic_1m", "raw_rank_ic_3m", "raw_rank_ic_6m",
+            ]
+        ]
         .mean()
     )
     print("[factor] diagnostics (mean over dates):", flush=True)

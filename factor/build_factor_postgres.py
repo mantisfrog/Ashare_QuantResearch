@@ -148,6 +148,9 @@ CREATE TABLE IF NOT EXISTS fact_factor_diagnostics (
     rank_ic_1m     NUMERIC(12, 6),
     rank_ic_3m     NUMERIC(12, 6),
     rank_ic_6m     NUMERIC(12, 6),
+    raw_rank_ic_1m NUMERIC(12, 6),
+    raw_rank_ic_3m NUMERIC(12, 6),
+    raw_rank_ic_6m NUMERIC(12, 6),
     created_at     TIMESTAMP NOT NULL DEFAULT now(),
     CONSTRAINT pk_fact_factor_diagnostics PRIMARY KEY (date_id, factor_code, calc_version),
     CONSTRAINT fk_factor_diag_date FOREIGN KEY (date_id) REFERENCES dim_date (date_id),
@@ -158,6 +161,14 @@ CREATE TABLE IF NOT EXISTS fact_factor_diagnostics (
 FACTOR_SCHEMA_MIGRATIONS_SQL = """
 ALTER TABLE fact_factor_composite
     ADD COLUMN IF NOT EXISTS reversal_score NUMERIC(12, 6);
+ALTER TABLE fact_factor_composite
+    DROP COLUMN IF EXISTS size_score;
+ALTER TABLE fact_factor_diagnostics
+    ADD COLUMN IF NOT EXISTS raw_rank_ic_1m NUMERIC(12, 6);
+ALTER TABLE fact_factor_diagnostics
+    ADD COLUMN IF NOT EXISTS raw_rank_ic_3m NUMERIC(12, 6);
+ALTER TABLE fact_factor_diagnostics
+    ADD COLUMN IF NOT EXISTS raw_rank_ic_6m NUMERIC(12, 6);
 """
 
 FACTOR_INDEXES_SQL = """
@@ -304,6 +315,7 @@ DIAGNOSTICS_COLUMNS = [
     "date_id", "factor_code", "calc_version",
     "universe_count", "valid_count", "coverage",
     "rank_ic_1m", "rank_ic_3m", "rank_ic_6m",
+    "raw_rank_ic_1m", "raw_rank_ic_3m", "raw_rank_ic_6m",
 ]
 
 

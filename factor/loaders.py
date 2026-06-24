@@ -170,16 +170,20 @@ def load_quarterly_metrics_history(
 
 
 def load_daily_snapshot(conn, date_id: int) -> pd.DataFrame:
-    """close + market_cap on ``date_id`` indexed by stock_code."""
+    """Daily point-in-time fields on ``date_id`` indexed by stock_code."""
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT stock_code, close, market_cap FROM fact_daily WHERE date_id = %s",
+            "SELECT stock_code, close, market_cap, float_market_cap "
+            "FROM fact_daily WHERE date_id = %s",
             (date_id,),
         )
         rows = cur.fetchall()
-    frame = pd.DataFrame(rows, columns=["stock_code", "close", "market_cap"]).set_index("stock_code")
-    frame["close"] = pd.to_numeric(frame["close"], errors="coerce")
-    frame["market_cap"] = pd.to_numeric(frame["market_cap"], errors="coerce")
+    frame = pd.DataFrame(
+        rows,
+        columns=["stock_code", "close", "market_cap", "float_market_cap"],
+    ).set_index("stock_code")
+    for column in ("close", "market_cap", "float_market_cap"):
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
     return frame
 
 

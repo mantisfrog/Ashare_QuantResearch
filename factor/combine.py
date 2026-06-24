@@ -1,23 +1,28 @@
 """Composite style scores from neutralized factor exposures.
 
-Combines per-factor neutralized exposures into one score per style
-(value / quality / growth / momentum / reversal / risk) and an equal-weighted total.
+Combines per-factor exposures into one score per style and an equal-weighted
+alpha total.
 
 Method (per rebalance cross-section):
   1. within-style aggregation: equal-weighted by default, or weighted by
      factor_config.COMPOSITE_FACTOR_WEIGHTS when enabled;
   2. re-standardize each style score (cross-sectional z-score) so styles with
      different factor counts / correlations are comparable;
-  3. total_score = equal weight across the styles that have a value for the
-     stock (styles with no implemented factor are simply absent).
-Neutralized exposures already have ``direction`` applied, so larger is better.
+  3. total_score = equal weight across configured alpha styles that have a
+     value for the stock.
+Exposures already have ``direction`` applied, so larger is better.
 """
 from __future__ import annotations
 
 import pandas as pd
 
 import preprocess
-from factor_config import COMPOSITE_EQUAL_WEIGHT, COMPOSITE_FACTOR_WEIGHTS, STYLES
+from factor_config import (
+    COMPOSITE_EQUAL_WEIGHT,
+    COMPOSITE_FACTOR_WEIGHTS,
+    STYLES,
+    TOTAL_SCORE_STYLES,
+)
 
 STYLE_SCORE_COLUMNS = [f"{style}_score" for style in STYLES]
 COMPOSITE_COLUMNS = ["date_id", "stock_code", *STYLE_SCORE_COLUMNS, "total_score"]
@@ -27,13 +32,13 @@ def composite_style_scores(
     exposure_long: pd.DataFrame,
     catalog: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Aggregate neutralized exposures into style scores + ``total_score``.
+    """Aggregate exposures into style scores + alpha ``total_score``.
 
     ``exposure_long`` has columns (date_id, stock_code, factor_code,
-    neutralized_value); ``catalog`` maps factor_code -> style (indexed by
-    factor_code or carrying it as a column). Returns a frame keyed by
-    (date_id, stock_code) with one ``<style>_score`` column per
-    :data:`factor_config.STYLES` plus ``total_score``.
+    neutralized_value); ``catalog`` maps factor_code -> style. Returns a frame
+    keyed by (date_id, stock_code) with one ``<style>_score`` column per
+    :data:`factor_config.STYLES` plus ``total_score`` over
+    :data:`factor_config.TOTAL_SCORE_STYLES`.
     """
     if exposure_long is None or exposure_long.empty:
         return pd.DataFrame(columns=COMPOSITE_COLUMNS)
@@ -64,8 +69,9 @@ def composite_style_scores(
     )
     wide = wide.reindex(columns=list(STYLES))
     wide.columns = STYLE_SCORE_COLUMNS
-    # 3) equal weight across the styles present for each stock.
-    wide["total_score"] = wide[STYLE_SCORE_COLUMNS].mean(axis=1, skipna=True)
+    # 3) equal weight across alpha styles present for each stock.
+    total_score_columns = [f"{style}_score" for style in TOTAL_SCORE_STYLES]
+    wide["total_score"] = wide[total_score_columns].mean(axis=1, skipna=True)
     return wide.reset_index().loc[:, COMPOSITE_COLUMNS]
 
 

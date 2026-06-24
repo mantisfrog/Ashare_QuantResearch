@@ -39,6 +39,7 @@ from factor_config import (
     REVERSAL_LONG_SKIP_TRADE_DAYS,
     REVERSAL_LONG_TRADE_DAYS,
     REVERSAL_TRADE_DAYS,
+    TURNOVER_126D_TRADE_DAYS,
     TURNOVER_TRADE_DAYS,
     VOLATILITY_TRADE_DAYS,
 )
@@ -73,7 +74,7 @@ COMPUTE = {
 
 PRICE_FACTORS = [
     "mom_6_1", "reversal_1m", "reversal_3y_6m",
-    "volatility_252d", "turnover_21d",
+    "volatility_252d", "turnover_21d", "turnover_126d",
 ]
 PRICE_FACTOR_LOOKBACKS = {
     "mom_6_1": MOMENTUM_HALF_TRADE_DAYS,
@@ -81,6 +82,7 @@ PRICE_FACTOR_LOOKBACKS = {
     "reversal_3y_6m": REVERSAL_LONG_TRADE_DAYS,
     "volatility_252d": VOLATILITY_TRADE_DAYS,
     "turnover_21d": TURNOVER_TRADE_DAYS,
+    "turnover_126d": TURNOVER_126D_TRADE_DAYS,
 }
 
 # Growth acceleration (point-in-time quarterly history, not a snapshot).
@@ -148,13 +150,16 @@ def compute_price_factors(window, tdi_t, dateid_to_tdi, members, requested) -> d
     if "volatility_252d" in requested:
         returns = price.pct_change()
         raw["volatility_252d"] = returns.iloc[-VOLATILITY_TRADE_DAYS:].std()
-    if "turnover_21d" in requested:
+    if "turnover_21d" in requested or "turnover_126d" in requested:
         df["turnover"] = df["vol"] / df["float_shares"].where(df["float_shares"] > 0)
         turn = (
             df.pivot_table(index="tdi", columns="stock_code", values="turnover", aggfunc="first")
             .reindex(full_tdi)
         )
-        raw["turnover_21d"] = turn.iloc[-TURNOVER_TRADE_DAYS:].mean()
+        if "turnover_21d" in requested:
+            raw["turnover_21d"] = turn.iloc[-TURNOVER_TRADE_DAYS:].mean()
+        if "turnover_126d" in requested:
+            raw["turnover_126d"] = turn.iloc[-TURNOVER_126D_TRADE_DAYS:].mean()
     member_idx = pd.Index(sorted(members), name="stock_code")
     result: dict[str, pd.Series] = {}
     for code, series in raw.items():

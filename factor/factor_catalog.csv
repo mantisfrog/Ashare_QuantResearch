@@ -15,4 +15,5 @@ reversal_1m,短期反转,reversal,1,return,"-(adj_close[t] / adj_close[t-21] - 1
 reversal_3y_6m,3年减6月长期反转,reversal,1,return,"-(adj_close[t-126] / adj_close[t-756] - 1)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
 volatility_252d,波动率,risk,-1,std,"std(daily_return, trailing 252 td)","fact_daily.close; fact_adjustment_factor_period.adjust_factor",false,v1
 turnover_21d,换手率,risk,-1,turnover,"mean(vol / float_shares, trailing 21 td)","fact_daily.vol; fact_daily.float_shares",false,v1
+turnover_126d,6个月换手率,risk,-1,turnover,"mean(vol / float_shares, trailing 126 td)","fact_daily.vol; fact_daily.float_shares",false,v1
 earnings_accel_2q_avg,双季净利加速度均值,growth,1,zscore,"average of latest two consecutive standardized net-profit acceleration scores; each alpha = FN324_q - FN324_q-4","FN324",false,v1

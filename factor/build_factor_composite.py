@@ -1,8 +1,8 @@
 """Build composite style scores (Phase 5).
 
-Per rebalance cross-section, aggregates the neutralized factor exposures into
-one score per style (value / quality / growth / momentum / reversal / risk) and an
-equal-weighted ``total_score``. Output: data/factor/composite/.
+Per rebalance cross-section, aggregates factor exposures into one score per
+style and an equal-weighted alpha ``total_score``. Output:
+data/factor/composite/.
 """
 from __future__ import annotations
 

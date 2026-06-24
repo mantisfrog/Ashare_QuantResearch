@@ -38,6 +38,7 @@ REVERSAL_LONG_TRADE_DAYS = 756
 REVERSAL_LONG_SKIP_TRADE_DAYS = 126
 VOLATILITY_TRADE_DAYS = 252
 TURNOVER_TRADE_DAYS = 21
+TURNOVER_126D_TRADE_DAYS = 126
 
 # Growth acceleration: standardize the latest single-quarter net-profit YoY change
 # against its own recent history. alpha = single-quarter net profit YoY change;
@@ -52,6 +53,15 @@ QUALITY_HISTORY_YEARS = 5
 
 # Composite styles (must match the ``style`` column in factor_catalog.csv).
 STYLES = ("value", "quality", "growth", "momentum", "reversal", "risk")
+
+# Styles included in the alpha total score.
+TOTAL_SCORE_STYLES = ("value", "quality", "growth", "momentum", "reversal", "risk")
+if not set(TOTAL_SCORE_STYLES).issubset(STYLES):
+    raise RuntimeError("TOTAL_SCORE_STYLES must be a subset of STYLES.")
+
+# Factors that should pass through preprocessing without market-cap/industry
+# neutralization. Their ``neutralized_value`` output is the z-scored exposure.
+NEUTRALIZATION_EXEMPT_FACTORS = ()
 
 # Composite aggregation. When ``COMPOSITE_EQUAL_WEIGHT`` is True, every factor
 # within a style receives equal weight and the mapping below is only documented
@@ -87,6 +97,7 @@ COMPOSITE_FACTOR_WEIGHTS: dict[str, dict[str, float]] = {
     "risk": {
         "volatility_252d": 1.0,
         "turnover_21d": 1.0,
+        "turnover_126d": 1.0,
     },
 }
 
@@ -120,6 +131,7 @@ def factor_config_snapshot_lines() -> list[str]:
         f"    REVERSAL_LONG_SKIP_TRADE_DAYS: {REVERSAL_LONG_SKIP_TRADE_DAYS}",
         f"    VOLATILITY_TRADE_DAYS: {VOLATILITY_TRADE_DAYS}",
         f"    TURNOVER_TRADE_DAYS: {TURNOVER_TRADE_DAYS}",
+        f"    TURNOVER_126D_TRADE_DAYS: {TURNOVER_126D_TRADE_DAYS}",
         "  growth_acceleration:",
         f"    GROWTH_ACCEL_LOOKBACK_QUARTERS: {GROWTH_ACCEL_LOOKBACK_QUARTERS}",
         f"    GROWTH_ACCEL_YOY_QUARTERS: {GROWTH_ACCEL_YOY_QUARTERS}",
@@ -129,11 +141,14 @@ def factor_config_snapshot_lines() -> list[str]:
         f"    QUALITY_HISTORY_YEARS: {QUALITY_HISTORY_YEARS}",
         "  composite:",
         f"    STYLES: {STYLES}",
+        f"    TOTAL_SCORE_STYLES: {TOTAL_SCORE_STYLES}",
         f"    COMPOSITE_EQUAL_WEIGHT: {COMPOSITE_EQUAL_WEIGHT}",
         "    COMPOSITE_FACTOR_WEIGHTS:",
     ]
     lines.extend(_format_nested_weights(COMPOSITE_FACTOR_WEIGHTS, indent=6))
     lines.extend([
+        "  neutralization:",
+        f"    NEUTRALIZATION_EXEMPT_FACTORS: {NEUTRALIZATION_EXEMPT_FACTORS}",
         "  financial_sector_keywords:",
         f"    FINANCIAL_SECTOR_KEYWORDS: {FINANCIAL_SECTOR_KEYWORDS}",
     ])
