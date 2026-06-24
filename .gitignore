@@ -9,6 +9,7 @@
 # 日志
 /log/*
 !/log/.gitkeep
+debug.log
 
 # 密钥 / 环境
 .env
