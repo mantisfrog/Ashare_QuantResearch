@@ -1,8 +1,9 @@
 """CSV partitioning + manifest helpers for the factor library.
 
 Keeps factor outputs as long-format CSVs split by year, with idempotent
-"upsert by date_id" semantics so re-running a month overwrites cleanly. Also
-appends one row per build to the shared manifest.
+"upsert by month" semantics so a moving latest-month rebalance date overwrites
+the earlier same-month snapshot cleanly. Also appends one row per build to the
+shared manifest.
 """
 from __future__ import annotations
 
@@ -39,9 +40,12 @@ def write_year_partitioned_csv(
 ) -> list[Path]:
     """Write ``df`` to ``<directory>/[subdir/]<prefix>_<year>.csv`` per year.
 
-    For each year touched by ``df``, existing rows whose ``date_id`` is present
-    in ``df`` are dropped before appending, so re-computing a month is
-    idempotent. Returns the list of files written.
+    For each year touched by ``df``, existing rows whose ``date_id`` is in the
+    same YYYYMM month as any new row are dropped before appending. If
+    ``calc_version`` is present on both old and new rows, replacement is scoped
+    to the new versions. This keeps partially updated latest-month snapshots
+    from leaving stale earlier rebalance dates in monthly factor outputs.
+    Returns the list of files written.
     """
     out_dir = Path(directory) if subdir is None else Path(directory) / subdir
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -54,10 +58,11 @@ def write_year_partitioned_csv(
     for year, chunk in work.groupby("__year"):
         chunk = chunk.drop(columns="__year")
         path = out_dir / f"{prefix}_{year}.csv"
-        new_dates = {int(value) for value in chunk["date_id"].unique()}
+        new_months = {int(value) // 100 for value in chunk["date_id"].unique()}
         if path.exists():
             existing = pd.read_csv(path)
-            replace_mask = existing["date_id"].isin(new_dates)
+            existing_months = pd.to_numeric(existing["date_id"], errors="coerce") // 100
+            replace_mask = existing_months.isin(new_months)
             if "calc_version" in existing.columns and "calc_version" in chunk.columns:
                 new_versions = {str(value) for value in chunk["calc_version"].dropna().unique()}
                 replace_mask &= existing["calc_version"].astype(str).isin(new_versions)
