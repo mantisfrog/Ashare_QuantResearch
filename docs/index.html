@@ -34,12 +34,12 @@
     html {
       height: 100%;
       overflow: hidden;
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
     }
 
     body {
       margin: 0;
+      width: 100%;
+      max-width: 100vw;
       height: 100%;
       min-height: 100vh;
       overflow: hidden;
@@ -54,13 +54,10 @@
       box-sizing: border-box;
     }
 
-    button {
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-
     header {
       flex: 0 0 auto;
+      min-width: 0;
+      max-width: 100vw;
       padding: 16px 24px;
       background: #111827;
       color: white;
@@ -69,18 +66,25 @@
     header h1 {
       margin: 0 0 12px;
       font-size: 32px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
     }
 
     header p {
       margin: 0;
       font-size: 16px;
       color: #d1d5db;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
     main {
       flex: 1;
       display: flex;
+      width: 100%;
+      max-width: 100vw;
       min-height: 0;
+      min-width: 0;
       padding: 12px;
     }
 
@@ -92,6 +96,7 @@
       gap: 12px;
       align-items: stretch;
       min-height: 0;
+      min-width: 0;
     }
 
     .sidebar {
@@ -107,6 +112,8 @@
       box-shadow: var(--shadow-soft);
       height: 100%;
       min-height: 0;
+      min-width: 0;
+      max-width: 100%;
       justify-content: flex-start;
     }
 
@@ -147,6 +154,7 @@
       display: none;
       width: 100%;
       min-height: 0;
+      min-width: 0;
     }
 
     .page-panel.active {
@@ -167,6 +175,7 @@
       display: flex;
       flex-direction: column;
       min-width: 0;
+      overflow: auto;
     }
 
     .project-card h2 {
@@ -219,56 +228,10 @@
       position: relative;
     }
 
-    .tableau-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      display: flex;
-      border-radius: var(--radius);
-    }
-
-    .tableau-scroll-hint {
-      display: none;
-      position: absolute;
-      inset: 0;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.05);
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-      pointer-events: auto;
-      cursor: grab;
-      user-select: none;
-      -webkit-user-select: none;
-      z-index: 2;
-    }
-
-    .tableau-scroll-hint.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .tableau-interact-toggle {
-      display: none;
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      z-index: 3;
-      padding: 5px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
     tableau-viz {
+      display: block;
       width: 100%;
       height: 100%;
-      display: block;
     }
 
     .data-dashboard {
@@ -278,6 +241,7 @@
       display: flex;
       flex-direction: column;
       gap: var(--section-gap);
+      overflow: auto;
     }
 
     .dashboard-header {
@@ -475,6 +439,7 @@
       display: flex;
       flex-direction: column;
       gap: var(--section-gap);
+      overflow: auto;
     }
 
     .factor-kpi-grid {
@@ -514,7 +479,7 @@
 
     .style-summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: var(--section-gap);
     }
 
@@ -644,7 +609,25 @@
 
     @media (max-width: 760px) {
       header {
+        width: 100vw;
+        max-width: 100vw;
+        overflow: hidden;
         padding: 14px 16px;
+      }
+
+      header h1 {
+        width: 100%;
+        font-size: 28px;
+        max-width: 100%;
+      }
+
+      header p {
+        width: 100%;
+        max-width: 100%;
+        font-size: 11px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       main {
@@ -653,23 +636,36 @@
 
       .page-shell {
         grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+        max-width: calc(100vw - 20px);
         gap: 10px;
       }
 
       .sidebar {
         position: static;
-        flex-direction: row;
-        justify-content: flex-start;
-        overflow-x: auto;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: hidden;
+        width: 100%;
+        max-width: 100%;
         height: auto;
         min-height: 0;
       }
 
+      .page-content {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+      }
+
       .nav-tab {
-        flex: 0 0 auto;
-        width: auto;
-        min-width: 84px;
+        width: 100%;
+        min-width: 0;
         text-align: center;
+      }
+
+      .nav-tab:last-child {
+        grid-column: 1 / -1;
       }
 
       .project-card {
@@ -677,35 +673,20 @@
       }
 
       .tableau-panel {
-        flex: none;
-        min-height: 360px;
-        height: 55vh;
-        margin-bottom: 12px;
+        min-height: 520px;
         padding: 16px;
       }
 
-      .tableau-panel:last-child {
-        margin-bottom: 0;
-      }
-
-      .tableau-frame {
+      .tableau-wrapper {
+        min-height: 0;
         overflow: auto;
-        background: var(--surface-subtle);
         border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-subtle);
       }
 
-      .tableau-frame tableau-viz {
-        width: 1200px;
-        height: 800px;
-        flex: 0 0 auto;
-      }
-
-      .tableau-scroll-hint {
-        display: flex;
-      }
-
-      .tableau-interact-toggle {
-        display: block;
+      .tableau-wrapper tableau-viz {
+        min-width: 960px;
       }
 
       .dashboard-header {
@@ -742,80 +723,7 @@
       }
 
       .erd-frame {
-        min-height: 420px;
-      }
-
-      html,
-      body {
-        height: auto;
-        overflow: visible;
-      }
-
-      body {
-        display: block;
-        min-height: 100vh;
-        min-height: 100dvh;
-      }
-
-      main {
-        display: block;
-        min-height: auto;
-        padding: 10px;
-      }
-
-      .page-shell {
-        display: block;
-        min-height: auto;
-      }
-
-      .page-content {
-        display: block;
-      }
-
-      .page-panel.active {
-        display: block;
-      }
-
-      .project-card,
-      .data-dashboard,
-      .factor-dashboard,
-      .tableau-page {
-        display: block;
-        min-height: auto;
-      }
-
-      .tableau-wrapper {
-        height: 100%;
-        min-height: 300px;
-      }
-
-      header h1 {
-        font-size: 24px;
-      }
-
-      header p {
-        font-size: 14px;
-      }
-
-      .nav-tab {
-        min-height: 40px;
-        padding: 0 16px;
-      }
-
-      .stat-value {
-        font-size: 20px;
-      }
-
-      .factor-metric-value {
-        font-size: 15px;
-      }
-
-      .factor-style-name {
-        font-size: 15px;
-      }
-
-      .factor-style-code {
-        font-size: 11px;
+        min-height: 520px;
       }
     }
   </style>
@@ -843,18 +751,12 @@
             <h2>成长 / 价值风格轮动分析</h2>
 
             <div class="tableau-wrapper">
-              <div class="tableau-frame">
-                <button class="tableau-interact-toggle" type="button" aria-pressed="false">启用交互</button>
-                <div class="tableau-scroll-hint">
-                  <span>👆 拖动浏览完整图表</span>
-                </div>
-                <tableau-viz
-                  id="tableauViz"
-                  src="https://public.tableau.com/views/vs_17812455678280/Return_Rolling"
-                  toolbar="bottom"
-                  hide-tabs>
-                </tableau-viz>
-              </div>
+              <tableau-viz
+                id="tableauViz"
+                src="https://public.tableau.com/views/vs_17812455678280/Return_Rolling"
+                toolbar="bottom"
+                hide-tabs>
+              </tableau-viz>
             </div>
           </div>
         </section>
@@ -937,6 +839,19 @@
               <div class="style-summary-grid" id="factorStyleSummary"></div>
             </section>
 
+            <section class="tableau-panel">
+              <h2>风格年度有效性</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="factorOverviewViz"
+                  src="https://public.tableau.com/views/Factor_Overview/Sheet1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+
           </div>
         </section>
 
@@ -946,18 +861,12 @@
               <h2>Rank IC Correlation Matrix</h2>
 
               <div class="tableau-wrapper">
-                <div class="tableau-frame">
-                  <button class="tableau-interact-toggle" type="button" aria-pressed="false">启用交互</button>
-                  <div class="tableau-scroll-hint">
-                    <span>👆 拖动浏览完整图表</span>
-                  </div>
-                  <tableau-viz
-                    id="rankIcCorrViz"
-                    src="https://public.tableau.com/views/RankICCorr/CorrMatrix"
-                    toolbar="bottom"
-                    hide-tabs>
-                  </tableau-viz>
-                </div>
+                <tableau-viz
+                  id="rankIcCorrViz"
+                  src="https://public.tableau.com/views/RankICCorr/CorrMatrix"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
               </div>
             </section>
 
@@ -965,18 +874,12 @@
               <h2>Rank IC &amp; Rank IC_Raw</h2>
 
               <div class="tableau-wrapper">
-                <div class="tableau-frame">
-                  <button class="tableau-interact-toggle" type="button" aria-pressed="false">启用交互</button>
-                  <div class="tableau-scroll-hint">
-                    <span>👆 拖动浏览完整图表</span>
-                  </div>
-                  <tableau-viz
-                    id="rankIcRawViz"
-                    src="https://public.tableau.com/views/Rank_IC/Sheet1"
-                    toolbar="bottom"
-                    hide-tabs>
-                  </tableau-viz>
-                </div>
+                <tableau-viz
+                  id="rankIcRawViz"
+                  src="https://public.tableau.com/views/Rank_IC/Sheet1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
               </div>
             </section>
           </div>
@@ -1370,8 +1273,11 @@
     }
 
     function activatePage(targetId) {
+      let activeTab = null;
       tabs.forEach((item) => {
-        item.classList.toggle("active", item.dataset.target === targetId);
+        const isActive = item.dataset.target === targetId;
+        item.classList.toggle("active", isActive);
+        if (isActive) activeTab = item;
       });
 
       panels.forEach((panel) => {
@@ -1388,6 +1294,18 @@
 
       window.requestAnimationFrame(() => {
         window.scrollTo({ left: 0, top: 0 });
+        if (activeTab) {
+          const nav = activeTab.parentElement;
+          if (nav && nav.scrollWidth > nav.clientWidth) {
+            const navRect = nav.getBoundingClientRect();
+            const tabRect = activeTab.getBoundingClientRect();
+            const targetLeft =
+              nav.scrollLeft + tabRect.left - navRect.left - (nav.clientWidth - activeTab.offsetWidth) / 2;
+            nav.scrollTo({ left: Math.max(0, targetLeft), behavior: "auto" });
+          } else {
+            activeTab.scrollIntoView({ block: "nearest", inline: "center" });
+          }
+        }
       });
     }
 
@@ -1401,17 +1319,6 @@
       tab.addEventListener("click", () => {
         selectErdView(tab.dataset.erdView);
         renderErdIfVisible();
-      });
-    });
-
-    document.querySelectorAll(".tableau-interact-toggle").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const frame = btn.closest(".tableau-frame");
-        const hint = frame && frame.querySelector(".tableau-scroll-hint");
-        const interact = btn.getAttribute("aria-pressed") !== "true";
-        btn.setAttribute("aria-pressed", String(interact));
-        btn.textContent = interact ? "拖动浏览" : "启用交互";
-        if (hint) hint.classList.toggle("hidden", interact);
       });
     });
 
