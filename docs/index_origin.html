@@ -34,8 +34,6 @@
     html {
       height: 100%;
       overflow: hidden;
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
     }
 
     body {
@@ -52,11 +50,6 @@
 
     * {
       box-sizing: border-box;
-    }
-
-    button {
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
 
     header {
@@ -219,56 +212,9 @@
       position: relative;
     }
 
-    .tableau-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      display: flex;
-      border-radius: var(--radius);
-    }
-
-    .tableau-scroll-hint {
-      display: none;
-      position: absolute;
-      inset: 0;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.05);
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-      pointer-events: auto;
-      cursor: grab;
-      user-select: none;
-      -webkit-user-select: none;
-      z-index: 2;
-    }
-
-    .tableau-scroll-hint.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .tableau-interact-toggle {
-      display: none;
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      z-index: 3;
-      padding: 5px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--surface);
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
     tableau-viz {
       width: 100%;
       height: 100%;
-      display: block;
     }
 
     .data-dashboard {
@@ -677,35 +623,12 @@
       }
 
       .tableau-panel {
-        flex: none;
-        min-height: 360px;
-        height: 55vh;
-        margin-bottom: 12px;
+        min-height: 520px;
         padding: 16px;
       }
 
-      .tableau-panel:last-child {
-        margin-bottom: 0;
-      }
-
-      .tableau-frame {
-        overflow: auto;
-        background: var(--surface-subtle);
-        border: 1px solid var(--border);
-      }
-
-      .tableau-frame tableau-viz {
-        width: 1200px;
-        height: 800px;
-        flex: 0 0 auto;
-      }
-
-      .tableau-scroll-hint {
-        display: flex;
-      }
-
-      .tableau-interact-toggle {
-        display: block;
+      .tableau-wrapper {
+        min-height: 0;
       }
 
       .dashboard-header {
@@ -742,80 +665,7 @@
       }
 
       .erd-frame {
-        min-height: 420px;
-      }
-
-      html,
-      body {
-        height: auto;
-        overflow: visible;
-      }
-
-      body {
-        display: block;
-        min-height: 100vh;
-        min-height: 100dvh;
-      }
-
-      main {
-        display: block;
-        min-height: auto;
-        padding: 10px;
-      }
-
-      .page-shell {
-        display: block;
-        min-height: auto;
-      }
-
-      .page-content {
-        display: block;
-      }
-
-      .page-panel.active {
-        display: block;
-      }
-
-      .project-card,
-      .data-dashboard,
-      .factor-dashboard,
-      .tableau-page {
-        display: block;
-        min-height: auto;
-      }
-
-      .tableau-wrapper {
-        height: 100%;
-        min-height: 300px;
-      }
-
-      header h1 {
-        font-size: 24px;
-      }
-
-      header p {
-        font-size: 14px;
-      }
-
-      .nav-tab {
-        min-height: 40px;
-        padding: 0 16px;
-      }
-
-      .stat-value {
-        font-size: 20px;
-      }
-
-      .factor-metric-value {
-        font-size: 15px;
-      }
-
-      .factor-style-name {
-        font-size: 15px;
-      }
-
-      .factor-style-code {
-        font-size: 11px;
+        min-height: 520px;
       }
     }
   </style>
@@ -843,18 +693,12 @@
             <h2>成长 / 价值风格轮动分析</h2>
 
             <div class="tableau-wrapper">
-              <div class="tableau-frame">
-                <button class="tableau-interact-toggle" type="button" aria-pressed="false">启用交互</button>
-                <div class="tableau-scroll-hint">
-                  <span>👆 拖动浏览完整图表</span>
-                </div>
-                <tableau-viz
-                  id="tableauViz"
-                  src="https://public.tableau.com/views/vs_17812455678280/Return_Rolling"
-                  toolbar="bottom"
-                  hide-tabs>
-                </tableau-viz>
-              </div>
+              <tableau-viz
+                id="tableauViz"
+                src="https://public.tableau.com/views/vs_17812455678280/Return_Rolling"
+                toolbar="bottom"
+                hide-tabs>
+              </tableau-viz>
             </div>
           </div>
         </section>
@@ -946,18 +790,12 @@
               <h2>Rank IC Correlation Matrix</h2>
 
               <div class="tableau-wrapper">
-                <div class="tableau-frame">
-                  <button class="tableau-interact-toggle" type="button" aria-pressed="false">启用交互</button>
-                  <div class="tableau-scroll-hint">
-                    <span>👆 拖动浏览完整图表</span>
-                  </div>
-                  <tableau-viz
-                    id="rankIcCorrViz"
-                    src="https://public.tableau.com/views/RankICCorr/CorrMatrix"
-                    toolbar="bottom"
-                    hide-tabs>
-                  </tableau-viz>
-                </div>
+                <tableau-viz
+                  id="rankIcCorrViz"
+                  src="https://public.tableau.com/views/RankICCorr/CorrMatrix"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
               </div>
             </section>
 
@@ -965,18 +803,12 @@
               <h2>Rank IC &amp; Rank IC_Raw</h2>
 
               <div class="tableau-wrapper">
-                <div class="tableau-frame">
-                  <button class="tableau-interact-toggle" type="button" aria-pressed="false">启用交互</button>
-                  <div class="tableau-scroll-hint">
-                    <span>👆 拖动浏览完整图表</span>
-                  </div>
-                  <tableau-viz
-                    id="rankIcRawViz"
-                    src="https://public.tableau.com/views/Rank_IC/Sheet1"
-                    toolbar="bottom"
-                    hide-tabs>
-                  </tableau-viz>
-                </div>
+                <tableau-viz
+                  id="rankIcRawViz"
+                  src="https://public.tableau.com/views/Rank_IC/Sheet1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
               </div>
             </section>
           </div>
@@ -1401,17 +1233,6 @@
       tab.addEventListener("click", () => {
         selectErdView(tab.dataset.erdView);
         renderErdIfVisible();
-      });
-    });
-
-    document.querySelectorAll(".tableau-interact-toggle").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const frame = btn.closest(".tableau-frame");
-        const hint = frame && frame.querySelector(".tableau-scroll-hint");
-        const interact = btn.getAttribute("aria-pressed") !== "true";
-        btn.setAttribute("aria-pressed", String(interact));
-        btn.textContent = interact ? "拖动浏览" : "启用交互";
-        if (hint) hint.classList.toggle("hidden", interact);
       });
     });
 
