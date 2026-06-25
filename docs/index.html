@@ -730,8 +730,8 @@
 
 <body>
   <header>
-    <h1>Wenbo Bi - Data Analytics Portfolio</h1>
-    <p>A-share style rotation, relative momentum, and Tableau dashboard examples.</p>
+    <h1>Wenbo 作品展示</h1>
+    <p>所有可视化控件均为交互式图表。因数据部署地区/境内外互联网限制，数据均为静态快照，加载可能较慢。</p>
   </header>
 
   <main>
@@ -740,8 +740,9 @@
         <button class="nav-tab active" type="button" data-target="page-1">风格监控</button>
         <button class="nav-tab" type="button" data-target="page-2">数据状态</button>
         <button class="nav-tab" type="button" data-target="page-3">因子总览</button>
+        <button class="nav-tab" type="button" data-target="page-5">分组收益</button>
         <button class="nav-tab" type="button" data-target="page-4">单因子详情</button>
-        <button class="nav-tab" type="button" data-target="page-5">测试5</button>
+        <button class="nav-tab" type="button" data-target="page-6">示例组合</button>
       </nav>
 
       <div class="page-content">
@@ -854,21 +855,38 @@
           </div>
         </section>
 
-        <section class="page-panel" id="page-4">
+        <section class="page-panel" id="page-5">
           <div class="tableau-page">
             <section class="tableau-panel">
-              <h2>Rank IC Correlation Matrix</h2>
+              <h2>累计净值 (Net Value Cum)</h2>
 
               <div class="tableau-wrapper">
                 <tableau-viz
-                  id="rankIcCorrViz"
-                  src="https://public.tableau.com/views/RankICCorr/CorrMatrix"
+                  id="netValueCumViz"
+                  src="https://public.tableau.com/views/Net_Value_Cum/Sheet1?publish=yes"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
               </div>
             </section>
 
+            <section class="tableau-panel">
+              <h2>多空收益 (Long-Short Return)</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="longShortReturnViz"
+                  src="https://public.tableau.com/views/Long-Short_Return/Sheet1?publish=yes"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page-panel" id="page-4">
+          <div class="tableau-page">
             <section class="tableau-panel">
               <h2>Rank IC &amp; Rank IC_Raw</h2>
 
@@ -881,12 +899,49 @@
                 </tableau-viz>
               </div>
             </section>
+
+            <section class="tableau-panel">
+              <h2>Rank IC Correlation Matrix</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="rankIcCorrViz"
+                  src="https://public.tableau.com/views/RankICCorr/CorrMatrix"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
           </div>
         </section>
 
-        <section class="page-panel" id="page-5">
-          <div class="project-card">
-            <h2>测试5</h2>
+        <section class="page-panel" id="page-6">
+          <div class="tableau-page">
+            <section class="tableau-panel">
+              <h2>组合收益 (Portfolio Return)</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="portfolioReturnViz"
+                  src="https://public.tableau.com/views/Portfolio_return/Sheet1?publish=yes"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+
+            <section class="tableau-panel">
+              <h2>行业敞口 (Sector Exposure)</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="sectorExposureViz"
+                  src="https://public.tableau.com/views/Sector_exposure/Sheet1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
           </div>
         </section>
       </div>
