@@ -607,6 +607,30 @@
       background: #f9fafb;
     }
 
+    .panel-description {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 3px solid #111827;
+      background: #f9fafb;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .panel-description p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .panel-description strong {
+      color: var(--text);
+    }
+
+    .portfolio-metric-grid {
+      margin-top: 16px;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+    }
+
     @media (max-width: 760px) {
       header {
         width: 100vw;
@@ -698,7 +722,8 @@
       }
 
       .factor-kpi-grid,
-      .style-summary-grid {
+      .style-summary-grid,
+      .portfolio-metric-grid {
         grid-template-columns: 1fr;
       }
 
@@ -730,8 +755,8 @@
 
 <body>
   <header>
-    <h1>Wenbo 作品展示</h1>
-    <p>所有可视化控件均为交互式图表。因数据部署地区/境内外互联网限制，数据均为静态快照，加载可能较慢。</p>
+    <h1>Wenbo 端到端多因子组合构建</h1>
+    <p>数据展示层为快照，因数据部署地区/境内外互联网限制，加载可能较慢，加载不正确可尝试刷新页面。</p>
   </header>
 
   <main>
@@ -918,7 +943,7 @@
         <section class="page-panel" id="page-6">
           <div class="tableau-page">
             <section class="tableau-panel">
-              <h2>组合收益 (Portfolio Return)</h2>
+              <h2>组合收益 (近一年)</h2>
 
               <div class="tableau-wrapper">
                 <tableau-viz
@@ -927,6 +952,36 @@
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
+              </div>
+
+              <div class="panel-description">
+                <p>
+                  这是一个 <strong>成长 + 动量主导</strong> 的示例组合，偏好高成长性标的，
+                  在 2025H2–2026 的成长/科技行情中表现突出，但行业与风格集中度较高。
+                </p>
+              </div>
+
+              <div class="status-grid portfolio-metric-grid" aria-label="组合核心指标">
+                <div class="stat-tile">
+                  <div class="stat-label">累计收益</div>
+                  <div class="stat-value metric-positive">+295.05%</div>
+                  <div class="stat-note">2025-05-30 → 2026-06-24</div>
+                </div>
+                <div class="stat-tile">
+                  <div class="stat-label">夏普比率</div>
+                  <div class="stat-value">3.02</div>
+                  <div class="stat-note">年化收益 / 年化波动</div>
+                </div>
+                <div class="stat-tile">
+                  <div class="stat-label">最大回撤</div>
+                  <div class="stat-value">6.84%</div>
+                  <div class="stat-note">2025-08-05 → 2025-10-17</div>
+                </div>
+                <div class="stat-tile">
+                  <div class="stat-label">年化换手率</div>
+                  <div class="stat-value">~295%</div>
+                  <div class="stat-note">月均 24.62%</div>
+                </div>
               </div>
             </section>
 
@@ -940,6 +995,14 @@
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
+              </div>
+
+              <div class="panel-description">
+                <p>
+                  上图展示的是 <strong>最后一期截面持仓的行业敞口</strong>，数据截至调仓日 <strong>2026-06-24</strong>。
+                  行业分类采用通达信（TDX）行业标准。组合当前高度集中于半导体、通信设备、消费电子等科技成长板块，
+                  前三大行业合计占比超过 67%。
+                </p>
               </div>
             </section>
           </div>
