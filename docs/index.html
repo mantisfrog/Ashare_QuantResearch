@@ -34,6 +34,8 @@
     html {
       height: 100%;
       overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     body {
@@ -50,6 +52,11 @@
 
     * {
       box-sizing: border-box;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     header {
@@ -665,7 +672,95 @@
       }
 
       .erd-frame {
-        min-height: 520px;
+        min-height: 420px;
+      }
+
+      html,
+      body {
+        height: auto;
+        overflow: visible;
+      }
+
+      body {
+        display: block;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+
+      main {
+        display: block;
+        min-height: auto;
+        padding: 10px;
+      }
+
+      .page-shell {
+        display: block;
+        min-height: auto;
+      }
+
+      .page-content {
+        display: block;
+      }
+
+      .page-panel.active {
+        display: block;
+      }
+
+      .project-card,
+      .data-dashboard,
+      .factor-dashboard,
+      .tableau-page {
+        display: block;
+        min-height: auto;
+      }
+
+      .tableau-panel {
+        flex: none;
+        min-height: 360px;
+        height: 55vh;
+        margin-bottom: 12px;
+      }
+
+      .tableau-panel:last-child {
+        margin-bottom: 0;
+      }
+
+      .tableau-wrapper {
+        height: 100%;
+        min-height: 300px;
+      }
+
+      .tableau-wrapper tableau-viz {
+        min-height: 300px;
+      }
+
+      header h1 {
+        font-size: 24px;
+      }
+
+      header p {
+        font-size: 14px;
+      }
+
+      .nav-tab {
+        min-height: 40px;
+        padding: 0 16px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+      }
+
+      .factor-metric-value {
+        font-size: 15px;
+      }
+
+      .factor-style-name {
+        font-size: 15px;
+      }
+
+      .factor-style-code {
+        font-size: 11px;
       }
     }
   </style>
