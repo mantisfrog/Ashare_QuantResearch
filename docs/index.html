@@ -762,7 +762,7 @@
 <body>
   <header>
     <h1>Wenbo 端到端多因子组合构建</h1>
-    <p>数据展示层为快照，因数据部署地区/境内外互联网限制，加载可能较慢，加载不正确可尝试刷新页面。</p>
+    <p>展示层为数据快照，因境内外互联网限制，加载可能较慢，加载不正确可尝试刷新页面。已优化移动端体验。</p>
   </header>
 
   <main>
@@ -778,17 +778,19 @@
 
       <div class="page-content">
         <section class="page-panel active" id="panel-page-1" data-page="page-1">
-          <div class="project-card">
-            <h2>成长 / 价值风格轮动分析</h2>
+          <div class="tableau-page">
+            <section class="tableau-panel">
+              <h2>成长 / 价值风格轮动分析</h2>
 
-            <div class="tableau-wrapper">
-              <tableau-viz
-                id="tableauViz"
-                src="https://public.tableau.com/views/vs_17812455678280/1"
-                toolbar="bottom"
-                hide-tabs>
-              </tableau-viz>
-            </div>
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="tableauViz"
+                  src="https://public.tableau.com/views/vs_17812455678280/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
           </div>
         </section>
 
