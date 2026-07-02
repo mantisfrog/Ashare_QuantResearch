@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WealthOps Copilot MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">W</div>
+          <div>
+            <div class="brand-name">WealthOps Copilot</div>
+            <div class="brand-subtitle">总行财富资配助手</div>
+          </div>
+        </div>
+        <nav class="nav-list">
+          <button class="nav-item active" data-page="strategy" type="button">
+            <span class="nav-index">01</span>
+            <span>市场观点与模板</span>
+          </button>
+          <button class="nav-item" data-page="segment" type="button">
+            <span class="nav-index">02</span>
+            <span>客群服务机会</span>
+          </button>
+          <button class="nav-item" data-page="diagnosis" type="button">
+            <span class="nav-index">03</span>
+            <span>单客户诊断</span>
+          </button>
+          <button class="nav-item" data-page="product" type="button">
+            <span class="nav-index">04</span>
+            <span>产品适配与解读</span>
+          </button>
+          <button class="nav-item" data-page="governance" type="button">
+            <span class="nav-index">05</span>
+            <span>治理与反馈</span>
+          </button>
+          <button class="nav-item" data-page="chatbot" type="button">
+            <span class="nav-index">06</span>
+            <span>产品解读 Copilot</span>
+          </button>
+        </nav>
+        <div class="sidebar-note">
+          <strong>MVP 边界</strong>
+          <span>AI 输出只作为客户经理辅助材料，最终触达需完成 KYC、适当性确认和人工复核。</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Head Office Wealth Management</p>
+            <h1 id="page-title">市场观点与分层配置模板</h1>
+          </div>
+          <div class="top-actions">
+            <label class="control">
+              <span>分行</span>
+              <select id="branch-select">
+                <option value="全部">全部</option>
+                <option value="上海分行">上海分行</option>
+                <option value="深圳分行">深圳分行</option>
+                <option value="杭州分行">杭州分行</option>
+              </select>
+            </label>
+            <label class="control">
+              <span>客户等级</span>
+              <select id="risk-select">
+                <option value="R3">R3 平衡型</option>
+                <option value="R2">R2 稳健型</option>
+                <option value="R4">R4 进取型</option>
+              </select>
+            </label>
+          </div>
+        </header>
+
+        <section id="global-metrics" class="metric-strip" aria-label="全局指标"></section>
+        <section id="page-root" class="page-root"></section>
+      </main>
+    </div>
+
+    <script src="./viz-data.js"></script>
+    <script src="./viz.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

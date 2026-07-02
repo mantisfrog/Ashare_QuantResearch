@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Wenbo Bi - Tableau Portfolio</title>
+
+  <!-- Tableau Embedding API v3 -->
+  <script
+    type="module"
+    src="https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/viz.js@2.1.2/viz.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/viz.js@2.1.2/full.render.js"></script>
+  <script src="./factor_panel_data.js"></script>
+  <script src="./portfolio_panel_data.js"></script>
+
+  <style>
+    :root {
+      --page-bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-subtle: #fbfcfd;
+      --text: #111827;
+      --muted: #4b5563;
+      --muted-light: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
+      --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.06);
+      --radius: 8px;
+      --panel-padding: 20px;
+      --section-gap: 12px;
+    }
+
+    html {
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    body {
+      margin: 0;
+      width: 100%;
+      max-width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    header {
+      flex: 0 0 auto;
+      min-width: 0;
+      max-width: 100vw;
+      padding: 16px 24px;
+      background: #111827;
+      color: white;
+    }
+
+    header h1 {
+      margin: 0 0 12px;
+      font-size: 32px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 16px;
+      color: #d1d5db;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    main {
+      flex: 1 0 auto;
+      display: flex;
+      width: 100%;
+      max-width: 100vw;
+      min-height: 0;
+      min-width: 0;
+      padding: 12px;
+    }
+
+    .page-shell {
+      width: 100%;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      align-self: start;
+      max-height: calc(100vh - 24px);
+      overflow: auto;
+      min-height: 0;
+      min-width: 0;
+      max-width: 100%;
+      justify-content: flex-start;
+    }
+
+    .nav-tab {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #374151;
+      font: inherit;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .nav-tab:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .nav-tab.active {
+      background: var(--text);
+      color: var(--surface);
+      border-color: var(--text);
+    }
+
+    .page-content {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex: 1;
+      align-self: stretch;
+    }
+
+    .page-panel {
+      display: none;
+      width: 100%;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .page-panel.active {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--panel-padding);
+      box-shadow: var(--shadow);
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: auto;
+    }
+
+    .project-card h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    .project-card p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .tableau-page {
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+      overflow: visible;
+    }
+
+    .tableau-panel {
+      flex: 0 0 auto;
+      min-height: 620px;
+      padding: var(--panel-padding);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .tableau-panel h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    .tableau-wrapper {
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      margin-top: 18px;
+      position: relative;
+    }
+
+    tableau-viz {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .data-dashboard {
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+      overflow: visible;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .dashboard-header h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    .dashboard-header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .snapshot-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
+      gap: var(--section-gap);
+    }
+
+    .stat-tile {
+      min-height: 96px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .stat-label {
+      color: var(--muted-light);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .stat-note {
+      color: var(--muted-light);
+      font-size: 14px;
+    }
+
+    .erd-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+      flex: 1;
+      min-height: 360px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .erd-section h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .erd-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .erd-view-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .erd-view-tab {
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #374151;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .erd-view-tab:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .erd-view-tab.active {
+      background: var(--text);
+      color: var(--surface);
+      border-color: var(--text);
+    }
+
+    .erd-frame {
+      flex: 1;
+      min-height: 580px;
+      overflow: auto;
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-subtle);
+    }
+
+    .erd-output {
+      display: grid;
+      justify-items: center;
+      min-width: 100%;
+      margin: 0;
+      padding: 18px;
+    }
+
+    .erd-output.is-wide {
+      justify-items: start;
+    }
+
+    .erd-output svg {
+      width: auto !important;
+      max-width: none !important;
+      height: auto !important;
+      display: block;
+    }
+
+    .erd-output svg text {
+      font-family: Arial, "Microsoft YaHei", sans-serif !important;
+    }
+
+    .erd-error {
+      display: none;
+      position: sticky;
+      left: 0;
+      bottom: 0;
+      margin: 12px;
+      padding: 10px 12px;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      background: #fef2f2;
+      color: #991b1b;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .erd-frame.has-error .erd-error {
+      display: block;
+    }
+
+    .factor-dashboard {
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+      overflow: visible;
+    }
+
+    .factor-kpi-grid {
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+    }
+
+    .factor-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .section-heading h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .section-heading p {
+      margin: 6px 0 0;
+      color: var(--muted-light);
+      line-height: 1.5;
+    }
+
+    .style-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--section-gap);
+    }
+
+    .factor-style-card {
+      --accent: #4b5563;
+      min-height: 158px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .factor-style-card[data-style="value"] {
+      --accent: #0f766e;
+    }
+
+    .factor-style-card[data-style="quality"] {
+      --accent: #2563eb;
+    }
+
+    .factor-style-card[data-style="growth"] {
+      --accent: #16a34a;
+    }
+
+    .factor-style-card[data-style="momentum"] {
+      --accent: #7c3aed;
+    }
+
+    .factor-style-card[data-style="reversal"] {
+      --accent: #ea580c;
+    }
+
+    .factor-style-card[data-style="risk"] {
+      --accent: #be123c;
+    }
+
+    .factor-style-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .factor-style-name {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .factor-style-code {
+      margin-top: 3px;
+      color: var(--muted-light);
+      font-size: 12px;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .factor-status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .factor-status.good {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .factor-status.watch {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .factor-status.bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .factor-metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .factor-metric {
+      min-width: 0;
+    }
+
+    .factor-metric-label {
+      color: var(--muted-light);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .factor-metric-value {
+      margin-top: 4px;
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-positive {
+      color: #166534;
+    }
+
+    .metric-negative {
+      color: #b91c1c;
+    }
+
+    .factor-empty {
+      padding: 14px;
+      border: 1px dashed #d1d5db;
+      border-radius: 8px;
+      color: #6b7280;
+      background: #f9fafb;
+    }
+
+    .panel-description {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 3px solid #111827;
+      background: #f9fafb;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .panel-description p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .panel-description strong {
+      color: var(--text);
+    }
+
+    .portfolio-metric-grid {
+      margin-top: 16px;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+    }
+
+    @media (max-width: 760px) {
+      header {
+        width: 100vw;
+        max-width: 100vw;
+        overflow: hidden;
+        padding: 14px 16px;
+      }
+
+      header h1 {
+        width: 100%;
+        font-size: 28px;
+        max-width: 100%;
+      }
+
+      header p {
+        width: 100%;
+        max-width: 100%;
+        font-size: 11px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      main {
+        padding: 10px;
+      }
+
+      .page-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        max-width: calc(100vw - 20px);
+        gap: 10px;
+      }
+
+      .sidebar {
+        position: static;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        min-height: 0;
+      }
+
+      .page-content {
+        width: 100%;
+        max-width: 100%;
+        overflow: visible;
+      }
+
+      .nav-tab {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 84px;
+        text-align: center;
+      }
+
+      .project-card {
+        padding: 16px;
+      }
+
+      .tableau-panel {
+        min-height: 520px;
+        padding: 16px;
+      }
+
+      .tableau-wrapper {
+        min-height: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-subtle);
+      }
+
+      .tableau-wrapper tableau-viz {
+        min-width: 960px;
+      }
+
+      .dashboard-header {
+        flex-direction: column;
+        padding: 16px;
+      }
+
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .factor-kpi-grid,
+      .style-summary-grid,
+      .portfolio-metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-heading {
+        flex-direction: column;
+      }
+
+      .erd-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .erd-view-tabs {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .stat-tile,
+      .erd-section {
+        padding: 16px;
+      }
+
+      .erd-frame {
+        min-height: 520px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Wenbo 端到端多因子组合构建</h1>
+    <p>展示层为数据快照，因境内外互联网限制，加载可能较慢，加载不正确可尝试刷新页面。06.29已优化移动端体验。</p>
+  </header>
+
+  <main>
+    <div class="page-shell">
+      <nav class="sidebar" aria-label="页面导航">
+        <button class="nav-tab active" type="button" data-target="page-1">风格监控</button>
+        <button class="nav-tab" type="button" data-target="page-2">数据状态</button>
+        <button class="nav-tab" type="button" data-target="page-3">因子总览</button>
+        <button class="nav-tab" type="button" data-target="page-5">分组收益</button>
+        <button class="nav-tab" type="button" data-target="page-4">单因子详情</button>
+        <button class="nav-tab" type="button" data-target="page-6">示例组合</button>
+      </nav>
+
+      <div class="page-content">
+        <section class="page-panel active" id="panel-page-1" data-page="page-1">
+          <div class="tableau-page">
+            <section class="tableau-panel">
+              <h2>成长 / 价值风格轮动分析</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="tableauViz"
+                  src="https://public.tableau.com/views/vs_17812455678280/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page-panel" id="panel-page-2" data-page="page-2">
+          <div class="data-dashboard">
+            <div class="dashboard-header">
+              <div>
+                <h2>数据状态面板</h2>
+                <p>静态快照展示行情、财务、公司行为和因子底座的数据规模与质量检查结果。</p>
+              </div>
+              <span class="snapshot-badge" id="dataStatusSnapshotBadge">最近更新：加载中</span>
+            </div>
+
+            <div class="status-grid" aria-label="数据状态">
+              <div class="stat-tile">
+                <div class="stat-label">股票维度</div>
+                <div class="stat-value">5,531</div>
+                <div class="stat-note">沪深 A 股证券</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">日线行情</div>
+                <div class="stat-value">17,535,743</div>
+                <div class="stat-note">1990-12-19 至 2026-06-24</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">财务报告</div>
+                <div class="stat-value">292,867</div>
+                <div class="stat-note">股票 x 报告期</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">财务指标值</div>
+                <div class="stat-value">128,275,746</div>
+                <div class="stat-note">438 个指标定义</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">财报可见桥表</div>
+                <div class="stat-value">17,775,401</div>
+                <div class="stat-note">交易日 x 股票</div>
+              </div>
+            </div>
+
+            <section class="erd-section">
+              <div class="erd-toolbar">
+                <h3>数据库 ERD</h3>
+                <div class="erd-view-tabs" aria-label="ERD 视图">
+                  <button class="erd-view-tab active" type="button" data-erd-view="overview">总览</button>
+                  <button class="erd-view-tab" type="button" data-erd-view="market">行情事件</button>
+                  <button class="erd-view-tab" type="button" data-erd-view="financial">财务桥表</button>
+                  <button class="erd-view-tab" type="button" data-erd-view="factor">因子库</button>
+                </div>
+              </div>
+              <div class="erd-frame">
+                <div class="erd-output" id="erdOutput" aria-live="polite"></div>
+                <div class="erd-error" id="erdError" role="alert"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page-panel" id="panel-page-3" data-page="page-3">
+          <div class="factor-dashboard" id="factorPanel">
+            <div class="dashboard-header">
+              <div>
+                <h2>因子库面板</h2>
+                <p>覆盖因子目录与风格健康度。</p>
+              </div>
+              <span class="snapshot-badge" id="factorSnapshotBadge">快照加载中</span>
+            </div>
+
+            <div class="status-grid factor-kpi-grid" id="factorKpis" aria-label="因子库概览"></div>
+
+            <section class="factor-section">
+              <div class="section-heading">
+                <div>
+                  <h3>风格健康摘要</h3>
+                  <p>全样本 rank IC 与近期 IR 对比。</p>
+                </div>
+              </div>
+              <div class="style-summary-grid" id="factorStyleSummary"></div>
+            </section>
+
+            <section class="tableau-panel">
+              <h2>风格年度有效性</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="factorOverviewViz"
+                  src="https://public.tableau.com/views/Factor_Overview/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+
+          </div>
+        </section>
+
+        <section class="page-panel" id="panel-page-5" data-page="page-5">
+          <div class="tableau-page">
+            <section class="tableau-panel">
+              <h2>累计净值 (Net Value Cum)</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="netValueCumViz"
+                  src="https://public.tableau.com/views/Net_Value_Cum/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+
+            <section class="tableau-panel">
+              <h2>多空收益 (Long-Short Return)</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="longShortReturnViz"
+                  src="https://public.tableau.com/views/Long-Short_Return/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page-panel" id="panel-page-4" data-page="page-4">
+          <div class="tableau-page">
+            <section class="tableau-panel">
+              <h2>Rank IC &amp; Rank IC_Raw</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="rankIcRawViz"
+                  src="https://public.tableau.com/views/Rank_IC/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+
+            <section class="tableau-panel">
+              <h2>Rank IC Correlation Matrix</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="rankIcCorrViz"
+                  src="https://public.tableau.com/views/RankICCorr/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page-panel" id="panel-page-6" data-page="page-6">
+          <div class="tableau-page">
+            <section class="tableau-panel">
+              <h2>组合收益 (近一年)</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="portfolioReturnViz"
+                  src="https://public.tableau.com/views/Portfolio_return/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+
+              <div class="panel-description" id="portfolioStrategyDescription">
+                <p>组合快照加载中。</p>
+              </div>
+
+              <div class="status-grid portfolio-metric-grid" id="portfolioMetricGrid" aria-label="组合核心指标"></div>
+            </section>
+
+            <section class="tableau-panel">
+              <h2>行业敞口 (Sector Exposure)</h2>
+
+              <div class="tableau-wrapper">
+                <tableau-viz
+                  id="sectorExposureViz"
+                  src="https://public.tableau.com/views/Sector_exposure/1"
+                  toolbar="bottom"
+                  hide-tabs>
+                </tableau-viz>
+              </div>
+
+              <div class="panel-description" id="portfolioSectorDescription">
+                <p>行业敞口快照加载中。</p>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const ERD_TABLES = {
+      DIM_TDX_INDUSTRY: [["str", "sector_code", "PK"], ["str", "sector_name", ""]],
+      DIM_STOCK: [["str", "stock_code", "PK"], ["str", "stock_name", ""], ["str", "sector_code", "FK"]],
+      DIM_DATE: [["int", "date_id", "PK"], ["date", "date", "UK"], ["bool", "is_trade_day", ""], ["int", "trade_index", ""]],
+      DIM_FINANCIAL_METRIC: [["str", "metric", "PK"], ["str", "metric_name", ""]],
+      DIM_FACTOR: [["str", "factor", "PK"], ["str", "factor_name", ""], ["str", "style", ""], ["int", "direction", ""], ["bool", "is_active", ""]],
+      FACT_DAILY: [["str", "stock_code", "PK,FK"], ["int", "date_id", "PK,FK"], ["num", "open", ""], ["num", "close", ""], ["big", "vol", ""], ["num", "market_cap", ""]],
+      FACT_DIVIDEND: [["str", "stock_code", "PK,FK"], ["int", "date_id", "PK,FK"], ["int", "action_type", "PK"], ["num", "bonus", ""]],
+      FACT_ADJUST_FACTOR_PERIOD: [["str", "stock_code", "PK,FK"], ["int", "from_date_id", "PK,FK"], ["int", "to_date_id", "FK"], ["num", "adj_factor", ""]],
+      FACT_FINANCIAL_REPORT: [["big", "report_id", "PK"], ["str", "stock_code", "FK"], ["date", "period", ""], ["int", "announce_date", "FK"]],
+      FACT_FINANCIAL_VALUE: [["big", "report_id", "PK,FK"], ["str", "metric", "PK,FK"], ["num", "value", ""]],
+      BRIDGE_FINANCIAL_REPORT: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["big", "report_id", "FK"]],
+      FACT_STOCK_UNIVERSE: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "calc_version", "PK"], ["bool", "in_universe", ""]],
+      FACT_FACTOR_RAW: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "factor", "PK,FK"], ["str", "calc_version", "PK"], ["num", "factor_value", ""]],
+      FACT_FACTOR_EXPOSURE: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "factor", "PK,FK"], ["str", "calc_version", "PK"], ["num", "neutralized", ""], ["num", "pct_rank", ""]],
+      FACT_FACTOR_COMPOSITE: [["int", "date_id", "PK,FK"], ["str", "stock_code", "PK,FK"], ["str", "calc_version", "PK"], ["num", "total_score", ""]],
+      FACT_FACTOR_DIAGNOSTICS: [["int", "date_id", "PK,FK"], ["str", "factor", "PK,FK"], ["str", "calc_version", "PK"], ["num", "rank_ic_1m", ""]]
+    };
+
+    const ERD_VIEWS = {
+      overview: {
+        rankdir: "TB",
+        tables: [
+          "DIM_TDX_INDUSTRY", "DIM_STOCK", "DIM_DATE", "FACT_DAILY",
+          "FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE",
+          "BRIDGE_FINANCIAL_REPORT", "DIM_FACTOR",
+          "FACT_FACTOR_EXPOSURE", "FACT_FACTOR_COMPOSITE"
+        ],
+        edges: [
+          ["DIM_TDX_INDUSTRY", "DIM_STOCK"], ["DIM_STOCK", "FACT_DAILY"],
+          ["DIM_DATE", "FACT_DAILY"], ["DIM_STOCK", "FACT_FINANCIAL_REPORT"],
+          ["FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE"],
+          ["FACT_FINANCIAL_REPORT", "BRIDGE_FINANCIAL_REPORT"],
+          ["DIM_FACTOR", "FACT_FACTOR_EXPOSURE"],
+          ["DIM_STOCK", "FACT_FACTOR_COMPOSITE"],
+          ["DIM_DATE", "FACT_FACTOR_COMPOSITE"]
+        ]
+      },
+      market: {
+        rankdir: "TB",
+        tables: [
+          "DIM_TDX_INDUSTRY", "DIM_STOCK", "DIM_DATE",
+          "FACT_DAILY", "FACT_DIVIDEND", "FACT_ADJUST_FACTOR_PERIOD"
+        ],
+        edges: [
+          ["DIM_TDX_INDUSTRY", "DIM_STOCK"], ["DIM_STOCK", "FACT_DAILY"],
+          ["DIM_DATE", "FACT_DAILY"], ["DIM_STOCK", "FACT_DIVIDEND"],
+          ["DIM_DATE", "FACT_DIVIDEND"], ["FACT_DAILY", "FACT_ADJUST_FACTOR_PERIOD"]
+        ]
+      },
+      financial: {
+        rankdir: "TB",
+        tables: [
+          "DIM_STOCK", "DIM_DATE", "DIM_FINANCIAL_METRIC",
+          "FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE",
+          "BRIDGE_FINANCIAL_REPORT"
+        ],
+        edges: [
+          ["DIM_STOCK", "FACT_FINANCIAL_REPORT"],
+          ["DIM_DATE", "FACT_FINANCIAL_REPORT"],
+          ["FACT_FINANCIAL_REPORT", "FACT_FINANCIAL_VALUE"],
+          ["DIM_FINANCIAL_METRIC", "FACT_FINANCIAL_VALUE"],
+          ["DIM_STOCK", "BRIDGE_FINANCIAL_REPORT"],
+          ["DIM_DATE", "BRIDGE_FINANCIAL_REPORT"],
+          ["FACT_FINANCIAL_REPORT", "BRIDGE_FINANCIAL_REPORT"]
+        ]
+      },
+      factor: {
+        rankdir: "TB",
+        nodesep: 0.45,
+        ranksep: 1.05,
+        tables: [
+          "DIM_STOCK", "DIM_DATE", "DIM_FACTOR", "FACT_STOCK_UNIVERSE",
+          "FACT_FACTOR_RAW", "FACT_FACTOR_EXPOSURE",
+          "FACT_FACTOR_COMPOSITE", "FACT_FACTOR_DIAGNOSTICS"
+        ],
+        edges: [
+          ["DIM_STOCK", "FACT_STOCK_UNIVERSE"], ["DIM_DATE", "FACT_STOCK_UNIVERSE"],
+          ["DIM_STOCK", "FACT_FACTOR_RAW"], ["DIM_DATE", "FACT_FACTOR_RAW"],
+          ["DIM_FACTOR", "FACT_FACTOR_RAW"], ["DIM_STOCK", "FACT_FACTOR_EXPOSURE"],
+          ["DIM_DATE", "FACT_FACTOR_EXPOSURE"], ["DIM_FACTOR", "FACT_FACTOR_EXPOSURE"],
+          ["DIM_STOCK", "FACT_FACTOR_COMPOSITE"], ["DIM_DATE", "FACT_FACTOR_COMPOSITE"],
+          ["DIM_DATE", "FACT_FACTOR_DIAGNOSTICS"], ["DIM_FACTOR", "FACT_FACTOR_DIAGNOSTICS"]
+        ],
+        ranks: [
+          ["DIM_STOCK", "DIM_DATE", "DIM_FACTOR"],
+          ["FACT_STOCK_UNIVERSE", "FACT_FACTOR_RAW", "FACT_FACTOR_EXPOSURE"],
+          ["FACT_FACTOR_COMPOSITE", "FACT_FACTOR_DIAGNOSTICS"]
+        ],
+        invisibleEdges: [
+          ["DIM_DATE", "FACT_FACTOR_EXPOSURE"],
+          ["FACT_FACTOR_EXPOSURE", "FACT_FACTOR_COMPOSITE"]
+        ]
+      }
+    };
+
+    let currentErdView = "overview";
+    let renderedErdView = "";
+    let erdRenderPending = false;
+    let graphvizRenderer = null;
+    const ERD_RENDER_SCALE = 0.8;
+
+    function recordEscape(value) {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/[{}|<>]/g, "\\$&");
+    }
+
+    function erdTableDot(tableName) {
+      const rows = ERD_TABLES[tableName].map(([type, field, role]) => {
+        const suffix = role ? `  ${role.replace(",", "/")}` : "";
+        return `${recordEscape(type.padEnd(4, " "))} ${recordEscape(field)}${recordEscape(suffix)}\\l`;
+      }).join("");
+      return `"${tableName}" [label="{${recordEscape(tableName)}|${rows}}"];`;
+    }
+
+    function buildErdDot(viewKey) {
+      const view = ERD_VIEWS[viewKey] || ERD_VIEWS.overview;
+      const nodes = view.tables.map(erdTableDot).join("\n");
+      const edges = view.edges.map(([from, to]) => `"${from}" -> "${to}";`).join("\n");
+      const ranks = (view.ranks || [])
+        .map((items) => `{ rank=same; ${items.map((name) => `"${name}";`).join(" ")} }`)
+        .join("\n");
+      const invisibleEdges = (view.invisibleEdges || [])
+        .map(([from, to]) => `"${from}" -> "${to}" [style=invis, weight=20];`)
+        .join("\n");
+      return `digraph ERD {
+        graph [
+          rankdir=${view.rankdir},
+          bgcolor="transparent",
+          margin=0,
+          pad=0.25,
+          nodesep=${view.nodesep || 0.55},
+          ranksep=${view.ranksep || 0.75},
+          splines=ortho,
+          outputorder=edgesfirst
+        ];
+        node [
+          shape=record,
+          style="rounded,filled",
+          fillcolor="white",
+          color="#9ca3af",
+          penwidth=1.25,
+          fontname="Arial",
+          fontsize=13,
+          margin="0.10,0.08"
+        ];
+        edge [color="#6b7280", arrowsize=0.75, penwidth=1.35, arrowhead=vee];
+        ${ranks}
+        ${nodes}
+        ${edges}
+        ${invisibleEdges}
+      }`;
+    }
+
+    function renderErdIfVisible() {
+      const page2 = document.querySelector('.page-panel[data-page="page-2"]');
+      const erdOutput = document.getElementById("erdOutput");
+      const erdFrame = page2 && page2.querySelector(".erd-frame");
+      const erdError = document.getElementById("erdError");
+      if (!erdOutput || erdRenderPending || renderedErdView === currentErdView) return;
+
+      const style = window.getComputedStyle(page2);
+      if (style.display === "none") return;
+
+      if (!window.Viz) {
+        if (erdFrame && erdError) {
+          erdFrame.classList.add("has-error");
+          erdError.textContent = "ERD 渲染库未加载，请检查 Viz.js CDN。";
+        }
+        return;
+      }
+
+      erdRenderPending = true;
+      window.requestAnimationFrame(() => {
+        const viewKey = currentErdView;
+        const dot = buildErdDot(viewKey);
+        if (!graphvizRenderer) {
+          graphvizRenderer = new Viz();
+        }
+        try {
+          graphvizRenderer.renderSVGElement(dot)
+            .then((svg) => {
+              erdOutput.replaceChildren(svg);
+              renderedErdView = viewKey;
+              erdRenderPending = false;
+              if (erdFrame) {
+                const svgWidth = svg.getBoundingClientRect().width;
+                const svgHeight = svg.getBoundingClientRect().height;
+                const scaledWidth = Math.round(svgWidth * ERD_RENDER_SCALE);
+                const scaledHeight = Math.round(svgHeight * ERD_RENDER_SCALE);
+                svg.style.setProperty("width", `${scaledWidth}px`, "important");
+                svg.style.setProperty("height", `${scaledHeight}px`, "important");
+                erdOutput.classList.toggle("is-wide", scaledWidth > erdFrame.clientWidth - 36);
+                erdFrame.scrollTo({ left: 0, top: 0 });
+              }
+              if (erdFrame) erdFrame.classList.remove("has-error");
+              if (erdError) erdError.textContent = "";
+              if (currentErdView !== viewKey) {
+                renderErdIfVisible();
+              }
+            })
+            .catch((error) => {
+              graphvizRenderer = new Viz();
+              erdRenderPending = false;
+              if (erdFrame && erdError) {
+                erdFrame.classList.add("has-error");
+                erdError.textContent = `ERD 渲染失败：${error && error.message ? error.message : "请检查 Graphviz DOT 定义。"}`;
+              }
+              console.error("Failed to render database ERD", error);
+            });
+        } catch (error) {
+          graphvizRenderer = new Viz();
+          erdRenderPending = false;
+          if (erdFrame && erdError) {
+            erdFrame.classList.add("has-error");
+            erdError.textContent = `ERD 渲染失败：${error && error.message ? error.message : "请检查 Graphviz DOT 定义。"}`;
+          }
+          console.error("Failed to render database ERD", error);
+        }
+      });
+    }
+
+    let factorPanelRendered = false;
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function isNumber(value) {
+      return typeof value === "number" && Number.isFinite(value);
+    }
+
+    function formatInt(value) {
+      if (!isNumber(value)) return "--";
+      return new Intl.NumberFormat("zh-CN").format(Math.round(value));
+    }
+
+    function formatSigned(value, digits = 2) {
+      if (!isNumber(value)) return "--";
+      const sign = value > 0 ? "+" : "";
+      return `${sign}${value.toFixed(digits)}`;
+    }
+
+    function formatPercent(value, digits = 1) {
+      if (!isNumber(value)) return "--";
+      return `${(value * 100).toFixed(digits)}%`;
+    }
+
+    function metricClass(value) {
+      if (!isNumber(value) || value === 0) return "";
+      return value > 0 ? "metric-positive" : "metric-negative";
+    }
+
+    function statusClass(label) {
+      if (label === "强" || label === "稳健") return "good";
+      if (label === "负效" || label === "需复核" || label === "覆盖偏低") return "bad";
+      return "watch";
+    }
+
+    function parseDateCandidate(value) {
+      if (!value) return null;
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function formatDateOnly(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function renderDataStatusSnapshot() {
+      const badge = document.getElementById("dataStatusSnapshotBadge");
+      if (!badge) return;
+
+      const candidates = [
+        document.lastModified,
+        window.factorPanelData && window.factorPanelData.meta && window.factorPanelData.meta.generated_at,
+        window.portfolioPanelData && window.portfolioPanelData.meta && window.portfolioPanelData.meta.generated_at
+      ].map(parseDateCandidate).filter(Boolean);
+
+      if (!candidates.length) {
+        badge.textContent = "最近更新：--";
+        return;
+      }
+      const latest = new Date(Math.max(...candidates.map((date) => date.getTime())));
+      badge.textContent = `最近更新：${formatDateOnly(latest)}`;
+    }
+
+    function renderFactorKpis(data) {
+      const meta = data.meta;
+      const items = [
+        {
+          label: "活跃因子",
+          value: formatInt(meta.factor_count),
+          note: `${formatInt(meta.style_count)} 个风格`
+        },
+        {
+          label: "最新覆盖日期",
+          value: escapeHtml(meta.latest_coverage_date_text),
+          note: `股票池 ${formatInt(meta.latest_universe_count)}`
+        },
+        {
+          label: "平均覆盖率",
+          value: formatPercent(meta.latest_avg_coverage),
+          note: "最新截面"
+        },
+        {
+          label: "IC 可评价月",
+          value: escapeHtml(meta.latest_ic_date_text),
+          note: "rank IC 1M"
+        },
+        {
+          label: "版本",
+          value: escapeHtml(meta.calc_version),
+          note: "factor catalog"
+        }
+      ];
+
+      document.getElementById("factorKpis").innerHTML = items.map((item) => `
+        <div class="stat-tile">
+          <div class="stat-label">${item.label}</div>
+          <div class="stat-value">${item.value}</div>
+          <div class="stat-note">${item.note}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderStyleSummary(data) {
+      const container = document.getElementById("factorStyleSummary");
+      container.innerHTML = data.styles.map((style) => `
+        <article class="factor-style-card" data-style="${escapeHtml(style.style)}">
+          <div class="factor-style-head">
+            <div>
+              <div class="factor-style-name">${escapeHtml(style.style_name)}</div>
+              <div class="factor-style-code">${escapeHtml(style.style)} · ${formatInt(style.factor_count)} factors</div>
+            </div>
+            <span class="factor-status ${statusClass(style.label)}">${escapeHtml(style.label)}</span>
+          </div>
+          <div class="factor-metric-row">
+            <div class="factor-metric">
+              <div class="factor-metric-label">全样本 IR</div>
+              <div class="factor-metric-value ${metricClass(style.ir)}">${formatSigned(style.ir)}</div>
+            </div>
+            <div class="factor-metric">
+              <div class="factor-metric-label">近12月</div>
+              <div class="factor-metric-value ${metricClass(style.recent_12m_ir)}">${formatSigned(style.recent_12m_ir)}</div>
+            </div>
+            <div class="factor-metric">
+              <div class="factor-metric-label">近6月</div>
+              <div class="factor-metric-value ${metricClass(style.recent_6m_ir)}">${formatSigned(style.recent_6m_ir)}</div>
+            </div>
+          </div>
+          <div class="factor-metric-row">
+            <div class="factor-metric">
+              <div class="factor-metric-label">IC 均值</div>
+              <div class="factor-metric-value ${metricClass(style.ic_mean)}">${formatSigned(style.ic_mean, 3)}</div>
+            </div>
+            <div class="factor-metric">
+              <div class="factor-metric-label">胜率</div>
+              <div class="factor-metric-value">${formatPercent(style.win_rate)}</div>
+            </div>
+            <div class="factor-metric">
+              <div class="factor-metric-label">覆盖</div>
+              <div class="factor-metric-value">${formatPercent(style.latest_coverage)}</div>
+            </div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderFactorPanel() {
+      const panel = document.getElementById("factorPanel");
+      if (!panel || factorPanelRendered) return;
+
+      const data = window.factorPanelData;
+      if (!data) {
+        document.getElementById("factorKpis").innerHTML = `
+          <div class="factor-empty">factor_panel_data.js 未加载</div>
+        `;
+        return;
+      }
+
+      document.getElementById("factorSnapshotBadge").textContent = `最近更新：${data.meta.latest_coverage_date_text}`;
+      renderFactorKpis(data);
+      renderStyleSummary(data);
+      factorPanelRendered = true;
+    }
+
+    let portfolioPanelRendered = false;
+
+    function renderPortfolioPanel() {
+      if (portfolioPanelRendered) return;
+
+      const metricGrid = document.getElementById("portfolioMetricGrid");
+      const strategyDescription = document.getElementById("portfolioStrategyDescription");
+      const sectorDescription = document.getElementById("portfolioSectorDescription");
+      if (!metricGrid || !strategyDescription || !sectorDescription) return;
+
+      const data = window.portfolioPanelData;
+      if (!data) {
+        metricGrid.innerHTML = `<div class="factor-empty">portfolio_panel_data.js 未加载</div>`;
+        strategyDescription.innerHTML = `<p>组合快照数据未加载，请先运行 factor/build_portfolio_panel_snapshot.py。</p>`;
+        sectorDescription.innerHTML = `<p>行业敞口快照数据未加载。</p>`;
+        return;
+      }
+
+      strategyDescription.innerHTML = `
+        <p>${escapeHtml(data.strategy.description)}</p>
+      `;
+      metricGrid.innerHTML = data.metrics.map((item) => `
+        <div class="stat-tile">
+          <div class="stat-label">${escapeHtml(item.label)}</div>
+          <div class="stat-value ${escapeHtml(item.value_class || "")}">${escapeHtml(item.value)}</div>
+          <div class="stat-note">${escapeHtml(item.note)}</div>
+        </div>
+      `).join("");
+      sectorDescription.innerHTML = `
+        <p>${escapeHtml(data.sector.description)}</p>
+      `;
+      portfolioPanelRendered = true;
+    }
+
+    const tabs = document.querySelectorAll(".nav-tab");
+    const panels = document.querySelectorAll(".page-panel");
+    const erdViewTabs = document.querySelectorAll(".erd-view-tab");
+
+    function resetWindowScroll() {
+      window.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    }
+
+    function selectErdView(viewKey) {
+      currentErdView = ERD_VIEWS[viewKey] ? viewKey : "overview";
+      erdViewTabs.forEach((item) => {
+        item.classList.toggle("active", item.dataset.erdView === currentErdView);
+      });
+      renderedErdView = "";
+    }
+
+    function activatePage(targetId) {
+      let activeTab = null;
+      tabs.forEach((item) => {
+        const isActive = item.dataset.target === targetId;
+        item.classList.toggle("active", isActive);
+        if (isActive) activeTab = item;
+      });
+
+      panels.forEach((panel) => {
+        panel.classList.toggle("active", panel.dataset.page === targetId);
+      });
+
+      if (targetId === "page-2") {
+        renderDataStatusSnapshot();
+        renderErdIfVisible();
+      }
+
+      if (targetId === "page-3") {
+        renderFactorPanel();
+      }
+
+      if (targetId === "page-6") {
+        renderPortfolioPanel();
+      }
+
+      window.requestAnimationFrame(() => {
+        resetWindowScroll();
+        if (activeTab) {
+          const nav = activeTab.parentElement;
+          if (nav && nav.scrollWidth > nav.clientWidth) {
+            const navRect = nav.getBoundingClientRect();
+            const tabRect = activeTab.getBoundingClientRect();
+            const targetLeft =
+              nav.scrollLeft + tabRect.left - navRect.left - (nav.clientWidth - activeTab.offsetWidth) / 2;
+            nav.scrollTo({ left: Math.max(0, targetLeft), behavior: "auto" });
+          } else if (nav && nav.scrollHeight > nav.clientHeight) {
+            const navRect = nav.getBoundingClientRect();
+            const tabRect = activeTab.getBoundingClientRect();
+            const targetTop =
+              nav.scrollTop + tabRect.top - navRect.top - (nav.clientHeight - activeTab.offsetHeight) / 2;
+            nav.scrollTo({ top: Math.max(0, targetTop), behavior: "auto" });
+          }
+        }
+        window.setTimeout(resetWindowScroll, 0);
+      });
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        activatePage(tab.dataset.target);
+      });
+    });
+
+    erdViewTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        selectErdView(tab.dataset.erdView);
+        renderErdIfVisible();
+      });
+    });
+
+    function hasPage(targetId) {
+      return Array.from(panels).some((panel) => panel.dataset.page === targetId);
+    }
+
+    const [initialTarget, initialErdView] = window.location.hash.replace("#", "").split(":");
+    if (initialErdView) {
+      selectErdView(initialErdView);
+    }
+    if (initialTarget && hasPage(initialTarget)) {
+      activatePage(initialTarget);
+    } else {
+      renderDataStatusSnapshot();
+      renderErdIfVisible();
+      renderFactorPanel();
+      renderPortfolioPanel();
+    }
+  </script>
+</body>
+</html>

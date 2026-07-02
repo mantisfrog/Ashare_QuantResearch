@@ -97,6 +97,11 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--disable-quality",
+        action="store_true",
+        help="Disable the quality_score filter while keeping quality_score in outputs.",
+    )
+    parser.add_argument(
         "--market-cap-top",
         dest="market_cap_top",
         type=parse_fraction,
@@ -366,18 +371,20 @@ def select_holdings(
             selected.insert(2, "exit_date_id", exit_date_id)
             holding_frames.append(selected)
 
+        quality_enabled = "quality" in tops
         summary_rows.append({
             "rebalance_date_id": rebalance_date_id,
             "entry_date_id": entry_date_id,
             "exit_date_id": exit_date_id,
             "universe_count": int(len(cross_section)),
-            "market_cap_top_count": counts["market_cap"],
-            "growth_top_count": counts["growth"],
-            "quality_top_count": counts["quality"],
+            "market_cap_top_count": counts.get("market_cap"),
+            "growth_top_count": counts.get("growth"),
+            "quality_enabled": quality_enabled,
+            "quality_top_count": counts.get("quality") if quality_enabled else None,
             "selected_count": int(selected_count),
-            "market_cap_threshold": thresholds["market_cap"],
-            "growth_threshold": thresholds["growth"],
-            "quality_threshold": thresholds["quality"],
+            "market_cap_threshold": thresholds.get("market_cap"),
+            "growth_threshold": thresholds.get("growth"),
+            "quality_threshold": thresholds.get("quality") if quality_enabled else None,
         })
 
     if not holding_frames:
@@ -732,7 +739,8 @@ def summarize_performance(
         ("max_position_weight", max_weight),
         ("market_cap_top", tops["market_cap"]),
         ("growth_top", tops["growth"]),
-        ("quality_top", tops["quality"]),
+        ("quality_enabled", "quality" in tops),
+        ("quality_top", tops.get("quality")),
         ("start_date_id", int(daily["date_id"].iloc[0])),
         ("end_date_id", int(daily["date_id"].iloc[-1])),
         ("trading_days", trading_days),
@@ -764,7 +772,11 @@ def default_portfolio_name(tops: dict[str, float], weighting: str) -> str:
     parts = [
         f"market_cap_top{int(round(tops['market_cap'] * 100))}",
         f"growth_top{int(round(tops['growth'] * 100))}",
-        f"quality_top{int(round(tops['quality'] * 100))}",
+        (
+            f"quality_top{int(round(tops['quality'] * 100))}"
+            if "quality" in tops
+            else "quality_disabled"
+        ),
         "intersection",
         weighting,
     ]
@@ -819,8 +831,9 @@ def main() -> int:
     tops = {
         "market_cap": float(args.market_cap_top),
         "growth": float(args.growth_top),
-        "quality": float(args.quality_top),
     }
+    if not args.disable_quality:
+        tops["quality"] = float(args.quality_top)
     portfolio_name = args.portfolio_name or default_portfolio_name(tops, args.weighting)
 
     calendar = load_trade_calendar(args.dim_date_path)
