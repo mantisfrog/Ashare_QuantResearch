@@ -23,6 +23,10 @@ import backtest_portfolio as bt
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_DIR = ROOT / "docs"
 OUT_PATH = DOCS_DIR / "portfolio_panel_data.js"
+DISPLAY_NAV_CANDIDATES = (
+    ROOT / "raw" / "tableau_display" / "nav_daily_size005_noquality_long_utf8_bom.csv",
+    ROOT / "data" / "factor" / "nav_daily_size005_noquality_long_utf8_bom.csv",
+)
 
 PORTFOLIO_NAME = "size5_growth10_quality_disabled_mcap_growth_cap10_1y"
 LOOKBACK_DAYS = 365
@@ -103,6 +107,58 @@ def max_drawdown_window(daily: pd.DataFrame) -> dict[str, Any]:
         "max_drawdown": float(drawdown.loc[trough_index]),
         "start_date": str(daily.loc[peak_index, "date"]),
         "end_date": str(daily.loc[trough_index, "date"]),
+    }
+
+
+def display_nav_performance() -> dict[str, Any] | None:
+    path = next((candidate for candidate in DISPLAY_NAV_CANDIDATES if candidate.exists()), None)
+    if path is None:
+        return None
+
+    nav = pd.read_csv(path, encoding="utf-8-sig")
+    required = {"date", "name", "nav"}
+    if not required.issubset(nav.columns):
+        return None
+
+    strategy = nav.loc[nav["name"].eq("策略组合"), ["date", "nav"]].copy()
+    strategy["date_id"] = strategy["date"].astype("int64")
+    strategy["date"] = strategy["date_id"].map(date_text)
+    strategy["net_value"] = pd.to_numeric(strategy["nav"], errors="coerce")
+    strategy = strategy.dropna(subset=["net_value"])
+    strategy = strategy.drop_duplicates(subset=["date_id"], keep="last")
+    strategy = strategy.sort_values("date_id", kind="mergesort").reset_index(drop=True)
+    if strategy.empty:
+        return None
+
+    returns = strategy["net_value"].pct_change().dropna()
+    trading_days = int(len(strategy))
+    total_return = float(strategy["net_value"].iloc[-1] / strategy["net_value"].iloc[0] - 1.0)
+    annual_return = (
+        float((1.0 + total_return) ** (TRADING_DAYS_PER_YEAR / trading_days) - 1.0)
+        if trading_days > 0 and total_return > -1.0
+        else float("nan")
+    )
+    annual_vol = float(returns.std(ddof=1) * math.sqrt(TRADING_DAYS_PER_YEAR)) if len(returns) > 1 else float("nan")
+    sharpe = (
+        float(returns.mean() / returns.std(ddof=1) * math.sqrt(TRADING_DAYS_PER_YEAR))
+        if len(returns) > 1 and returns.std(ddof=1) > 0
+        else float("nan")
+    )
+    drawdown_info = max_drawdown_window(strategy.rename(columns={"date_id": "date_id"}))
+    return {
+        "source": rel(path),
+        "start_date_id": int(strategy["date_id"].iloc[0]),
+        "end_date_id": int(strategy["date_id"].iloc[-1]),
+        "start_date": str(strategy["date"].iloc[0]),
+        "end_date": str(strategy["date"].iloc[-1]),
+        "trading_days": trading_days,
+        "total_return": total_return,
+        "annual_return": annual_return,
+        "annual_vol": annual_vol,
+        "sharpe_0rf": sharpe,
+        "max_drawdown": float(drawdown_info["max_drawdown"]),
+        "drawdown_start_date": drawdown_info["start_date"],
+        "drawdown_end_date": drawdown_info["end_date"],
     }
 
 
@@ -283,21 +339,39 @@ def panel_payload(
     annual_turnover: float | None,
 ) -> dict[str, Any]:
     values = dict(zip(summary["metric"], summary["value"], strict=False))
-    mdd = max_drawdown_window(daily)
+    display_perf = display_nav_performance()
+    mdd = (
+        {
+            "max_drawdown": display_perf["max_drawdown"],
+            "start_date": display_perf["drawdown_start_date"],
+            "end_date": display_perf["drawdown_end_date"],
+        }
+        if display_perf
+        else max_drawdown_window(daily)
+    )
     latest_rebalance_date_id = int(sector_exposure["rebalance_date_id"].max())
     sector_top = sector_exposure.head(3).copy()
     top_sector_names = sector_top["tdx_sector_name"].astype(str).tolist()
     top3_weight = float(sector_top["weight"].sum()) if not sector_top.empty else None
 
-    total_return = float(values["total_return"])
-    sharpe = float(values["sharpe_0rf"])
-    max_drawdown = float(values["max_drawdown"])
+    if display_perf:
+        total_return = float(display_perf["total_return"])
+        sharpe = float(display_perf["sharpe_0rf"])
+        max_drawdown = float(display_perf["max_drawdown"])
+        performance_start = display_perf["start_date"]
+        performance_end = display_perf["end_date"]
+    else:
+        total_return = float(values["total_return"])
+        sharpe = float(values["sharpe_0rf"])
+        max_drawdown = float(values["max_drawdown"])
+        performance_start = date_text(values["start_date_id"])
+        performance_end = date_text(values["end_date_id"])
     metrics = [
         {
             "label": "累计收益",
             "value": format_signed_percent(total_return),
             "value_class": metric_class(total_return),
-            "note": f"{date_text(values['start_date_id'])} -> {date_text(values['end_date_id'])}",
+            "note": f"{performance_start} -> {performance_end}",
         },
         {
             "label": "夏普比率",
@@ -333,21 +407,31 @@ def panel_payload(
             "weighting": "市值 × 成长得分",
             "max_weight": "10%",
             "rebalance_frequency": "月度",
-            "description": (
-                "这是一个 Size top 5% ∩ Growth top 10% 的示例组合，Quality 过滤禁用；"
-                "原始权重使用市值 × 成长得分，并设置 10% 单票上限，按月调仓。"
-            ),
+            "description": "",
         },
         "performance": {
-            "start_date": date_text(values["start_date_id"]),
-            "end_date": date_text(values["end_date_id"]),
-            "trading_days": int(float(values["trading_days"])),
+            "source": display_perf["source"] if display_perf else "backtest",
+            "start_date": performance_start,
+            "end_date": performance_end,
+            "trading_days": (
+                int(display_perf["trading_days"])
+                if display_perf
+                else int(float(values["trading_days"]))
+            ),
             "rebalance_count": int(float(values["rebalance_count"])),
             "holding_rows": int(float(values["holding_rows"])),
             "avg_holding_count": float(values["avg_holding_count"]),
             "total_return": total_return,
-            "annual_return": float(values["annual_return"]),
-            "annual_vol": float(values["annual_vol"]),
+            "annual_return": (
+                float(display_perf["annual_return"])
+                if display_perf
+                else float(values["annual_return"])
+            ),
+            "annual_vol": (
+                float(display_perf["annual_vol"])
+                if display_perf
+                else float(values["annual_vol"])
+            ),
             "sharpe_0rf": sharpe,
             "max_drawdown": max_drawdown,
             "drawdown_start_date": mdd["start_date"],
@@ -362,12 +446,7 @@ def panel_payload(
             "top_sector_names": top_sector_names,
             "top3_weight": top3_weight,
             "top3_weight_text": format_percent(top3_weight, digits=1),
-            "description": (
-                "上图展示的是最后一期截面持仓的行业敞口，"
-                f"数据截至调仓日 {date_text(latest_rebalance_date_id)}。"
-                "行业分类采用通达信（TDX）行业标准。组合当前主要集中于"
-                f"{'、'.join(top_sector_names)}，前三大行业合计占比 {format_percent(top3_weight, digits=1)}。"
-            ),
+            "description": "",
             "exposure": sector_exposure.to_dict(orient="records"),
         },
         "turnover": turnover.to_dict(orient="records"),

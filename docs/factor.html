@@ -851,7 +851,7 @@
               <div class="tableau-wrapper">
                 <tableau-viz
                   id="tableauViz"
-                  src="https://public.tableau.com/views/vs_17812455678280/1"
+                  src="https://public.tableau.com/app/profile/wenbo.bi/viz/vs_17812455678280/1"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
@@ -944,7 +944,7 @@
               <div class="tableau-wrapper">
                 <tableau-viz
                   id="factorOverviewViz"
-                  src="https://public.tableau.com/views/Factor_Overview/1"
+                  src="https://public.tableau.com/app/profile/wenbo.bi/viz/Factor_Overview/1"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
@@ -962,7 +962,7 @@
               <div class="tableau-wrapper">
                 <tableau-viz
                   id="netValueCumViz"
-                  src="https://public.tableau.com/views/Net_Value_Cum/1"
+                  src="https://public.tableau.com/app/profile/wenbo.bi/viz/Net_Value_Cum/1"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
@@ -992,7 +992,7 @@
               <div class="tableau-wrapper">
                 <tableau-viz
                   id="rankIcRawViz"
-                  src="https://public.tableau.com/views/Rank_IC/1"
+                  src="https://public.tableau.com/app/profile/wenbo.bi/viz/Rank_IC/1"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
@@ -1005,7 +1005,7 @@
               <div class="tableau-wrapper">
                 <tableau-viz
                   id="rankIcCorrViz"
-                  src="https://public.tableau.com/views/RankICCorr/1"
+                  src="https://public.tableau.com/app/profile/wenbo.bi/viz/RankICCorr/Dashboard1"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
@@ -1022,7 +1022,7 @@
               <div class="tableau-wrapper">
                 <tableau-viz
                   id="portfolioReturnViz"
-                  src="https://public.tableau.com/views/Portfolio_return/1"
+                  src="https://public.tableau.com/app/profile/wenbo.bi/viz/Portfolio_return/Dashboard1"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
@@ -1041,7 +1041,7 @@
               <div class="tableau-wrapper">
                 <tableau-viz
                   id="sectorExposureViz"
-                  src="https://public.tableau.com/views/Sector_exposure/1"
+                  src="https://public.tableau.com/app/profile/wenbo.bi/viz/Sector_exposure/1"
                   toolbar="bottom"
                   hide-tabs>
                 </tableau-viz>
@@ -1462,19 +1462,17 @@
       const metricGrid = document.getElementById("portfolioMetricGrid");
       const strategyDescription = document.getElementById("portfolioStrategyDescription");
       const sectorDescription = document.getElementById("portfolioSectorDescription");
-      if (!metricGrid || !strategyDescription || !sectorDescription) return;
+      if (!metricGrid) return;
 
       const data = window.portfolioPanelData;
       if (!data) {
         metricGrid.innerHTML = `<div class="factor-empty">portfolio_panel_data.js 未加载</div>`;
-        strategyDescription.innerHTML = `<p>组合快照数据未加载，请先运行 factor/build_portfolio_panel_snapshot.py。</p>`;
-        sectorDescription.innerHTML = `<p>行业敞口快照数据未加载。</p>`;
+        if (strategyDescription) strategyDescription.innerHTML = "";
+        if (sectorDescription) sectorDescription.innerHTML = "";
         return;
       }
 
-      strategyDescription.innerHTML = `
-        <p>${escapeHtml(data.strategy.description)}</p>
-      `;
+      if (strategyDescription) strategyDescription.innerHTML = "";
       metricGrid.innerHTML = data.metrics.map((item) => `
         <div class="stat-tile">
           <div class="stat-label">${escapeHtml(item.label)}</div>
@@ -1482,9 +1480,7 @@
           <div class="stat-note">${escapeHtml(item.note)}</div>
         </div>
       `).join("");
-      sectorDescription.innerHTML = `
-        <p>${escapeHtml(data.sector.description)}</p>
-      `;
+      if (sectorDescription) sectorDescription.innerHTML = "";
       portfolioPanelRendered = true;
     }
 

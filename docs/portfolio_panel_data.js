@@ -1,6 +1,6 @@
 window.portfolioPanelData = {
   "meta": {
-    "generated_at": "2026-07-02T16:44:16",
+    "generated_at": "2026-07-02T22:04:14",
     "portfolio_name": "size5_growth10_quality_disabled_mcap_growth_cap10_1y",
     "calc_version": "v1",
     "latest_rebalance_date": 20260701,
@@ -20,20 +20,21 @@ window.portfolioPanelData = {
     "weighting": "市值 × 成长得分",
     "max_weight": "10%",
     "rebalance_frequency": "月度",
-    "description": "这是一个 Size top 5% ∩ Growth top 10% 的示例组合，Quality 过滤禁用；原始权重使用市值 × 成长得分，并设置 10% 单票上限，按月调仓。"
+    "description": ""
   },
   "performance": {
-    "start_date": "2025-07-01",
-    "end_date": "2026-07-01",
-    "trading_days": 243,
+    "source": "raw/tableau_display/nav_daily_size005_noquality_long_utf8_bom.csv",
+    "start_date": "2025-05-30",
+    "end_date": "2026-06-24",
+    "trading_days": 252,
     "rebalance_count": 13,
     "holding_rows": 204,
     "avg_holding_count": 15.692307692307692,
-    "total_return": 2.344560024440214,
-    "annual_return": 2.497509939316473,
-    "annual_vol": 0.376941108323231,
-    "sharpe_0rf": 3.5162766215600207,
-    "max_drawdown": -0.16266901501732223,
+    "total_return": 2.950496,
+    "annual_return": 2.950496,
+    "annual_vol": 0.37925956937652927,
+    "sharpe_0rf": 3.834081339651154,
+    "max_drawdown": -0.16477966025379653,
     "drawdown_start_date": "2025-10-29",
     "drawdown_end_date": "2025-11-24",
     "monthly_turnover": 0.2314583659029167,
@@ -42,19 +43,19 @@ window.portfolioPanelData = {
   "metrics": [
     {
       "label": "累计收益",
-      "value": "+234.46%",
+      "value": "+295.05%",
       "value_class": "metric-positive",
-      "note": "2025-07-01 -> 2026-07-01"
+      "note": "2025-05-30 -> 2026-06-24"
     },
     {
       "label": "夏普比率",
-      "value": "3.52",
+      "value": "3.83",
       "value_class": "",
       "note": "年化收益 / 年化波动"
     },
     {
       "label": "最大回撤",
-      "value": "16.27%",
+      "value": "16.48%",
       "value_class": "metric-negative",
       "note": "2025-10-29 -> 2025-11-24"
     },
@@ -75,7 +76,7 @@ window.portfolioPanelData = {
     ],
     "top3_weight": 0.7103969473240501,
     "top3_weight_text": "71.0%",
-    "description": "上图展示的是最后一期截面持仓的行业敞口，数据截至调仓日 2026-07-01。行业分类采用通达信（TDX）行业标准。组合当前主要集中于半导体、通信设备、消费电子，前三大行业合计占比 71.0%。",
+    "description": "",
     "exposure": [
       {
         "rebalance_date_id": 20260701,
