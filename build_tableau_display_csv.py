@@ -11,11 +11,26 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+import gspread
 import pandas as pd
+from google.oauth2.service_account import Credentials
 
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = ROOT / "raw" / "tableau_display"
+
+GOOGLE_SHEET_SERVICE_ACCOUNT = ROOT / "google_sheet_service_account.json"
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
+# CSV filename -> Google Spreadsheet ID
+SPREADSHEET_IDS = {
+    "style_year_ic_chart.csv": "15grIgNjpTzJxM_Tk35MrC8ZGTMeem2iCFFxn7ueIqLM",
+    "style_group_returns.csv": "1m0KC4AjZxW1yQGFYJ601vtM5LnK3CkWQGSss8uV564c",
+    "style_long_short_returns.csv": "1ZhvcHUrSUpS5YfZtZgaOqFxHDMYLkeDeWMf1T1MSee8",
+    "diagnostics_2015_2026.csv": "1_b_F5Cr0Y1cRzVycD1Olb-hEryFQ0rz8pqSASVFtM-U",
+    "rank_corr_mean.csv": "1dPN2q-o8v3mz4dnlZgr0FWWUqSmYieGK_-8epoGDs2M",
+    "nav_daily_size005_noquality_long_utf8_bom.csv": "1TwwLg4BSZ3516c6jgr1pSEOddbiP-dTOMO3uC1jMs4o",
+}
 
 NAV_FILE = "nav_daily_size005_noquality_long_utf8_bom.csv"
 RANK_CORR_FILE = "rank_corr_mean.csv"
@@ -112,6 +127,11 @@ def parse_args() -> argparse.Namespace:
         "--fetch-missing-index",
         action="store_true",
         help="Best-effort akshare fallback for missing index rows.",
+    )
+    parser.add_argument(
+        "--skip-google-sync",
+        action="store_true",
+        help="Write local display CSVs only; skip Google Sheet synchronization.",
     )
     return parser.parse_args()
 
@@ -489,6 +509,36 @@ def build_all(output_dir: Path, fetch_missing_index: bool) -> list[BuildReport]:
     return reports
 
 
+def get_gsheet_client() -> gspread.Client:
+    """Authorize gspread client using the project service account."""
+    if not GOOGLE_SHEET_SERVICE_ACCOUNT.exists():
+        raise FileNotFoundError(f"missing service account: {GOOGLE_SHEET_SERVICE_ACCOUNT}")
+    creds = Credentials.from_service_account_file(
+        str(GOOGLE_SHEET_SERVICE_ACCOUNT), scopes=SCOPES
+    )
+    return gspread.authorize(creds)
+
+
+def sync_csv_to_gsheet(path: Path, sheet_key: str) -> tuple[bool, str]:
+    """Overwrite the first worksheet of a Google Sheet with CSV contents."""
+    try:
+        client = get_gsheet_client()
+        sh = client.open_by_key(sheet_key)
+        ws = sh.get_worksheet(0)
+        if ws is None:
+            raise ValueError("spreadsheet has no worksheets")
+
+        df = pd.read_csv(path, encoding="utf-8-sig")
+        df = df.where(pd.notna(df), "")
+        values = [df.columns.tolist()] + df.values.tolist()
+
+        ws.clear()
+        ws.update(range_name="A1", values=values, value_input_option="USER_ENTERED")
+        return True, f"synced {len(values) - 1} rows"
+    except Exception as exc:
+        return False, str(exc)
+
+
 def main() -> int:
     args = parse_args()
     output_dir = args.output_dir.resolve()
@@ -498,6 +548,32 @@ def main() -> int:
         rel_output = report.output.relative_to(ROOT) if report.output.is_relative_to(ROOT) else report.output
         detail = f" {report.detail}" if report.detail else ""
         print(f"  {report.name}: rows={report.rows}{detail} -> {rel_output}")
+
+    if args.skip_google_sync:
+        print("Google Sheet sync skipped.")
+        return 0
+
+    print("Syncing to Google Sheets...")
+    sync_failures: list[str] = []
+    for report in reports:
+        sheet_key = SPREADSHEET_IDS.get(report.name)
+        if not sheet_key:
+            print(f"  {report.name}: no sheet mapping, skipped")
+            continue
+        ok, msg = sync_csv_to_gsheet(report.output, sheet_key)
+        prefix = "  " + report.name + ":"
+        if ok:
+            print(f"{prefix} {msg}")
+        else:
+            print(f"{prefix} WARNING sync failed: {msg}")
+            sync_failures.append(f"{report.name}: {msg}")
+
+    if sync_failures:
+        print("Google Sheet sync failed:")
+        for failure in sync_failures:
+            print(f"  {failure}")
+        return 1
+
     return 0
 
 

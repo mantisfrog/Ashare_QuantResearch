@@ -43,7 +43,7 @@ DATE_FMT_FILE = "%Y-%m-%d"
 DATE_FMT_API = "%Y%m%d"
 DEFAULT_START_DATE = "19900101"
 BJ_TZ = ZoneInfo("Asia/Shanghai")
-UPDATE_AFTER = dt_time(9, 30)
+UPDATE_AFTER = dt_time(16, 30)
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -177,7 +177,7 @@ def should_update(path: Path) -> tuple[bool, str]:
     """
     now_bj = now_beijing()
     if now_bj.time() <= UPDATE_AFTER:
-        return False, f"北京时间 {now_bj.strftime('%H:%M')} 未过 15:30"
+        return False, f"北京时间 {now_bj.strftime('%H:%M')} 未过 16:30"
 
     try:
         existing = read_existing_csv(path)

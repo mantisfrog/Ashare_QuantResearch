@@ -1421,3 +1421,28 @@ button.wf-row:hover {
     min-height: 560px;
   }
 }
+
+/* ---------- 进场动画（与 docs/index.html 一致） ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: rise 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.reveal.d1 { animation-delay: 0.1s; }
+.reveal.d2 { animation-delay: 0.26s; }
+.reveal.d3 { animation-delay: 0.42s; }
+.reveal.d4 { animation-delay: 0.58s; }
+.reveal.d5 { animation-delay: 0.72s; }
+
+@keyframes rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
