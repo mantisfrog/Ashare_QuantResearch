@@ -16,20 +16,33 @@
   <script src="./factor_panel_data.js"></script>
   <script src="./portfolio_panel_data.js"></script>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap"
+    rel="stylesheet"
+  />
+
   <style>
     :root {
-      --page-bg: #f7f8fa;
-      --surface: #ffffff;
-      --surface-subtle: #fbfcfd;
-      --text: #111827;
-      --muted: #4b5563;
-      --muted-light: #6b7280;
-      --border: #e5e7eb;
-      --shadow: 0 8px 24px rgba(0,0,0,0.08);
-      --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.06);
-      --radius: 8px;
+      --page-bg: #f6f4ee;
+      --surface: #fffefb;
+      --surface-subtle: #faf8f1;
+      --text: #1e2620;
+      --muted: #565b52;
+      --muted-light: #6f7268;
+      --border: #e5e0d2;
+      --charcoal: #14201a;
+      --gold: #a5822f;
+      --gold-bright: #c8a44b;
+      --gold-soft: #f2e9d3;
+      --gold-line: rgba(165, 130, 47, 0.38);
+      --shadow: none;
+      --shadow-soft: none;
+      --radius: 6px;
       --panel-padding: 20px;
       --section-gap: 12px;
+      --font-serif: "Noto Serif SC", "Source Han Serif SC", Georgia, "Times New Roman", serif;
     }
 
     html {
@@ -61,23 +74,65 @@
       min-width: 0;
       max-width: 100vw;
       padding: 16px 24px;
-      background: #111827;
+      background: var(--charcoal);
       color: white;
+      border-bottom: 1px solid var(--gold-line);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
     header h1 {
       margin: 0 0 12px;
-      font-size: 32px;
-      line-height: 1.15;
+      font-size: 30px;
+      line-height: 1.2;
+      font-family: var(--font-serif);
+      font-weight: 700;
+      letter-spacing: 0.01em;
       overflow-wrap: anywhere;
     }
 
     header p {
       margin: 0;
-      font-size: 16px;
-      color: #d1d5db;
+      font-size: 15px;
+      color: rgba(245, 244, 236, 0.62);
       line-height: 1.35;
       overflow-wrap: anywhere;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 6px;
+    }
+
+    .site-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 0 14px;
+      border: 1px solid var(--gold-line);
+      border-radius: 999px;
+      color: rgba(245, 244, 236, 0.85);
+      font-size: 13px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .site-nav a:hover {
+      background: rgba(200, 164, 75, 0.14);
+      border-color: var(--gold-bright);
+      color: #ffffff;
+    }
+
+    h2, h3 {
+      font-family: var(--font-serif);
+      letter-spacing: 0.01em;
     }
 
     main {
@@ -128,7 +183,7 @@
       border: 1px solid transparent;
       border-radius: 6px;
       background: transparent;
-      color: #374151;
+      color: #4c5049;
       font: inherit;
       font-weight: 600;
       text-align: left;
@@ -137,14 +192,15 @@
     }
 
     .nav-tab:hover {
-      background: #f3f4f6;
-      color: #111827;
+      background: #f0ede2;
+      color: var(--text);
     }
 
     .nav-tab.active {
-      background: var(--text);
+      background: var(--charcoal);
       color: var(--surface);
-      border-color: var(--text);
+      border-color: var(--charcoal);
+      box-shadow: inset 3px 0 0 var(--gold-bright);
     }
 
     .page-content {
@@ -316,7 +372,9 @@
     .stat-value {
       color: var(--text);
       font-size: 24px;
-      font-weight: 800;
+      font-weight: 700;
+      font-family: var(--font-serif);
+      font-variant-numeric: tabular-nums;
       line-height: 1.1;
     }
 
@@ -375,14 +433,14 @@
     }
 
     .erd-view-tab:hover {
-      background: #f3f4f6;
-      color: #111827;
+      background: #f0ede2;
+      color: var(--text);
     }
 
     .erd-view-tab.active {
-      background: var(--text);
+      background: var(--charcoal);
       color: var(--surface);
-      border-color: var(--text);
+      border-color: var(--charcoal);
     }
 
     .erd-frame {
@@ -550,8 +608,8 @@
       min-height: 24px;
       padding: 0 8px;
       border-radius: 999px;
-      background: #f3f4f6;
-      color: #374151;
+      background: #f0ede2;
+      color: #4c5049;
       font-size: 12px;
       font-weight: 800;
       white-space: nowrap;
@@ -592,7 +650,8 @@
       margin-top: 4px;
       color: var(--text);
       font-size: 17px;
-      font-weight: 800;
+      font-weight: 700;
+      font-family: var(--font-serif);
       font-variant-numeric: tabular-nums;
     }
 
@@ -606,17 +665,17 @@
 
     .factor-empty {
       padding: 14px;
-      border: 1px dashed #d1d5db;
+      border: 1px dashed var(--border);
       border-radius: 8px;
-      color: #6b7280;
-      background: #f9fafb;
+      color: var(--muted-light);
+      background: var(--surface-subtle);
     }
 
     .panel-description {
       margin-top: 16px;
       padding: 14px 16px;
-      border-left: 3px solid #111827;
-      background: #f9fafb;
+      border-left: 3px solid var(--gold);
+      background: var(--gold-soft);
       border-radius: 0 6px 6px 0;
     }
 
@@ -762,8 +821,14 @@
 
 <body>
   <header>
-    <h1>Wenbo 端到端多因子组合构建</h1>
-    <p>展示层为数据快照，因境内外互联网限制，加载可能较慢，加载不正确可尝试刷新页面。06.29已优化移动端体验。</p>
+    <div>
+      <h1>Wenbo 端到端多因子组合构建</h1>
+      <p>展示层为数据快照，因境内外互联网限制，加载可能较慢，加载不正确可尝试刷新页面。06.29已优化移动端体验。</p>
+    </div>
+    <nav class="site-nav" aria-label="站点导航">
+      <a href="./index.html">&#8592; 主页</a>
+      <a href="./wealthops_frontend/index.html">财富管理 &#8594;</a>
+    </nav>
   </header>
 
   <main>

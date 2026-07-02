@@ -1501,6 +1501,11 @@ function renderApp() {
 }
 
 function renderGlobalMetrics() {
+  const strip = document.getElementById("global-metrics");
+  if (state.page !== "strategy") {
+    strip.innerHTML = "";
+    return;
+  }
   const scopedCustomers = filteredCustomers();
   const opportunityCustomers = scopedCustomers.filter((customer) => portfolioGaps(customer).some((item) => item.gap > 0.08));
   const totalGap = scopedCustomers.reduce((sum, customer) => {
@@ -1511,7 +1516,7 @@ function renderGlobalMetrics() {
   }, 0);
   const accepted = state.feedback.filter((item) => item.action === "accepted").length;
   const decided = state.feedback.filter((item) => item.action !== "pending").length || 1;
-  document.getElementById("global-metrics").innerHTML = [
+  strip.innerHTML = [
     metric("服务客群", `${scopedCustomers.length || 0} 户`, `${state.branch} ${state.risk}`),
     metric("配置缺口规模", fmtMoney(totalGap), "按正向缺口估算"),
     metric("适当性拦截", `${blockCount} 次`, "风险、期限、流动性规则"),
