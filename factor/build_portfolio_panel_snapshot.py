@@ -23,10 +23,6 @@ import backtest_portfolio as bt
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_DIR = ROOT / "docs"
 OUT_PATH = DOCS_DIR / "portfolio_panel_data.js"
-DISPLAY_NAV_CANDIDATES = (
-    ROOT / "raw" / "tableau_display" / "nav_daily_size005_noquality_long_utf8_bom.csv",
-    ROOT / "data" / "factor" / "nav_daily_size005_noquality_long_utf8_bom.csv",
-)
 
 PORTFOLIO_NAME = "size5_growth10_quality_disabled_mcap_growth_cap10_1y"
 LOOKBACK_DAYS = 365
@@ -110,25 +106,21 @@ def max_drawdown_window(daily: pd.DataFrame) -> dict[str, Any]:
     }
 
 
-def display_nav_performance() -> dict[str, Any] | None:
-    path = next((candidate for candidate in DISPLAY_NAV_CANDIDATES if candidate.exists()), None)
-    if path is None:
-        return None
+def daily_performance(daily: pd.DataFrame, source_path: Path) -> dict[str, Any]:
+    required = {"date_id", "net_value"}
+    missing = required - set(daily.columns)
+    if missing:
+        raise ValueError(f"daily performance input missing columns: {sorted(missing)}")
 
-    nav = pd.read_csv(path, encoding="utf-8-sig")
-    required = {"date", "name", "nav"}
-    if not required.issubset(nav.columns):
-        return None
-
-    strategy = nav.loc[nav["name"].eq("策略组合"), ["date", "nav"]].copy()
-    strategy["date_id"] = strategy["date"].astype("int64")
-    strategy["date"] = strategy["date_id"].map(date_text)
-    strategy["net_value"] = pd.to_numeric(strategy["nav"], errors="coerce")
+    strategy = daily.copy()
+    strategy["date_id"] = strategy["date_id"].astype("int64")
+    if "date" not in strategy.columns:
+        strategy["date"] = strategy["date_id"].map(date_text)
     strategy = strategy.dropna(subset=["net_value"])
     strategy = strategy.drop_duplicates(subset=["date_id"], keep="last")
     strategy = strategy.sort_values("date_id", kind="mergesort").reset_index(drop=True)
     if strategy.empty:
-        return None
+        raise ValueError("daily performance input has no valid net_value rows")
 
     returns = strategy["net_value"].pct_change().dropna()
     trading_days = int(len(strategy))
@@ -146,7 +138,7 @@ def display_nav_performance() -> dict[str, Any] | None:
     )
     drawdown_info = max_drawdown_window(strategy.rename(columns={"date_id": "date_id"}))
     return {
-        "source": rel(path),
+        "source": rel(source_path),
         "start_date_id": int(strategy["date_id"].iloc[0]),
         "end_date_id": int(strategy["date_id"].iloc[-1]),
         "start_date": str(strategy["date"].iloc[0]),
@@ -339,33 +331,22 @@ def panel_payload(
     annual_turnover: float | None,
 ) -> dict[str, Any]:
     values = dict(zip(summary["metric"], summary["value"], strict=False))
-    display_perf = display_nav_performance()
-    mdd = (
-        {
-            "max_drawdown": display_perf["max_drawdown"],
-            "start_date": display_perf["drawdown_start_date"],
-            "end_date": display_perf["drawdown_end_date"],
-        }
-        if display_perf
-        else max_drawdown_window(daily)
-    )
+    performance = daily_performance(daily, paths["daily_returns"])
+    mdd = {
+        "max_drawdown": performance["max_drawdown"],
+        "start_date": performance["drawdown_start_date"],
+        "end_date": performance["drawdown_end_date"],
+    }
     latest_rebalance_date_id = int(sector_exposure["rebalance_date_id"].max())
     sector_top = sector_exposure.head(3).copy()
     top_sector_names = sector_top["tdx_sector_name"].astype(str).tolist()
     top3_weight = float(sector_top["weight"].sum()) if not sector_top.empty else None
 
-    if display_perf:
-        total_return = float(display_perf["total_return"])
-        sharpe = float(display_perf["sharpe_0rf"])
-        max_drawdown = float(display_perf["max_drawdown"])
-        performance_start = display_perf["start_date"]
-        performance_end = display_perf["end_date"]
-    else:
-        total_return = float(values["total_return"])
-        sharpe = float(values["sharpe_0rf"])
-        max_drawdown = float(values["max_drawdown"])
-        performance_start = date_text(values["start_date_id"])
-        performance_end = date_text(values["end_date_id"])
+    total_return = float(performance["total_return"])
+    sharpe = float(performance["sharpe_0rf"])
+    max_drawdown = float(performance["max_drawdown"])
+    performance_start = performance["start_date"]
+    performance_end = performance["end_date"]
     metrics = [
         {
             "label": "累计收益",
@@ -410,28 +391,16 @@ def panel_payload(
             "description": "",
         },
         "performance": {
-            "source": display_perf["source"] if display_perf else "backtest",
+            "source": performance["source"],
             "start_date": performance_start,
             "end_date": performance_end,
-            "trading_days": (
-                int(display_perf["trading_days"])
-                if display_perf
-                else int(float(values["trading_days"]))
-            ),
+            "trading_days": int(performance["trading_days"]),
             "rebalance_count": int(float(values["rebalance_count"])),
             "holding_rows": int(float(values["holding_rows"])),
             "avg_holding_count": float(values["avg_holding_count"]),
             "total_return": total_return,
-            "annual_return": (
-                float(display_perf["annual_return"])
-                if display_perf
-                else float(values["annual_return"])
-            ),
-            "annual_vol": (
-                float(display_perf["annual_vol"])
-                if display_perf
-                else float(values["annual_vol"])
-            ),
+            "annual_return": float(performance["annual_return"]),
+            "annual_vol": float(performance["annual_vol"]),
             "sharpe_0rf": sharpe,
             "max_drawdown": max_drawdown,
             "drawdown_start_date": mdd["start_date"],

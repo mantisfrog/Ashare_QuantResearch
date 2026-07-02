@@ -21,6 +21,7 @@ Run-Step "Factor update" "update_factors.py"
 Run-Step "Factor panel snapshot" "archived\简历展示页\build_factor_panel_snapshot.py"
 Run-Step "Tableau CSV" "archived\update_tableau_csv.py"
 Run-Step "Portfolio panel snapshot" "factor\build_portfolio_panel_snapshot.py"
+Run-Step "Style group backtest" "factor\build_style_group_backtest.py"
 Run-Step "Tableau display CSV" "build_tableau_display_csv.py"
 
 Write-Host "Pipeline completed." -ForegroundColor Green

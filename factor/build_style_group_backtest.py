@@ -109,6 +109,11 @@ def parse_args() -> argparse.Namespace:
         default=1_000_000,
         help="Rows per chunk when reading fact_daily.csv. Default: 1000000.",
     )
+    parser.add_argument(
+        "--allow-partial-latest-period",
+        action="store_true",
+        help="Include the latest partial month if it exists. Default: complete months only.",
+    )
     return parser.parse_args()
 
 
@@ -130,11 +135,32 @@ def parse_styles(value: str | None) -> list[str]:
 
 
 def load_trade_calendar(path: Path) -> pd.DataFrame:
-    calendar = pd.read_csv(path, usecols=["date_id", "date", "is_trade_day"])
-    calendar = calendar[calendar["is_trade_day"].astype(bool)].copy()
+    raw = pd.read_csv(path, usecols=["date_id", "date", "is_trade_day"])
+    raw["date"] = pd.to_datetime(raw["date"])
+    is_trade_day = raw["is_trade_day"].astype(str).str.lower().isin(
+        ["1", "true", "yes"]
+    )
+    calendar = raw[is_trade_day].copy()
     calendar["date_id"] = calendar["date_id"].astype("int64")
-    calendar["date"] = pd.to_datetime(calendar["date"])
-    return calendar.sort_values("date_id").reset_index(drop=True)
+    calendar = calendar.sort_values("date_id").reset_index(drop=True)
+    calendar.attrs["max_calendar_date"] = raw["date"].max()
+    return calendar
+
+
+def latest_complete_month_end_date_id(calendar: pd.DataFrame) -> int:
+    max_calendar_date = pd.Timestamp(
+        calendar.attrs.get("max_calendar_date", calendar["date"].max())
+    )
+    max_period = max_calendar_date.to_period("M")
+    month_end = max_period.to_timestamp(how="end").normalize()
+    complete_period = max_period if max_calendar_date.normalize() >= month_end else max_period - 1
+
+    complete_calendar = calendar[
+        calendar["date"].dt.to_period("M") <= complete_period
+    ]
+    if complete_calendar.empty:
+        raise ValueError("no complete month is available in the trading calendar")
+    return int(complete_calendar["date_id"].max())
 
 
 def load_composite(
@@ -452,13 +478,16 @@ def main() -> int:
         for row in calendar.itertuples(index=False)
     }
     trade_ids = calendar["date_id"].to_numpy(dtype=np.int64)
+    end_date_id = args.end
+    if end_date_id is None and not args.allow_partial_latest_period:
+        end_date_id = latest_complete_month_end_date_id(calendar)
 
     composite = load_composite(args.composite_dir, args.calc_version, styles)
     schedule = build_monthly_schedule(
         composite["date_id"].unique(),
         trade_ids,
         start_date_id=args.start,
-        end_date_id=args.end,
+        end_date_id=end_date_id,
     )
     composite = composite[composite["date_id"].isin(schedule["signal_date_id"])].copy()
     stock_codes = set(composite["stock_code"].astype(str))
@@ -489,6 +518,8 @@ def main() -> int:
 
     print("Style group backtest complete")
     print(f"  styles: {','.join(styles)}")
+    if end_date_id is not None:
+        print(f"  effective_end: {end_date_id}")
     print(f"  periods: {schedule['signal_date_id'].min()} - {schedule['exit_date_id'].max()}")
     print(f"  group_count: {args.group_count}")
     print(f"  group_rows: {len(group_returns)}")

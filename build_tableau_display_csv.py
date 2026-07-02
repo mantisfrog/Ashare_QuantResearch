@@ -1,8 +1,8 @@
-"""Build stable Tableau display-layer CSV files.
+"""Build latest Tableau display-layer CSV files.
 
-Outputs are written to ``raw/tableau_display``.  Existing Tableau CSVs remain
-the canonical history: rows already present in those files are copied byte for
-byte, and only genuinely new rows are appended.
+Outputs are written to ``raw/tableau_display``.  Each run reconstructs the
+display files from the current upstream CSVs; existing display outputs are not
+used as canonical history.
 """
 from __future__ import annotations
 
@@ -30,21 +30,11 @@ PORTFOLIO_DAILY = (
     / "backtest"
     / "size5_growth10_quality_disabled_mcap_growth_cap10_1y_daily_returns.csv"
 )
-GROWTH100_INDEX = ROOT / "data" / "factor" / "980080_成长100.csv"
+GROWTH100_INDEX = ROOT / "raw" / "index_gz" / "980080_成长100.csv"
 ALL_A_INDEX = ROOT / "raw" / "index_gz" / "000985_中证全指.csv"
-
-LEGACY_PATHS = {
-    NAV_FILE: ROOT / "data" / "factor" / NAV_FILE,
-    RANK_CORR_FILE: ROOT / "data" / "factor" / "diagnostics" / RANK_CORR_FILE,
-    DIAGNOSTICS_FILE: ROOT / DIAGNOSTICS_FILE,
-    STYLE_GROUP_FILE: ROOT / "data" / "factor" / "style_backtest" / STYLE_GROUP_FILE,
-    STYLE_LONG_SHORT_FILE: ROOT
-    / "data"
-    / "factor"
-    / "style_backtest"
-    / STYLE_LONG_SHORT_FILE,
-    STYLE_YEAR_IC_FILE: ROOT / "docs" / STYLE_YEAR_IC_FILE,
-}
+RANK_CORR_SOURCE = ROOT / "data" / "factor" / "diagnostics" / RANK_CORR_FILE
+STYLE_GROUP_SOURCE = ROOT / "data" / "factor" / "style_backtest" / STYLE_GROUP_FILE
+STYLE_LONG_SHORT_SOURCE = ROOT / "data" / "factor" / "style_backtest" / STYLE_LONG_SHORT_FILE
 
 DIAGNOSTICS_COLUMNS = [
     "date_id",
@@ -67,6 +57,27 @@ DIAGNOSTICS_COLUMNS = [
     "raw_icir_6m",
 ]
 
+STYLE_YEAR_COLUMNS = [
+    "calc_version",
+    "year",
+    "style",
+    "style_name",
+    "style_order",
+    "horizon",
+    "horizon_months",
+    "signal_type",
+    "signal_name",
+    "month_count",
+    "factor_count",
+    "factor_month_obs",
+    "win_rate",
+    "ic_std",
+    "is_partial_year",
+    "metric",
+    "metric_name",
+    "value",
+]
+
 STYLE_ORDER = ["value", "quality", "growth", "momentum", "reversal", "risk"]
 STYLE_NAMES = {
     "value": "价值",
@@ -84,14 +95,12 @@ class BuildReport:
     name: str
     output: Path
     rows: int
-    frozen_rows: int = 0
-    appended_rows: int = 0
-    generated_overlap_diffs: int = 0
+    detail: str = ""
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build stable Tableau display CSV files under raw/tableau_display."
+        description="Build latest Tableau display CSV files under raw/tableau_display."
     )
     parser.add_argument(
         "--output-dir",
@@ -111,79 +120,67 @@ def read_csv(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, encoding="utf-8-sig")
 
 
-def copy_csv(source: Path, output: Path, name: str) -> BuildReport:
+def write_csv(
+    frame: pd.DataFrame,
+    output: Path,
+    name: str,
+    *,
+    columns: list[str] | None = None,
+    float_format: str | None = None,
+    encoding: str = "utf-8",
+    detail: str = "",
+) -> BuildReport:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temp_output = output.with_name(f".{output.name}.tmp")
+    frame.to_csv(
+        temp_output,
+        index=False,
+        columns=columns,
+        encoding=encoding,
+        float_format=float_format,
+        lineterminator="\n",
+    )
+    replace_output(temp_output, output)
+    return BuildReport(name=name, output=output, rows=len(frame), detail=detail)
+
+
+def copy_current_csv(source: Path, output: Path, name: str) -> BuildReport:
     if not source.exists():
         raise FileNotFoundError(f"missing source CSV for {name}: {source}")
     output.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, output)
-    rows = len(read_csv(output))
-    return BuildReport(name=name, output=output, rows=rows, frozen_rows=rows)
+    temp_output = output.with_name(f".{output.name}.tmp")
+    shutil.copyfile(source, temp_output)
+    replace_output(temp_output, output)
+    frame = read_csv(output)
+    return BuildReport(name=name, output=output, rows=len(frame), detail=date_detail(frame))
 
 
-def append_preserving_legacy(
-    *,
-    legacy_path: Path,
-    output_path: Path,
-    append_rows: pd.DataFrame,
-    columns: list[str],
-    name: str,
-    float_format: str | None = None,
-) -> BuildReport:
-    if not legacy_path.exists():
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        append_rows.to_csv(
-            output_path,
-            index=False,
-            columns=columns,
-            encoding="utf-8-sig" if name == NAV_FILE else "utf-8",
-            float_format=float_format,
-            lineterminator="\n",
-        )
-        return BuildReport(name=name, output=output_path, rows=len(append_rows))
-
-    legacy = read_csv(legacy_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(legacy_path, output_path)
-    if not append_rows.empty:
-        append_rows.to_csv(
-            output_path,
-            mode="a",
-            header=False,
-            index=False,
-            columns=columns,
-            encoding="utf-8",
-            float_format=float_format,
-            lineterminator="\n",
-        )
-    return BuildReport(
-        name=name,
-        output=output_path,
-        rows=len(legacy) + len(append_rows),
-        frozen_rows=len(legacy),
-        appended_rows=len(append_rows),
-    )
+def replace_output(temp_output: Path, output: Path) -> None:
+    try:
+        temp_output.replace(output)
+    except PermissionError as exc:
+        temp_output.unlink(missing_ok=True)
+        raise PermissionError(
+            f"cannot replace {output}; close any Tableau/Excel/preview process using it and rerun"
+        ) from exc
 
 
-def count_key_diffs(
-    legacy: pd.DataFrame,
-    candidate: pd.DataFrame,
-    key_cols: list[str],
-) -> int:
-    if legacy.empty or candidate.empty:
-        return 0
-    if legacy.duplicated(key_cols).any() or candidate.duplicated(key_cols).any():
-        return 0
-    value_cols = [col for col in legacy.columns if col not in key_cols]
-    common = legacy.merge(candidate, on=key_cols, how="inner", suffixes=("_old", "_new"))
-    if common.empty:
-        return 0
-    changed = pd.Series(False, index=common.index)
-    for col in value_cols:
-        old = common[f"{col}_old"]
-        new = common[f"{col}_new"]
-        equal = old.eq(new) | (old.isna() & new.isna())
-        changed |= ~equal
-    return int(changed.sum())
+def date_detail(frame: pd.DataFrame) -> str:
+    for col in ("date", "date_id", "exit_date_id", "signal_date_id", "year", "日期"):
+        if col not in frame.columns or frame.empty:
+            continue
+        values = frame[col].dropna()
+        if values.empty:
+            continue
+        return f"{col}={values.min()}..{values.max()}"
+    return ""
+
+
+def safe_icir(series: pd.Series) -> float:
+    std = series.std(skipna=True)
+    if pd.isna(std) or float(std) == 0.0:
+        return float("nan")
+    return float(series.mean(skipna=True) / std)
 
 
 def build_diagnostics_candidate() -> pd.DataFrame:
@@ -207,7 +204,7 @@ def build_diagnostics_candidate() -> pd.DataFrame:
             output_col = f"{output_prefix}_{horizon}m"
             diagnostics[output_col] = diagnostics.groupby("factor_code")[
                 value_col
-            ].transform(lambda s: s.mean(skipna=True) / s.std(skipna=True))
+            ].transform(safe_icir)
 
     for col in DIAGNOSTICS_COLUMNS:
         if col not in diagnostics.columns:
@@ -222,30 +219,15 @@ def build_diagnostics_candidate() -> pd.DataFrame:
 
 
 def build_diagnostics(output_dir: Path) -> BuildReport:
-    name = DIAGNOSTICS_FILE
-    legacy_path = LEGACY_PATHS[name]
     candidate = build_diagnostics_candidate()
-    append_rows = candidate
-    diffs = 0
-    if legacy_path.exists():
-        legacy = read_csv(legacy_path)
-        max_date_id = int(legacy["date_id"].max())
-        append_rows = candidate[candidate["date_id"].astype(int) > max_date_id]
-        diffs = count_key_diffs(
-            legacy,
-            candidate[candidate["date_id"].astype(int) <= max_date_id],
-            ["date_id", "factor_code", "calc_version"],
-        )
-    report = append_preserving_legacy(
-        legacy_path=legacy_path,
-        output_path=output_dir / name,
-        append_rows=append_rows,
+    return write_csv(
+        candidate,
+        output_dir / DIAGNOSTICS_FILE,
+        DIAGNOSTICS_FILE,
         columns=DIAGNOSTICS_COLUMNS,
-        name=name,
         float_format="%.6f",
+        detail=date_detail(candidate),
     )
-    report.generated_overlap_diffs = diffs
-    return report
 
 
 def read_index_nav(path: Path, name: str, start_date: int) -> pd.DataFrame:
@@ -256,25 +238,31 @@ def read_index_nav(path: Path, name: str, start_date: int) -> pd.DataFrame:
     missing = required - set(raw.columns)
     if missing:
         raise ValueError(f"{path} missing columns: {sorted(missing)}")
+
     frame = raw[["日期", "收盘价"]].copy()
     frame["date"] = pd.to_datetime(frame["日期"], errors="coerce").dt.strftime("%Y%m%d")
-    frame = frame.dropna(subset=["date", "收盘价"])
-    frame["date"] = frame["date"].astype("int64")
     frame["close"] = pd.to_numeric(frame["收盘价"], errors="coerce")
-    frame = frame.dropna(subset=["close"]).sort_values("date", kind="mergesort")
+    frame = frame.dropna(subset=["date", "close"])
+    frame["date"] = frame["date"].astype("int64")
+    frame = frame.sort_values("date", kind="mergesort").drop_duplicates(
+        subset=["date"],
+        keep="last",
+    )
     frame = frame[frame["date"] >= start_date].copy()
     if frame.empty:
         return pd.DataFrame(columns=["date", "name", "nav"])
-    base_rows = frame.loc[frame["date"] == start_date, "close"]
+
+    base_rows = frame.loc[frame["date"].eq(start_date), "close"]
     base = float(base_rows.iloc[0] if not base_rows.empty else frame["close"].iloc[0])
-    result = pd.DataFrame(
+    if base == 0.0:
+        raise ValueError(f"{path} has zero base close for {name}")
+    return pd.DataFrame(
         {
             "date": frame["date"].astype("int64"),
             "name": name,
             "nav": frame["close"].astype("float64") / base,
         }
     )
-    return result
 
 
 def maybe_fetch_missing_index_rows(enabled: bool) -> None:
@@ -286,8 +274,6 @@ def maybe_fetch_missing_index_rows(enabled: bool) -> None:
         print(f"[tableau] akshare unavailable, skip index fetch: {exc}")
         return
 
-    # Keep this deliberately conservative.  The script can run without network;
-    # local CSVs remain the canonical source when available.
     for code, path in (("980080", GROWTH100_INDEX), ("000985", ALL_A_INDEX)):
         try:
             existing = read_csv(path) if path.exists() else pd.DataFrame()
@@ -324,38 +310,37 @@ def maybe_fetch_missing_index_rows(enabled: bool) -> None:
             print(f"[tableau] akshare fetch failed for {code}, keep local CSV: {exc}")
 
 
-def build_strategy_nav(legacy: pd.DataFrame | None) -> pd.DataFrame:
+def build_strategy_nav() -> pd.DataFrame:
     if not PORTFOLIO_DAILY.exists():
-        return pd.DataFrame(columns=["date", "name", "nav"])
+        raise FileNotFoundError(f"missing portfolio daily CSV: {PORTFOLIO_DAILY}")
     daily = read_csv(PORTFOLIO_DAILY)
     if daily.empty:
-        return pd.DataFrame(columns=["date", "name", "nav"])
+        raise ValueError(f"portfolio daily CSV is empty: {PORTFOLIO_DAILY}")
     date_col = "date_id" if "date_id" in daily.columns else "date"
+    missing = {date_col, "net_value"} - set(daily.columns)
+    if missing:
+        raise ValueError(f"{PORTFOLIO_DAILY} missing columns: {sorted(missing)}")
+
     daily = daily[[date_col, "net_value"]].copy()
-    daily["date"] = daily[date_col].astype(str).str.replace("-", "", regex=False).astype("int64")
+    daily["date"] = pd.to_numeric(
+        daily[date_col].astype(str).str.replace("-", "", regex=False).str.slice(0, 8),
+        errors="coerce",
+    )
     daily["net_value"] = pd.to_numeric(daily["net_value"], errors="coerce")
-    daily = daily.dropna(subset=["net_value"]).sort_values("date", kind="mergesort")
+    daily = daily.dropna(subset=["date", "net_value"]).sort_values("date", kind="mergesort")
+    daily["date"] = daily["date"].astype("int64")
+    daily = daily.drop_duplicates(subset=["date"], keep="last")
+    if daily.empty:
+        raise ValueError(f"no valid portfolio daily rows found in {PORTFOLIO_DAILY}")
 
-    scale = 1.0
-    if legacy is not None and not legacy.empty:
-        old_strategy = legacy[legacy["name"].eq("策略组合")][["date", "nav"]].copy()
-        old_strategy["date"] = old_strategy["date"].astype("int64")
-        old_strategy = old_strategy.drop_duplicates(subset=["date"], keep="last")
-        common = old_strategy.merge(daily[["date", "net_value"]], on="date", how="inner")
-        common = common[common["net_value"].ne(0)]
-        if not common.empty:
-            last = common.sort_values("date").iloc[-1]
-            scale = float(last["nav"]) / float(last["net_value"])
-        elif not daily.empty:
-            scale = 1.0 / float(daily["net_value"].iloc[0])
-    elif not daily.empty:
-        scale = 1.0 / float(daily["net_value"].iloc[0])
-
+    base = float(daily["net_value"].iloc[0])
+    if base == 0.0:
+        raise ValueError(f"{PORTFOLIO_DAILY} has zero initial net_value")
     return pd.DataFrame(
         {
             "date": daily["date"].astype("int64"),
             "name": "策略组合",
-            "nav": daily["net_value"].astype("float64") * scale,
+            "nav": daily["net_value"].astype("float64") / base,
         }
     )
 
@@ -368,53 +353,34 @@ def restrict_to_complete_nav_dates(nav: pd.DataFrame) -> pd.DataFrame:
     return nav[nav["date"].isin(complete_dates)].copy()
 
 
-def duplicate_month_end_nav_rows(nav: pd.DataFrame) -> pd.DataFrame:
-    if nav.empty:
-        return nav
-    dated = nav.copy()
-    parsed = pd.to_datetime(dated["date"].astype(str), format="%Y%m%d", errors="coerce")
-    dated["_period"] = parsed.dt.to_period("M").astype(str)
-    max_dates = set(dated.groupby("_period")["date"].max())
-    duplicates = dated[dated["date"].isin(max_dates)].copy()
-    dated = dated.drop(columns=["_period"])
-    duplicates = duplicates.drop(columns=["_period"])
-    return pd.concat([dated, duplicates], ignore_index=True)
-
-
 def build_nav(output_dir: Path, fetch_missing_index: bool) -> BuildReport:
-    name = NAV_FILE
-    legacy_path = LEGACY_PATHS[name]
-    legacy = read_csv(legacy_path) if legacy_path.exists() else None
-    start_date = 20250530
-    max_legacy_date = None
-    if legacy is not None and not legacy.empty:
-        start_date = int(legacy["date"].min())
-        max_legacy_date = int(legacy["date"].max())
-
     maybe_fetch_missing_index_rows(fetch_missing_index)
+    strategy = build_strategy_nav()
+    start_date = int(strategy["date"].min())
     pieces = [
-        build_strategy_nav(legacy),
+        strategy,
         read_index_nav(GROWTH100_INDEX, "成长100", start_date),
         read_index_nav(ALL_A_INDEX, "中证全指", start_date),
     ]
     candidate = pd.concat(pieces, ignore_index=True)
     candidate = restrict_to_complete_nav_dates(candidate)
     candidate = candidate.sort_values(["date", "name"], kind="mergesort")
+    candidate = candidate[["date", "name", "nav"]].reset_index(drop=True)
+    if candidate.empty:
+        raise ValueError("nav candidate is empty after aligning strategy and benchmarks")
+    duplicate_count = int(candidate.duplicated(["date", "name"]).sum())
+    if duplicate_count:
+        raise ValueError(f"nav candidate has duplicate date/name rows: {duplicate_count}")
 
-    append_rows = candidate
-    if max_legacy_date is not None:
-        append_rows = candidate[candidate["date"].astype(int) > max_legacy_date].copy()
-    append_rows = duplicate_month_end_nav_rows(append_rows)
-    append_rows = append_rows.sort_values(["date", "name"], kind="mergesort")
-    report = append_preserving_legacy(
-        legacy_path=legacy_path,
-        output_path=output_dir / name,
-        append_rows=append_rows[["date", "name", "nav"]],
+    return write_csv(
+        candidate,
+        output_dir / NAV_FILE,
+        NAV_FILE,
         columns=["date", "name", "nav"],
-        name=name,
         float_format="%.6f",
+        encoding="utf-8-sig",
+        detail=date_detail(candidate),
     )
-    return report
 
 
 def build_style_year_ic_candidate(diagnostics: pd.DataFrame) -> pd.DataFrame:
@@ -476,29 +442,8 @@ def build_style_year_ic_candidate(diagnostics: pd.DataFrame) -> pd.DataFrame:
 
     output = pd.DataFrame(rows)
     if output.empty:
-        return output
-    return output[
-        [
-            "calc_version",
-            "year",
-            "style",
-            "style_name",
-            "style_order",
-            "horizon",
-            "horizon_months",
-            "signal_type",
-            "signal_name",
-            "month_count",
-            "factor_count",
-            "factor_month_obs",
-            "win_rate",
-            "ic_std",
-            "is_partial_year",
-            "metric",
-            "metric_name",
-            "value",
-        ]
-    ].round(
+        return pd.DataFrame(columns=STYLE_YEAR_COLUMNS)
+    return output[STYLE_YEAR_COLUMNS].round(
         {
             "win_rate": 6,
             "ic_std": 6,
@@ -507,97 +452,40 @@ def build_style_year_ic_candidate(diagnostics: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def build_style_year_ic(output_dir: Path, diagnostics_output: Path) -> BuildReport:
-    name = STYLE_YEAR_IC_FILE
-    legacy_path = LEGACY_PATHS[name]
-    diagnostics = read_csv(diagnostics_output)
+def build_style_year_ic(output_dir: Path, diagnostics: pd.DataFrame) -> BuildReport:
     candidate = build_style_year_ic_candidate(diagnostics)
-    append_rows = candidate
-    diffs = 0
-    key_cols = [
-        "calc_version",
-        "year",
-        "style",
-        "horizon",
-        "signal_type",
-        "metric",
-    ]
-    if legacy_path.exists() and not candidate.empty:
-        legacy = read_csv(legacy_path)
-        existing_keys = legacy[key_cols].drop_duplicates()
-        candidate_keys = candidate.merge(existing_keys, on=key_cols, how="inner")
-        new_keys = candidate.merge(existing_keys, on=key_cols, how="left", indicator=True)
-        append_rows = new_keys[new_keys["_merge"].eq("left_only")]
-        append_rows = append_rows.drop(columns=["_merge"])
-        diffs = count_key_diffs(legacy, candidate_keys, key_cols)
-    report = append_preserving_legacy(
-        legacy_path=legacy_path,
-        output_path=output_dir / name,
-        append_rows=append_rows,
-        columns=list(candidate.columns) if not candidate.empty else list(read_csv(legacy_path).columns),
-        name=name,
+    return write_csv(
+        candidate,
+        output_dir / STYLE_YEAR_IC_FILE,
+        STYLE_YEAR_IC_FILE,
+        columns=STYLE_YEAR_COLUMNS,
         float_format="%.6f",
+        detail=date_detail(candidate),
     )
-    report.generated_overlap_diffs = diffs
-    return report
-
-
-def build_temporal_copy(
-    *,
-    source: Path,
-    output_dir: Path,
-    name: str,
-    date_col: str,
-    key_cols: list[str],
-) -> BuildReport:
-    if not source.exists():
-        raise FileNotFoundError(f"missing source CSV for {name}: {source}")
-    legacy_path = LEGACY_PATHS[name]
-    candidate = read_csv(source)
-    append_rows = candidate
-    diffs = 0
-    if legacy_path.exists():
-        legacy = read_csv(legacy_path)
-        max_date = int(legacy[date_col].max())
-        append_rows = candidate[candidate[date_col].astype(int) > max_date].copy()
-        diffs = count_key_diffs(
-            legacy,
-            candidate[candidate[date_col].astype(int) <= max_date],
-            key_cols,
-        )
-    report = append_preserving_legacy(
-        legacy_path=legacy_path,
-        output_path=output_dir / name,
-        append_rows=append_rows,
-        columns=list(candidate.columns),
-        name=name,
-    )
-    report.generated_overlap_diffs = diffs
-    return report
 
 
 def build_all(output_dir: Path, fetch_missing_index: bool) -> list[BuildReport]:
     output_dir.mkdir(parents=True, exist_ok=True)
+    diagnostics = build_diagnostics_candidate()
     reports = [
         build_nav(output_dir, fetch_missing_index),
-        copy_csv(LEGACY_PATHS[RANK_CORR_FILE], output_dir / RANK_CORR_FILE, RANK_CORR_FILE),
-        build_diagnostics(output_dir),
-        build_temporal_copy(
-            source=LEGACY_PATHS[STYLE_GROUP_FILE],
-            output_dir=output_dir,
-            name=STYLE_GROUP_FILE,
-            date_col="signal_date_id",
-            key_cols=["signal_date_id", "style", "group_rank", "group_count"],
+        copy_current_csv(RANK_CORR_SOURCE, output_dir / RANK_CORR_FILE, RANK_CORR_FILE),
+        write_csv(
+            diagnostics,
+            output_dir / DIAGNOSTICS_FILE,
+            DIAGNOSTICS_FILE,
+            columns=DIAGNOSTICS_COLUMNS,
+            float_format="%.6f",
+            detail=date_detail(diagnostics),
         ),
-        build_temporal_copy(
-            source=LEGACY_PATHS[STYLE_LONG_SHORT_FILE],
-            output_dir=output_dir,
-            name=STYLE_LONG_SHORT_FILE,
-            date_col="signal_date_id",
-            key_cols=["signal_date_id", "style", "group_count"],
+        copy_current_csv(STYLE_GROUP_SOURCE, output_dir / STYLE_GROUP_FILE, STYLE_GROUP_FILE),
+        copy_current_csv(
+            STYLE_LONG_SHORT_SOURCE,
+            output_dir / STYLE_LONG_SHORT_FILE,
+            STYLE_LONG_SHORT_FILE,
         ),
+        build_style_year_ic(output_dir, diagnostics),
     ]
-    reports.append(build_style_year_ic(output_dir, output_dir / DIAGNOSTICS_FILE))
     return reports
 
 
@@ -608,16 +496,8 @@ def main() -> int:
     print(f"Tableau display CSVs written to {output_dir}")
     for report in reports:
         rel_output = report.output.relative_to(ROOT) if report.output.is_relative_to(ROOT) else report.output
-        diff_note = (
-            f" generated_overlap_diffs={report.generated_overlap_diffs}"
-            if report.generated_overlap_diffs
-            else ""
-        )
-        print(
-            f"  {report.name}: rows={report.rows} "
-            f"frozen={report.frozen_rows} appended={report.appended_rows}"
-            f"{diff_note} -> {rel_output}"
-        )
+        detail = f" {report.detail}" if report.detail else ""
+        print(f"  {report.name}: rows={report.rows}{detail} -> {rel_output}")
     return 0
 
 

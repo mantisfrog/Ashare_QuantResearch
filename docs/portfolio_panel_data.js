@@ -1,6 +1,6 @@
 window.portfolioPanelData = {
   "meta": {
-    "generated_at": "2026-07-02T22:04:14",
+    "generated_at": "2026-07-02T22:21:38",
     "portfolio_name": "size5_growth10_quality_disabled_mcap_growth_cap10_1y",
     "calc_version": "v1",
     "latest_rebalance_date": 20260701,
@@ -23,18 +23,18 @@ window.portfolioPanelData = {
     "description": ""
   },
   "performance": {
-    "source": "raw/tableau_display/nav_daily_size005_noquality_long_utf8_bom.csv",
-    "start_date": "2025-05-30",
-    "end_date": "2026-06-24",
-    "trading_days": 252,
+    "source": "data/backtest/size5_growth10_quality_disabled_mcap_growth_cap10_1y_daily_returns.csv",
+    "start_date": "2025-07-01",
+    "end_date": "2026-07-01",
+    "trading_days": 243,
     "rebalance_count": 13,
     "holding_rows": 204,
     "avg_holding_count": 15.692307692307692,
-    "total_return": 2.950496,
-    "annual_return": 2.950496,
-    "annual_vol": 0.37925956937652927,
-    "sharpe_0rf": 3.834081339651154,
-    "max_drawdown": -0.16477966025379653,
+    "total_return": 2.3540520300296386,
+    "annual_return": 2.5078041966109974,
+    "annual_vol": 0.37763136730679425,
+    "sharpe_0rf": 3.532156639057758,
+    "max_drawdown": -0.16266901501732223,
     "drawdown_start_date": "2025-10-29",
     "drawdown_end_date": "2025-11-24",
     "monthly_turnover": 0.2314583659029167,
@@ -43,19 +43,19 @@ window.portfolioPanelData = {
   "metrics": [
     {
       "label": "累计收益",
-      "value": "+295.05%",
+      "value": "+235.41%",
       "value_class": "metric-positive",
-      "note": "2025-05-30 -> 2026-06-24"
+      "note": "2025-07-01 -> 2026-07-01"
     },
     {
       "label": "夏普比率",
-      "value": "3.83",
+      "value": "3.53",
       "value_class": "",
       "note": "年化收益 / 年化波动"
     },
     {
       "label": "最大回撤",
-      "value": "16.48%",
+      "value": "16.27%",
       "value_class": "metric-negative",
       "note": "2025-10-29 -> 2025-11-24"
     },
