@@ -40,5 +40,5 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v5
         with:
-          # Allow for slower Pages queue times than the auto-generated 10 minute default.
+          # Use a 30 minute timeout to tolerate slower Pages queue times than the auto-generated 10 minute default.
           timeout: 1800000
