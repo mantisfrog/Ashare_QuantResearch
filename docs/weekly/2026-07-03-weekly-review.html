@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026/07/03 每周点评 — Wenbo Bi</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --bg: #f6f4ee;
+      --ink: #1e2620;
+      --muted: #6f7268;
+      --faint: #a3a094;
+      --line: #e0dccb;
+      --surface: #fcfbf7;
+      --surface-subtle: #f8f6ef;
+      --gold: #a5822f;
+      --gold-bright: #c8a44b;
+      --gold-soft: #f2e9d3;
+      --gold-line: rgba(165, 130, 47, 0.4);
+      --radius: 6px;
+      --section-gap: 12px;
+      --font-serif: "Noto Serif SC", "Source Han Serif SC", Georgia, "Times New Roman", serif;
+      --font-sans: "Inter", "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      --font-mono: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    body {
+      width: 100%;
+      max-width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 极淡的纸面肌理 */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(var(--line) 1px, transparent 1px);
+      background-size: 100% 96px;
+      opacity: 0.16;
+      pointer-events: none;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--font-serif);
+      letter-spacing: 0.01em;
+    }
+
+    /* ---------- 顶栏 ---------- */
+    .topbar {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: clamp(16px, 2.8vh, 26px) clamp(24px, 5vw, 64px);
+      border-bottom: 1px solid var(--gold-line);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      z-index: 1;
+    }
+
+    .topbar .brand { color: var(--ink); font-weight: 600; }
+    .topbar .brand span { color: var(--gold); }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .site-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 0 14px;
+      border: 1px solid var(--gold-line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .site-nav a:hover {
+      background: rgba(200, 164, 75, 0.12);
+      border-color: var(--gold-bright);
+      color: var(--ink);
+    }
+
+    /* ---------- 主布局 ---------- */
+    main {
+      flex: 1 0 auto;
+      width: 100%;
+      max-width: 100vw;
+      min-height: 0;
+      min-width: 0;
+      padding: clamp(28px, 5vh, 64px) clamp(24px, 5vw, 64px) clamp(24px, 4vh, 48px);
+      z-index: 1;
+    }
+
+    .article-shell {
+      width: 100%;
+      max-width: 920px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(24px, 4vh, 40px);
+    }
+
+    .article-header {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--gold-line);
+    }
+
+    .article-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    .article-meta .separator {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--faint);
+    }
+
+    .article-header h1 {
+      font-size: clamp(28px, 4.5vw, 48px);
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .article-header .lead {
+      max-width: 66ch;
+      font-size: clamp(14px, 1.3vw, 16px);
+      line-height: 1.95;
+      color: var(--muted);
+    }
+
+    /* ---------- 表格 ---------- */
+    .table-card {
+      padding: clamp(18px, 3vh, 28px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow-x: auto;
+    }
+
+    .table-card h2 {
+      margin-bottom: 18px;
+      font-size: 20px;
+      color: var(--ink);
+    }
+
+    table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    thead th {
+      padding: 16px;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--gold-line);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--line);
+      transition: background 0.2s ease;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:hover { background: var(--surface-subtle); }
+
+    tbody td {
+      padding: 18px 16px;
+      vertical-align: top;
+      color: var(--ink);
+    }
+
+    .asset-name {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+
+    .asset-en {
+      display: block;
+      margin-top: 4px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--faint);
+      text-transform: uppercase;
+    }
+
+    .rating {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-family: var(--font-serif);
+      font-size: 16px;
+      white-space: nowrap;
+    }
+
+    .rating-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 12px;
+    }
+
+    .rating.underweight { color: #991b1b; }
+    .rating.underweight .rating-icon { background: #fde8e8; }
+
+    .rating.neutral { color: #6f7268; }
+    .rating.neutral .rating-icon { background: #f2f0e9; }
+
+    .rating.overweight { color: #166534; }
+    .rating.overweight .rating-icon { background: #e6f4ea; }
+
+    .logic-cell, .tactic-cell {
+      max-width: 32ch;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .tactic-cell {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* ---------- 返回链接 ---------- */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--gold-line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      text-decoration: none;
+      transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+      align-self: flex-start;
+    }
+
+    .back-link:hover {
+      background: rgba(200, 164, 75, 0.12);
+      border-color: var(--gold-bright);
+      color: var(--ink);
+    }
+
+    /* ---------- 页脚 ---------- */
+    .footer {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      padding: clamp(18px, 2.6vh, 26px) clamp(24px, 5vw, 64px);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--faint);
+      text-transform: uppercase;
+      z-index: 1;
+    }
+
+    .footer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    /* ---------- 进场动画 ---------- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: rise 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .reveal.d1 { animation-delay: 0.1s; }
+    .reveal.d2 { animation-delay: 0.26s; }
+    .reveal.d3 { animation-delay: 0.42s; }
+    .reveal.d4 { animation-delay: 0.58s; }
+
+    @keyframes rise {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { animation: none; opacity: 1; transform: none; }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+
+      .topbar .brand { width: 100%; }
+
+      .site-nav {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      main { padding: 28px 16px 24px; }
+
+      .article-header h1 { font-size: 26px; }
+
+      .table-card { padding: 16px; }
+
+      .footer {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+        padding: 18px 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar reveal d1">
+    <div class="brand">WENBO&nbsp;BI<span>&nbsp;/&nbsp;WEEKLY VIEWS</span></div>
+    <nav class="site-nav" aria-label="站点导航">
+      <a href="../index.html">&#8592; 主页</a>
+      <a href="../weekly_views.html">本周观点目录</a>
+      <a href="../factor.html">多因子研究</a>
+      <a href="../wealthops_frontend/index.html">财富管理 &#8594;</a>
+    </nav>
+  </header>
+
+  <main class="reveal d2">
+    <article class="article-shell">
+      <header class="article-header reveal d3">
+        <div class="article-meta">
+          <span>2026/07/03</span>
+          <span class="separator"></span>
+          <span>每周点评</span>
+        </div>
+        <h1>每周点评</h1>
+      </header>
+
+      <section class="table-card reveal d4">
+        <h2>资产评级一览</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>资产类别</th>
+              <th>评级</th>
+              <th>核心逻辑摘要</th>
+              <th>战术建议</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <span class="asset-name">权益</span>
+                <span class="asset-en">Equity</span>
+              </td>
+              <td>
+                <span class="rating underweight">
+                  <span class="rating-icon">&#9660;</span>
+                  减配
+                </span>
+              </td>
+              <td class="logic-cell">
+                因子失效 + 复苏证伪。成长/动量因子拥挤度有瓦解趋势，价值/质量因子尚未接力；顺周期缺乏基本面强支撑，叙事面临诸多不确定性，市场进入高波动调整期。
+              </td>
+              <td class="tactic-cell">
+                降仓防御，可观察中报披露期成长因子表现。
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="asset-name">债券</span>
+                <span class="asset-en">Fixed Income</span>
+              </td>
+              <td>
+                <span class="rating neutral">
+                  <span class="rating-icon">&#9472;</span>
+                  中性
+                </span>
+              </td>
+              <td class="logic-cell">
+                供给冲击 + 曲线走陡。特别国债供给放量扰动长端情绪，长债性价比下降，但资金面仍宽。
+              </td>
+              <td class="tactic-cell">
+                缩短久期。聚焦中短端票息策略，规避 30Y+ 长端波动。
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="asset-name">黄金</span>
+                <span class="asset-en">Gold</span>
+              </td>
+              <td>
+                <span class="rating overweight">
+                  <span class="rating-icon">&#9650;</span>
+                  超配
+                </span>
+              </td>
+              <td class="logic-cell">
+                逻辑重构 + 低相关性。地缘溢价消退后，黄金与股债相关性降低，回归货币信用对冲本质，配置价值独立凸显。
+              </td>
+              <td class="tactic-cell">
+                战略增配。作为组合避险锚，对冲宏观不确定性。
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="asset-name">美元</span>
+                <span class="asset-en">USD Cash</span>
+              </td>
+              <td>
+                <span class="rating underweight">
+                  <span class="rating-icon">&#9660;</span>
+                  低配
+                </span>
+              </td>
+              <td class="logic-cell">
+                预期修正 + 汇率风险。加息预期退潮，就业与 AI 叙事走弱削弱美元信用支撑，汇率回调风险大于利率收益。
+              </td>
+              <td class="tactic-cell">
+                置换币种。减持美元敞口，转向本币资产或另类配置。
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <a class="back-link reveal d4" href="../weekly_views.html">&#8592; 返回本周观点目录</a>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div>Quant Research &amp; Wealth Ops</div>
+    <div>Built with plain HTML / CSS</div>
+  </footer>
+</body>
+</html>

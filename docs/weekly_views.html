@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wenbo Bi — Weekly Views</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --bg: #f6f4ee;
+      --ink: #1e2620;
+      --muted: #6f7268;
+      --faint: #a3a094;
+      --line: #e0dccb;
+      --surface: #fcfbf7;
+      --surface-subtle: #f8f6ef;
+      --gold: #a5822f;
+      --gold-bright: #c8a44b;
+      --gold-soft: #f2e9d3;
+      --gold-line: rgba(165, 130, 47, 0.4);
+      --radius: 6px;
+      --section-gap: 12px;
+      --font-serif: "Noto Serif SC", "Source Han Serif SC", Georgia, "Times New Roman", serif;
+      --font-sans: "Inter", "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      --font-mono: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    body {
+      width: 100%;
+      max-width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 极淡的纸面肌理 */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(var(--line) 1px, transparent 1px);
+      background-size: 100% 96px;
+      opacity: 0.16;
+      pointer-events: none;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--font-serif);
+      letter-spacing: 0.01em;
+    }
+
+    /* ---------- 顶栏 ---------- */
+    .topbar {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: clamp(16px, 2.8vh, 26px) clamp(24px, 5vw, 64px);
+      border-bottom: 1px solid var(--gold-line);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      z-index: 1;
+    }
+
+    .topbar .brand { color: var(--ink); font-weight: 600; }
+    .topbar .brand span { color: var(--gold); }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .site-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 0 14px;
+      border: 1px solid var(--gold-line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .site-nav a:hover {
+      background: rgba(200, 164, 75, 0.12);
+      border-color: var(--gold-bright);
+      color: var(--ink);
+    }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      position: relative;
+      padding: clamp(28px, 5vh, 64px) clamp(24px, 5vw, 64px) clamp(24px, 4vh, 48px);
+      z-index: 1;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: clamp(32px, min(5.2vw, 7vh), 62px);
+      line-height: 1.18;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      max-width: 20ch;
+    }
+
+    .hero h1 .dim { color: var(--muted); }
+
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: clamp(18px, 3vh, 30px);
+    }
+
+    .intro {
+      margin-top: clamp(22px, 3.8vh, 36px);
+      max-width: 56ch;
+      font-size: clamp(14px, 1.3vw, 16px);
+      line-height: 1.95;
+      color: var(--muted);
+    }
+
+    /* ---------- 主布局 ---------- */
+    main {
+      flex: 1 0 auto;
+      width: 100%;
+      max-width: 100vw;
+      min-height: 0;
+      min-width: 0;
+      padding: 0 clamp(24px, 5vw, 64px) clamp(24px, 4vh, 48px);
+      z-index: 1;
+    }
+
+    .archive-shell {
+      width: 100%;
+      max-width: 880px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+    }
+
+    .archive-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 0 8px;
+      border-bottom: 1px solid var(--gold-line);
+    }
+
+    .archive-heading h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .archive-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* ---------- 文章列表 ---------- */
+    .post-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+    }
+
+    .post-card {
+      display: flex;
+      align-items: baseline;
+      gap: clamp(16px, 3vw, 32px);
+      padding: clamp(18px, 3vh, 28px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      text-decoration: none;
+      color: var(--ink);
+      transition: border-color 0.3s ease, background 0.3s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .post-card:hover {
+      border-color: var(--gold-line);
+      background: var(--surface-subtle);
+      transform: translateX(8px);
+    }
+
+    .post-date {
+      flex: 0 0 auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      min-width: 92px;
+    }
+
+    .post-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .post-title {
+      font-family: var(--font-serif);
+      font-size: clamp(20px, 2.6vw, 28px);
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: 0.01em;
+    }
+
+    .post-summary {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 60ch;
+    }
+
+    .post-arrow {
+      flex: 0 0 auto;
+      font-size: 22px;
+      color: var(--faint);
+      transform: translateX(0);
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), color 0.4s ease;
+    }
+
+    .post-card:hover .post-arrow {
+      transform: translateX(8px);
+      color: var(--gold);
+    }
+
+    /* ---------- 页脚 ---------- */
+    .footer {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      padding: clamp(18px, 2.6vh, 26px) clamp(24px, 5vw, 64px);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--faint);
+      text-transform: uppercase;
+      z-index: 1;
+    }
+
+    .footer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    /* ---------- 进场动画 ---------- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: rise 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .reveal.d1 { animation-delay: 0.1s; }
+    .reveal.d2 { animation-delay: 0.26s; }
+    .reveal.d3 { animation-delay: 0.42s; }
+    .reveal.d4 { animation-delay: 0.58s; }
+
+    @keyframes rise {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { animation: none; opacity: 1; transform: none; }
+      .post-card { transition: none; }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+
+      .topbar .brand { width: 100%; }
+
+      .site-nav {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .hero {
+        padding: 28px 16px 24px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+        max-width: 100%;
+      }
+
+      main { padding: 0 16px 24px; }
+
+      .post-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .post-arrow { margin-left: auto; }
+
+      .footer {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+        padding: 18px 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar reveal d1">
+    <div class="brand">WENBO&nbsp;BI<span>&nbsp;/&nbsp;WEEKLY VIEWS</span></div>
+    <nav class="site-nav" aria-label="站点导航">
+      <a href="./index.html">&#8592; 主页</a>
+      <a href="./factor.html">多因子研究</a>
+      <a href="./wealthops_frontend/index.html">财富管理 &#8594;</a>
+    </nav>
+  </header>
+
+  <section class="hero reveal d2">
+    <p class="kicker">Weekly Market Commentary</p>
+    <h1>
+      每周观点<span class="dim"></span><br />
+    </h1>
+    <p class="intro">
+      对大类资产的定期点评：基于因子信号、宏观预期与战术配置视角，给出当前市场环境下的评级与操作建议。
+    </p>
+  </section>
+
+  <main class="reveal d3">
+    <div class="archive-shell">
+      <div class="archive-heading reveal d4">
+        <h2>文章目录</h2>
+        <span class="archive-count">1 篇</span>
+      </div>
+
+      <div class="post-list reveal d4">
+        <a class="post-card" href="./weekly/2026-07-03-weekly-review.html">
+          <span class="post-date">2026/07/03</span>
+          <div class="post-body">
+            <h3 class="post-title">每周点评</h3>
+            <p class="post-summary">
+              权益减配、债券中性、黄金超配、美元低配。因子失效与复苏证伪交织，市场进入高波动调整期。
+            </p>
+          </div>
+          <span class="post-arrow">&#8594;</span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div>Quant Research &amp; Wealth Ops</div>
+    <div>Built with plain HTML / CSS</div>
+  </footer>
+</body>
+</html>
