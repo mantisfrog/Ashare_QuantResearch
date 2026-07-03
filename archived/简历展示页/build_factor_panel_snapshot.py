@@ -9,7 +9,8 @@ import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT_PATH = Path(__file__).resolve().with_name("factor_panel_data.js")
+ARCHIVE_OUT_PATH = Path(__file__).resolve().with_name("factor_panel_data.js")
+DOCS_OUT_PATH = ROOT / "docs" / "factor_panel_data.js"
 
 STYLE_ORDER = ["value", "quality", "growth", "momentum", "reversal", "risk"]
 STYLE_NAMES = {
@@ -294,8 +295,11 @@ def main() -> None:
     data["build_manifest"] = _build_manifest()
 
     payload = json.dumps(_clean(data), ensure_ascii=False, allow_nan=False, indent=2)
-    OUT_PATH.write_text(f"window.factorPanelData = {payload};\n", encoding="utf-8")
-    print(f"wrote {OUT_PATH.relative_to(ROOT)}")
+    output = f"window.factorPanelData = {payload};\n"
+    DOCS_OUT_PATH.write_text(output, encoding="utf-8")
+    ARCHIVE_OUT_PATH.write_text(output, encoding="utf-8")
+    print(f"wrote {DOCS_OUT_PATH.relative_to(ROOT)}")
+    print(f"wrote {ARCHIVE_OUT_PATH.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
