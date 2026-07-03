@@ -924,7 +924,7 @@
       多因子组合构建<span class="dim">。</span>
     </h1>
     <p class="intro">
-      展示层为数据快照，加载不正确可尝试刷新页面。
+      请等待数据加载和计算完成，卡住可尝试刷新页面。
     </p>
   </section>
 
@@ -1126,10 +1126,6 @@
                 </tableau-viz>
               </div>
 
-              <div class="panel-description" id="portfolioStrategyDescription">
-                <p>组合快照加载中。</p>
-              </div>
-
               <div class="status-grid portfolio-metric-grid" id="portfolioMetricGrid" aria-label="组合核心指标"></div>
             </section>
 
@@ -1145,9 +1141,6 @@
                 </tableau-viz>
               </div>
 
-              <div class="panel-description" id="portfolioSectorDescription">
-                <p>行业敞口快照加载中。</p>
-              </div>
             </section>
           </div>
         </section>
@@ -1563,19 +1556,14 @@
       if (portfolioPanelRendered) return;
 
       const metricGrid = document.getElementById("portfolioMetricGrid");
-      const strategyDescription = document.getElementById("portfolioStrategyDescription");
-      const sectorDescription = document.getElementById("portfolioSectorDescription");
       if (!metricGrid) return;
 
       const data = window.portfolioPanelData;
       if (!data) {
         metricGrid.innerHTML = `<div class="factor-empty">portfolio_panel_data.js 未加载</div>`;
-        if (strategyDescription) strategyDescription.innerHTML = "";
-        if (sectorDescription) sectorDescription.innerHTML = "";
         return;
       }
 
-      if (strategyDescription) strategyDescription.innerHTML = "";
       metricGrid.innerHTML = data.metrics.map((item) => `
         <div class="stat-tile">
           <div class="stat-label">${escapeHtml(item.label)}</div>
@@ -1583,7 +1571,6 @@
           <div class="stat-note">${escapeHtml(item.note)}</div>
         </div>
       `).join("");
-      if (sectorDescription) sectorDescription.innerHTML = "";
       portfolioPanelRendered = true;
     }
 
