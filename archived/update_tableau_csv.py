@@ -15,13 +15,16 @@
 """
 
 import csv
+import json
 import logging
 import os
+import shutil
 import subprocess
 import sys
 import time
 from datetime import datetime, time as dt_time
 from pathlib import Path
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 os.environ.setdefault("TQDM_DISABLE", "1")
@@ -84,6 +87,153 @@ def fetch_hist(code: str, start_date: str, end_date: str) -> pd.DataFrame:
     )
 
 
+def eastmoney_market_candidates(prefix: str) -> tuple[str, ...]:
+    return {
+        "sz": ("0", "1", "2", "47"),
+        "sh": ("1", "0", "2", "47"),
+        "csi": ("2", "1", "0", "47"),
+        "bj": ("0", "1", "2", "47"),
+    }.get(prefix, ("0", "1", "2", "47"))
+
+
+def curl_json(request_url: str) -> dict:
+    curl_bin = shutil.which("curl") or shutil.which("curl.exe")
+    if not curl_bin:
+        raise RuntimeError("未找到 curl/curl.exe")
+
+    completed = subprocess.run(
+        [
+            curl_bin,
+            "-sS",
+            "--connect-timeout",
+            "5",
+            "--max-time",
+            "10",
+            request_url,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    output = completed.stdout.strip()
+    if not output:
+        err = completed.stderr.strip() or f"curl exit {completed.returncode}"
+        raise RuntimeError(err)
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"解析 JSON 失败: {exc}") from exc
+
+
+def fetch_em_curl(code: str, prefix: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """EastMoney K-line fallback using system curl.
+
+    EastMoney currently closes Python requests/urllib connections for some
+    index endpoints, while the same URL still works with curl.
+    """
+    last_error: str | None = None
+    url = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+    for market_id in eastmoney_market_candidates(prefix):
+        params = {
+            "secid": f"{market_id}.{code}",
+            "ut": "7eea3edcaed734bea9cbfc24409ed989",
+            "fields1": "f1,f2,f3,f4,f5,f6",
+            "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
+            "klt": "101",
+            "fqt": "0",
+            "beg": start_date,
+            "end": end_date,
+        }
+        request_url = f"{url}?{urlencode(params)}"
+        try:
+            data_json = curl_json(request_url)
+            data = data_json.get("data")
+            klines = data.get("klines") if data else None
+        except Exception as exc:
+            last_error = str(exc)
+            continue
+
+        if not klines:
+            last_error = f"secid={market_id}.{code} 返回空数据"
+            continue
+
+        temp_df = pd.DataFrame([item.split(",") for item in klines])
+        temp_df.columns = [
+            "日期",
+            "开盘",
+            "收盘",
+            "最高",
+            "最低",
+            "成交量",
+            "成交额",
+            "振幅",
+            "涨跌幅",
+            "涨跌额",
+            "换手率",
+        ]
+        for col in ("开盘", "收盘", "最高", "最低", "成交量", "成交额", "振幅", "涨跌幅", "涨跌额", "换手率"):
+            temp_df[col] = pd.to_numeric(temp_df[col], errors="coerce")
+        return temp_df
+
+    raise RuntimeError(last_error or "EastMoney curl 兜底接口无可用数据")
+
+
+def fetch_em_snapshot_curl(
+    code: str, prefix: str, start_date: str, end_date: str
+) -> pd.DataFrame:
+    """Fetch the latest EastMoney quote snapshot as a one-row daily fallback."""
+    last_error: str | None = None
+    url = "https://push2.eastmoney.com/api/qt/stock/get"
+    for market_id in eastmoney_market_candidates(prefix):
+        params = {
+            "secid": f"{market_id}.{code}",
+            "ut": "bd1d9ddb04089700cf9c27f6f7426281",
+            "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86",
+        }
+        request_url = f"{url}?{urlencode(params)}"
+        try:
+            data_json = curl_json(request_url)
+            data = data_json.get("data") or {}
+        except Exception as exc:
+            last_error = str(exc)
+            continue
+
+        if str(data.get("f57", "")) != code:
+            last_error = f"secid={market_id}.{code} 返回非目标代码"
+            continue
+        if data.get("f43") in (None, "-", 0):
+            last_error = f"secid={market_id}.{code} 返回空行情"
+            continue
+
+        quote_time = datetime.fromtimestamp(int(data["f86"]), BJ_TZ)
+        quote_date = quote_time.strftime(DATE_FMT_API)
+        if quote_date < start_date or quote_date > end_date:
+            last_error = f"快照日期 {quote_date} 不在请求区间 {start_date}-{end_date}"
+            continue
+        start_dt = datetime.strptime(start_date, DATE_FMT_API).date()
+        if (quote_time.date() - start_dt).days > 4:
+            last_error = "快照兜底只允许补最近几天，避免跳过历史缺口"
+            continue
+
+        price_scale = 100.0
+        return pd.DataFrame(
+            [
+                {
+                    "日期": quote_time.strftime(DATE_FMT_FILE),
+                    "开盘": float(data["f46"]) / price_scale,
+                    "收盘": float(data["f43"]) / price_scale,
+                    "最高": float(data["f44"]) / price_scale,
+                    "最低": float(data["f45"]) / price_scale,
+                    "成交量": float(data["f47"]),
+                    "成交额": float(data["f48"]),
+                }
+            ]
+        )
+
+    raise RuntimeError(last_error or "EastMoney 快照兜底接口无可用数据")
+
+
 API_CONFIGS = [
     {
         "name": "stock_zh_index_daily_tx",
@@ -130,6 +280,38 @@ API_CONFIGS = [
         "conversions": {
             "成交量(万手)": lambda x: x / 10000.0,
         },
+    },
+    {
+        "name": "eastmoney_kline_curl",
+        "fetch": fetch_em_curl,
+        "column_map": {
+            "日期": "日期",
+            "开盘": "开盘价",
+            "收盘": "收盘价",
+            "最高": "最高价",
+            "最低": "最低价",
+            "成交量": "成交量(万手)",
+        },
+        "conversions": {
+            "成交量(万手)": lambda x: x / 10000.0,
+        },
+        "max_attempts": 1,
+    },
+    {
+        "name": "eastmoney_snapshot_curl",
+        "fetch": fetch_em_snapshot_curl,
+        "column_map": {
+            "日期": "日期",
+            "开盘": "开盘价",
+            "收盘": "收盘价",
+            "最高": "最高价",
+            "最低": "最低价",
+            "成交量": "成交量(万手)",
+        },
+        "conversions": {
+            "成交量(万手)": lambda x: x / 10000.0,
+        },
+        "max_attempts": 1,
     },
 ]
 
@@ -230,6 +412,50 @@ def update_file(path: Path, new_df: pd.DataFrame) -> None:
             writer.writerow([format_value(c, row.get(c, "")) for c in file_cols])
 
 
+def align_volume_scale_to_existing(path: Path, new_df: pd.DataFrame) -> pd.DataFrame:
+    """Keep new volume rows on the same scale as overlapping existing rows."""
+    volume_col = "成交量(万手)"
+    if volume_col not in new_df.columns or "日期" not in new_df.columns:
+        return new_df
+
+    try:
+        existing = read_existing_csv(path)[["日期", volume_col]].copy()
+    except Exception:
+        return new_df
+
+    current = new_df[["日期", volume_col]].copy()
+    existing[volume_col] = pd.to_numeric(existing[volume_col], errors="coerce")
+    current[volume_col] = pd.to_numeric(current[volume_col], errors="coerce")
+    overlap = existing.merge(current, on="日期", suffixes=("_existing", "_new"))
+    overlap = overlap[
+        (overlap[f"{volume_col}_existing"] > 0)
+        & (overlap[f"{volume_col}_new"] > 0)
+    ]
+    if overlap.empty:
+        return new_df
+
+    ratio = (
+        overlap[f"{volume_col}_existing"] / overlap[f"{volume_col}_new"]
+    ).median()
+    if pd.isna(ratio):
+        return new_df
+
+    scale = None
+    for candidate in (100.0, 10.0, 0.1, 0.01):
+        if candidate * 0.9 <= float(ratio) <= candidate * 1.1:
+            scale = candidate
+            break
+    if scale is None:
+        return new_df
+
+    adjusted = new_df.copy()
+    adjusted[volume_col] = pd.to_numeric(
+        adjusted[volume_col], errors="coerce"
+    ) * scale
+    logging.info(f"{path.name} 成交量按历史重叠日期校准: x{scale:g}")
+    return adjusted
+
+
 def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_date: str) -> tuple[bool, str]:
     """依次尝试三个接口更新单个文件，返回 (是否成功, 使用的接口名)。"""
     file_cols = list(pd.read_csv(path, nrows=0, encoding=ENCODING).columns)
@@ -244,11 +470,17 @@ def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_dat
             continue
 
         wait = 15
-        for attempt in range(3):
+        max_attempts = api.get("max_attempts", 3)
+        for attempt in range(max_attempts):
             if attempt > 0:
                 time.sleep(wait)
             try:
-                if api["name"] in ("stock_zh_index_daily_tx", "stock_zh_index_daily_em"):
+                if api["name"] in (
+                    "stock_zh_index_daily_tx",
+                    "stock_zh_index_daily_em",
+                    "eastmoney_kline_curl",
+                    "eastmoney_snapshot_curl",
+                ):
                     raw_df = api["fetch"](code, prefix, start_date, end_date)
                 else:
                     raw_df = api["fetch"](code, start_date, end_date)
@@ -275,6 +507,7 @@ def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_dat
                 missing_cols = [c for c in file_cols if c not in df.columns]
                 if missing_cols:
                     raise ValueError(f"返回数据缺少文件列: {missing_cols}")
+                df = align_volume_scale_to_existing(path, df)
 
                 # 每完成一次成功的请求就立即把数据写回 CSV
                 update_file(path, df)
