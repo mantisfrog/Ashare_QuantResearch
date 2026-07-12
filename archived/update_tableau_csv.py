@@ -3,14 +3,14 @@
 使用 akshare 更新 raw/index_gz/ 目录下的 CSV 指数行情文件，并自动同步到对应的 Google Sheets。
 
 规则：
-1. 仅在「CSV 最新日期 < 今天」且「北京时间 > 16:30」时才执行更新。
+1. 仅在「CSV 最新日期 < 今天」时执行更新，不限制运行时间。
 2. 依次尝试三个接口：stock_zh_index_daily_tx -> stock_zh_index_daily_em -> index_zh_a_hist。
    某个接口只要能返回可用数据即停止，并立即把该文件已取到的数据写回 CSV，再继续下一个文件。
 3. 默认每次请求后间隔 15 秒；接口失败时重试间隔依次提升为 30 秒、60 秒；仍然失败则尝试下一个接口。
 4. 仅更新 CSV 中已存在的列，不新增列，并保持原编码（utf-8-sig BOM）、表头与数值格式。
 5. 本地 CSV 更新成功后，自动把该文件完整覆盖同步到对应的 Google Sheet 第一个工作表。
-   对于明确标记为不需要同步的指数（如 000985_中证全指），则跳过 Google Sheet 同步。
-6. 全部 9 个文件处理完毕后，仅当存在失败文件时：生成 log/日期_fail.log，并调用 archived/telegram_msg.py 发送一次汇总消息。
+   对于明确标记为不需要同步的指数（000985_中证全指、980080_成长100），则跳过 Google Sheet 同步。
+6. 全部 CSV 文件处理完毕后，仅当存在失败文件时：生成 log/日期_fail.log，并调用 archived/telegram_msg.py 发送一次汇总消息。
    若本地 CSV 更新成功但 Google Sheet 同步失败，也会汇总到失败通知中。
 """
 
@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime, time as dt_time
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
@@ -46,7 +46,6 @@ DATE_FMT_FILE = "%Y-%m-%d"
 DATE_FMT_API = "%Y%m%d"
 DEFAULT_START_DATE = "19900101"
 BJ_TZ = ZoneInfo("Asia/Shanghai")
-UPDATE_AFTER = dt_time(16, 30)
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -66,6 +65,7 @@ SPREADSHEET_IDS = {
 # 明确不需要同步到 Google Sheets 的指数文件
 NO_SYNC_STEMS = {
     "000985_中证全指",
+    "980080_成长100",
 }
 
 
@@ -357,10 +357,6 @@ def should_update(path: Path) -> tuple[bool, str]:
     判断是否需要更新该文件。
     返回 (是否更新, 原因说明)。
     """
-    now_bj = now_beijing()
-    if now_bj.time() <= UPDATE_AFTER:
-        return False, f"北京时间 {now_bj.strftime('%H:%M')} 未过 16:30"
-
     try:
         existing = read_existing_csv(path)
     except Exception as e:
@@ -370,7 +366,7 @@ def should_update(path: Path) -> tuple[bool, str]:
         return True, "文件为空"
 
     latest_date = existing["日期"].max().date()
-    today = now_bj.date()
+    today = now_beijing().date()
     if latest_date >= today:
         return False, f"最新日期 {latest_date} 已是今天或更晚"
     return True, f"最新日期 {latest_date} 早于今天 {today}"
