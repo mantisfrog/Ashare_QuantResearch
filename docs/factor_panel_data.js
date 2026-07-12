@@ -1,85 +1,85 @@
 window.factorPanelData = {
   "meta": {
-    "generated_at": "2026-07-03T18:11:04",
+    "generated_at": "2026-07-12T07:05:43",
     "factor_count": 18,
     "style_count": 6,
     "calc_version": "v1",
-    "latest_coverage_date": 20260703,
-    "latest_coverage_date_text": "2026-07-03",
+    "latest_coverage_date": 20260710,
+    "latest_coverage_date_text": "2026-07-10",
     "latest_ic_date": 20260630,
     "latest_ic_date_text": "2026-06-30",
-    "latest_universe_count": 4023,
-    "latest_avg_coverage": 0.9864116111111111
+    "latest_universe_count": 4021,
+    "latest_avg_coverage": 0.9865843333333335
   },
   "styles": [
     {
       "style": "value",
       "style_name": "价值",
       "factor_count": 5,
-      "latest_coverage": 0.9940344,
-      "latest_ic_1m": 0.13666040000000002,
-      "ic_mean": 0.043632159420289855,
-      "ir": 0.5859387990739179,
+      "latest_coverage": 0.9940314000000001,
+      "latest_ic_1m": 0.1679956,
+      "ic_mean": 0.043859226086956526,
+      "ir": 0.5859071325362294,
       "win_rate": 0.7260869565217392,
       "months": 690,
-      "recent_12m_ir": 0.5091740065847333,
-      "recent_6m_ir": 0.2621039331803919,
+      "recent_12m_ir": 0.5057756397480911,
+      "recent_6m_ir": 0.2916537871364228,
       "label": "稳健"
     },
     {
       "style": "quality",
       "style_name": "质量",
       "factor_count": 4,
-      "latest_coverage": 0.966692,
-      "latest_ic_1m": 0.026166250000000002,
-      "ic_mean": 0.01628809420289855,
-      "ir": 0.3527775563799474,
+      "latest_coverage": 0.9666750000000001,
+      "latest_ic_1m": 0.01793175,
+      "ic_mean": 0.01622842391304348,
+      "ir": 0.3524371059217946,
       "win_rate": 0.6485507246376812,
       "months": 552,
-      "recent_12m_ir": 0.3285766837126254,
-      "recent_6m_ir": 0.27428305150012433,
+      "recent_12m_ir": 0.3288209129979435,
+      "recent_6m_ir": 0.2779224593168153,
       "label": "可观察"
     },
     {
       "style": "growth",
       "style_name": "成长",
       "factor_count": 3,
-      "latest_coverage": 0.991963,
-      "latest_ic_1m": -0.015309999999999999,
-      "ic_mean": 0.01857720531400966,
-      "ir": 0.32925824247073515,
+      "latest_coverage": 0.9920416666666667,
+      "latest_ic_1m": -0.03877033333333333,
+      "ic_mean": 0.018407202898550728,
+      "ir": 0.325446849311628,
       "win_rate": 0.6642512077294686,
       "months": 414,
-      "recent_12m_ir": 0.38519870931052597,
-      "recent_6m_ir": 0.5638627781777411,
+      "recent_12m_ir": 0.3309296249729309,
+      "recent_6m_ir": 0.3863437132716023,
       "label": "可观察"
     },
     {
       "style": "momentum",
       "style_name": "动量",
       "factor_count": 1,
-      "latest_coverage": 0.998011,
-      "latest_ic_1m": -0.189121,
-      "ic_mean": -0.01472342753623189,
-      "ir": -0.16814644665087414,
+      "latest_coverage": 0.998757,
+      "latest_ic_1m": -0.214361,
+      "ic_mean": -0.014906326086956525,
+      "ir": -0.16947570215027635,
       "win_rate": 0.4420289855072464,
       "months": 138,
-      "recent_12m_ir": -0.15316893958191916,
-      "recent_6m_ir": -0.06990712801692613,
+      "recent_12m_ir": -0.167867903964862,
+      "recent_6m_ir": -0.10109575915384439,
       "label": "需复核"
     },
     {
       "style": "reversal",
       "style_name": "反转",
       "factor_count": 2,
-      "latest_coverage": 0.9722845,
-      "latest_ic_1m": 0.09983,
-      "ic_mean": 0.03744875724637681,
-      "ir": 0.42303566195647596,
-      "win_rate": 0.6811594202898551,
+      "latest_coverage": 0.9733895,
+      "latest_ic_1m": 0.132444,
+      "ic_mean": 0.03768509057971014,
+      "ir": 0.42654774235493453,
+      "win_rate": 0.6847826086956522,
       "months": 276,
-      "recent_12m_ir": 0.26347127708800877,
-      "recent_6m_ir": 0.12894709765770504,
+      "recent_12m_ir": 0.3046954570564685,
+      "recent_6m_ir": 0.19279811908478514,
       "label": "可观察"
     },
     {
@@ -87,13 +87,13 @@ window.factorPanelData = {
       "style_name": "风险",
       "factor_count": 3,
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.178966,
-      "ic_mean": 0.07447667391304348,
-      "ir": 0.7853098404796912,
+      "latest_ic_1m": 0.23497833333333337,
+      "ic_mean": 0.07488256038647342,
+      "ir": 0.7847651357526302,
       "win_rate": 0.7753623188405797,
       "months": 414,
-      "recent_12m_ir": 0.6275214011698226,
-      "recent_6m_ir": 0.289486886962702,
+      "recent_12m_ir": 0.6212319416198592,
+      "recent_6m_ir": 0.3286425363357679,
       "label": "强"
     }
   ],
@@ -105,14 +105,14 @@ window.factorPanelData = {
       "style_name": "价值",
       "direction": 1,
       "unit": "ratio",
-      "latest_coverage": 0.970172,
-      "latest_ic_1m": 0.145198,
-      "ic_mean": 0.04034502898550725,
-      "ir": 0.6823466503689399,
+      "latest_coverage": 0.970157,
+      "latest_ic_1m": 0.154583,
+      "ic_mean": 0.04041303623188406,
+      "ir": 0.6820348509883575,
       "win_rate": 0.7318840579710145,
       "months": 138,
-      "recent_12m_ir": 0.5475381288631388,
-      "recent_6m_ir": 0.24663287466758627,
+      "recent_12m_ir": 0.546811595528012,
+      "recent_6m_ir": 0.2565861716296427,
       "label": "稳健"
     },
     {
@@ -123,13 +123,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.108923,
-      "ic_mean": 0.038167014492753615,
-      "ir": 0.6367841549066175,
+      "latest_ic_1m": 0.122628,
+      "ic_mean": 0.03826632608695652,
+      "ir": 0.6370666800271234,
       "win_rate": 0.7898550724637681,
       "months": 138,
-      "recent_12m_ir": 0.6813086062260134,
-      "recent_6m_ir": 0.42285988944748465,
+      "recent_12m_ir": 0.6721450701564595,
+      "recent_6m_ir": 0.42947411401661484,
       "label": "稳健"
     },
     {
@@ -140,13 +140,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.126412,
-      "ic_mean": 0.0547338115942029,
-      "ir": 0.6144124392174948,
+      "latest_ic_1m": 0.21591,
+      "ic_mean": 0.05538234782608696,
+      "ir": 0.6158345788754871,
       "win_rate": 0.6956521739130435,
       "months": 138,
-      "recent_12m_ir": 0.5112679586390565,
-      "recent_6m_ir": 0.23107366943406443,
+      "recent_12m_ir": 0.5239230896015066,
+      "recent_6m_ir": 0.31017838763664307,
       "label": "稳健"
     },
     {
@@ -157,13 +157,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.164582,
-      "ic_mean": 0.04472150724637681,
-      "ir": 0.5771409822448827,
+      "latest_ic_1m": 0.13221,
+      "ic_mean": 0.04448692753623189,
+      "ir": 0.5764731337129584,
       "win_rate": 0.7681159420289855,
       "months": 138,
-      "recent_12m_ir": 0.5090708093332755,
-      "recent_6m_ir": 0.30943432260564785,
+      "recent_12m_ir": 0.5098418086655561,
+      "recent_6m_ir": 0.2800399166029144,
       "label": "稳健"
     },
     {
@@ -174,13 +174,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.138187,
-      "ic_mean": 0.0401934347826087,
-      "ir": 0.49175726857137647,
+      "latest_ic_1m": 0.214647,
+      "ic_mean": 0.04074749275362319,
+      "ir": 0.4929687063459978,
       "win_rate": 0.644927536231884,
       "months": 138,
-      "recent_12m_ir": 0.3209682467077541,
-      "recent_6m_ir": 0.08502837487618307,
+      "recent_12m_ir": 0.3442031597106258,
+      "recent_6m_ir": 0.1821041222469219,
       "label": "稳健"
     },
     {
@@ -190,14 +190,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": -1,
       "unit": "std",
-      "latest_coverage": 0.963212,
-      "latest_ic_1m": 0.02399,
-      "ic_mean": 0.01915723913043478,
-      "ir": 0.44529596594554577,
+      "latest_coverage": 0.963193,
+      "latest_ic_1m": 0.014465,
+      "ic_mean": 0.019088217391304348,
+      "ir": 0.4436933525082089,
       "win_rate": 0.6521739130434783,
       "months": 138,
-      "recent_12m_ir": 0.4793552696570627,
-      "recent_6m_ir": 0.44596137603526254,
+      "recent_12m_ir": 0.4557215603913158,
+      "recent_6m_ir": 0.3953234969923111,
       "label": "可观察"
     },
     {
@@ -207,14 +207,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": 1,
       "unit": "ratio",
-      "latest_coverage": 0.963212,
-      "latest_ic_1m": 0.102164,
-      "ic_mean": 0.024739557971014493,
-      "ir": 0.3886628005956407,
+      "latest_coverage": 0.963193,
+      "latest_ic_1m": 0.059976,
+      "ic_mean": 0.024433847826086954,
+      "ir": 0.38551859993914495,
       "win_rate": 0.6956521739130435,
       "months": 138,
-      "recent_12m_ir": 0.5648787607629596,
-      "recent_6m_ir": 0.5253692128229109,
+      "recent_12m_ir": 0.5479296402280951,
+      "recent_6m_ir": 0.5319973642555167,
       "label": "可观察"
     },
     {
@@ -224,14 +224,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": -1,
       "unit": "ratio",
-      "latest_coverage": 0.970172,
-      "latest_ic_1m": 0.003966,
-      "ic_mean": 0.0148286884057971,
-      "ir": 0.3597935829528278,
+      "latest_coverage": 0.970157,
+      "latest_ic_1m": 0.013793,
+      "ic_mean": 0.014899898550724636,
+      "ir": 0.3616127799770664,
       "win_rate": 0.6666666666666666,
       "months": 138,
-      "recent_12m_ir": 0.09257047495640425,
-      "recent_6m_ir": -0.13293815264576891,
+      "recent_12m_ir": 0.11561273306539606,
+      "recent_6m_ir": -0.07255676701082818,
       "label": "可观察"
     },
     {
@@ -241,14 +241,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": 1,
       "unit": "ratio",
-      "latest_coverage": 0.970172,
-      "latest_ic_1m": -0.025455,
-      "ic_mean": 0.006426891304347826,
-      "ir": 0.2283385994985551,
+      "latest_coverage": 0.970157,
+      "latest_ic_1m": -0.016507,
+      "ic_mean": 0.006491731884057971,
+      "ir": 0.23116585665234557,
       "win_rate": 0.5797101449275363,
       "months": 138,
-      "recent_12m_ir": 0.07121412832180714,
-      "recent_6m_ir": 0.11415941483683363,
+      "recent_12m_ir": 0.11347396889846255,
+      "recent_6m_ir": 0.22097206578445222,
       "label": "可观察"
     },
     {
@@ -258,14 +258,14 @@ window.factorPanelData = {
       "style_name": "成长",
       "direction": 1,
       "unit": "zscore",
-      "latest_coverage": 0.975889,
-      "latest_ic_1m": -0.019718,
-      "ic_mean": 0.018328021739130434,
-      "ir": 0.38491114068058885,
+      "latest_coverage": 0.976125,
+      "latest_ic_1m": -0.043405,
+      "ic_mean": 0.018156376811594203,
+      "ir": 0.379866428075189,
       "win_rate": 0.6884057971014492,
       "months": 138,
-      "recent_12m_ir": 0.4555689167610234,
-      "recent_6m_ir": 0.6445777452081827,
+      "recent_12m_ir": 0.3807036540000381,
+      "recent_6m_ir": 0.3939664421843222,
       "label": "可观察"
     },
     {
@@ -276,13 +276,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "pct",
       "latest_coverage": 1.0,
-      "latest_ic_1m": -0.001137,
-      "ic_mean": 0.02024223188405797,
-      "ir": 0.3164060981169857,
+      "latest_ic_1m": -0.023567,
+      "ic_mean": 0.02007969565217391,
+      "ir": 0.31345808253627055,
       "win_rate": 0.6521739130434783,
       "months": 138,
-      "recent_12m_ir": 0.3034994893278309,
-      "recent_6m_ir": 0.4524069609886548,
+      "recent_12m_ir": 0.2615657224036755,
+      "recent_6m_ir": 0.31054208121098614,
       "label": "可观察"
     },
     {
@@ -293,13 +293,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "pct",
       "latest_coverage": 1.0,
-      "latest_ic_1m": -0.025075,
-      "ic_mean": 0.01716136231884058,
-      "ir": 0.30188846177684275,
+      "latest_ic_1m": -0.049339,
+      "ic_mean": 0.016985536231884056,
+      "ir": 0.2979105304187023,
       "win_rate": 0.6521739130434783,
       "months": 138,
-      "recent_12m_ir": 0.39132804296228363,
-      "recent_6m_ir": 0.5470231796539466,
+      "recent_12m_ir": 0.33974457987381856,
+      "recent_6m_ir": 0.39542015364884586,
       "label": "可观察"
     },
     {
@@ -309,14 +309,14 @@ window.factorPanelData = {
       "style_name": "动量",
       "direction": 1,
       "unit": "return",
-      "latest_coverage": 0.998011,
-      "latest_ic_1m": -0.189121,
-      "ic_mean": -0.01472342753623189,
-      "ir": -0.16814644665087414,
+      "latest_coverage": 0.998757,
+      "latest_ic_1m": -0.214361,
+      "ic_mean": -0.014906326086956525,
+      "ir": -0.16947570215027635,
       "win_rate": 0.4420289855072464,
       "months": 138,
-      "recent_12m_ir": -0.15316893958191916,
-      "recent_6m_ir": -0.06990712801692613,
+      "recent_12m_ir": -0.167867903964862,
+      "recent_6m_ir": -0.10109575915384439,
       "label": "需复核"
     },
     {
@@ -327,13 +327,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "return",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.242086,
-      "ic_mean": 0.06097028985507246,
-      "ir": 0.6311261859243014,
+      "latest_ic_1m": 0.236656,
+      "ic_mean": 0.0609309420289855,
+      "ir": 0.6311973460758761,
       "win_rate": 0.7753623188405797,
       "months": 138,
-      "recent_12m_ir": 0.24167762254418126,
-      "recent_6m_ir": 0.14409580273319353,
+      "recent_12m_ir": 0.23967069244679606,
+      "recent_6m_ir": 0.13919439379165147,
       "label": "稳健"
     },
     {
@@ -343,14 +343,14 @@ window.factorPanelData = {
       "style_name": "反转",
       "direction": 1,
       "unit": "return",
-      "latest_coverage": 0.944569,
-      "latest_ic_1m": -0.042426,
-      "ic_mean": 0.013927224637681158,
-      "ir": 0.19161412430155045,
-      "win_rate": 0.5869565217391305,
+      "latest_coverage": 0.946779,
+      "latest_ic_1m": 0.028232,
+      "ic_mean": 0.014439239130434782,
+      "ir": 0.19907254910056324,
+      "win_rate": 0.5942028985507246,
       "months": 138,
-      "recent_12m_ir": 0.38147756823458523,
-      "recent_6m_ir": 0.13479089489320767,
+      "recent_12m_ir": 0.5789480755952452,
+      "recent_6m_ir": 0.5858618008496772,
       "label": "偏弱"
     },
     {
@@ -361,13 +361,13 @@ window.factorPanelData = {
       "direction": -1,
       "unit": "turnover",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.21194,
-      "ic_mean": 0.08710423188405798,
-      "ir": 0.9648103672275719,
+      "latest_ic_1m": 0.266749,
+      "ic_mean": 0.08750139855072465,
+      "ir": 0.9620565810126201,
       "win_rate": 0.8115942028985508,
       "months": 138,
-      "recent_12m_ir": 0.7330305602578038,
-      "recent_6m_ir": 0.27110190905873116,
+      "recent_12m_ir": 0.7103347006058215,
+      "recent_6m_ir": 0.30228805965063105,
       "label": "强"
     },
     {
@@ -378,13 +378,13 @@ window.factorPanelData = {
       "direction": -1,
       "unit": "turnover",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.157801,
-      "ic_mean": 0.06641220289855072,
-      "ir": 0.7868348576920813,
+      "latest_ic_1m": 0.191586,
+      "ic_mean": 0.06665702173913042,
+      "ir": 0.7867951341688988,
       "win_rate": 0.7608695652173914,
       "months": 138,
-      "recent_12m_ir": 0.6129557012590101,
-      "recent_6m_ir": 0.2978380044152028,
+      "recent_12m_ir": 0.608837641913427,
+      "recent_6m_ir": 0.3219843304666709,
       "label": "强"
     },
     {
@@ -395,13 +395,13 @@ window.factorPanelData = {
       "direction": -1,
       "unit": "std",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.167157,
-      "ic_mean": 0.06991358695652172,
-      "ir": 0.6493616465047637,
+      "latest_ic_1m": 0.2466,
+      "ic_mean": 0.07048926086956522,
+      "ir": 0.6502775335091802,
       "win_rate": 0.7536231884057971,
       "months": 138,
-      "recent_12m_ir": 0.5120597790772969,
-      "recent_6m_ir": 0.25916705474274787,
+      "recent_12m_ir": 0.5220188972848617,
+      "recent_6m_ir": 0.31499068662825375,
       "label": "稳健"
     }
   ],
@@ -438,7 +438,7 @@ window.factorPanelData = {
           "2023": 1.2404893287906558,
           "2024": 0.5901499546886144,
           "2025": 0.48500038135946755,
-          "2026": 0.24663287466758627
+          "2026": 0.2565861716296427
         }
       },
       {
@@ -458,7 +458,7 @@ window.factorPanelData = {
           "2023": 0.8885902581033146,
           "2024": 0.33237404553656574,
           "2025": 0.3413561806474888,
-          "2026": 0.42285988944748465
+          "2026": 0.42947411401661484
         }
       },
       {
@@ -478,7 +478,7 @@ window.factorPanelData = {
           "2023": 1.1152695205988319,
           "2024": 0.6290058316995846,
           "2025": 0.7825392013087661,
-          "2026": 0.23107366943406443
+          "2026": 0.31017838763664307
         }
       },
       {
@@ -498,7 +498,7 @@ window.factorPanelData = {
           "2023": 0.6698785868777679,
           "2024": 0.3870202411701793,
           "2025": 0.16227427334443262,
-          "2026": 0.30943432260564785
+          "2026": 0.2800399166029144
         }
       },
       {
@@ -518,7 +518,7 @@ window.factorPanelData = {
           "2023": 0.9355940536291472,
           "2024": 0.5823571643915431,
           "2025": 0.6701237089079866,
-          "2026": 0.08502837487618307
+          "2026": 0.1821041222469219
         }
       },
       {
@@ -538,7 +538,7 @@ window.factorPanelData = {
           "2023": 0.7060326656030134,
           "2024": 0.44461132464040637,
           "2025": 0.11982914254752518,
-          "2026": 0.44596137603526254
+          "2026": 0.3953234969923111
         }
       },
       {
@@ -558,7 +558,7 @@ window.factorPanelData = {
           "2023": 0.11078900767936653,
           "2024": 0.21357343938341225,
           "2025": 0.11114323704792885,
-          "2026": 0.5253692128229109
+          "2026": 0.5319973642555167
         }
       },
       {
@@ -578,7 +578,7 @@ window.factorPanelData = {
           "2023": 1.0734198438791134,
           "2024": 0.16794414990516335,
           "2025": 0.2984418911571071,
-          "2026": -0.13293815264576891
+          "2026": -0.07255676701082818
         }
       },
       {
@@ -598,7 +598,7 @@ window.factorPanelData = {
           "2023": 0.19227844263436397,
           "2024": 0.18994883547699232,
           "2025": 0.2681479209295695,
-          "2026": 0.11415941483683363
+          "2026": 0.22097206578445222
         }
       },
       {
@@ -618,7 +618,7 @@ window.factorPanelData = {
           "2023": 0.07286536953827748,
           "2024": 0.27263005412059965,
           "2025": 0.3558769540433355,
-          "2026": 0.6445777452081827
+          "2026": 0.3939664421843222
         }
       },
       {
@@ -638,7 +638,7 @@ window.factorPanelData = {
           "2023": -0.017520165578078423,
           "2024": 0.4250629761704373,
           "2025": 0.13189600977106006,
-          "2026": 0.4524069609886548
+          "2026": 0.31054208121098614
         }
       },
       {
@@ -658,7 +658,7 @@ window.factorPanelData = {
           "2023": -0.40807746161425773,
           "2024": 0.419084072652579,
           "2025": 0.265566548500484,
-          "2026": 0.5470231796539466
+          "2026": 0.39542015364884586
         }
       },
       {
@@ -678,7 +678,7 @@ window.factorPanelData = {
           "2023": -0.06260504112592968,
           "2024": -0.3022721837771838,
           "2025": -0.3637021844235151,
-          "2026": -0.06990712801692613
+          "2026": -0.10109575915384439
         }
       },
       {
@@ -698,7 +698,7 @@ window.factorPanelData = {
           "2023": 0.296701292205084,
           "2024": 0.5164883224315348,
           "2025": 0.8008618827535938,
-          "2026": 0.14409580273319353
+          "2026": 0.13919439379165147
         }
       },
       {
@@ -718,7 +718,7 @@ window.factorPanelData = {
           "2023": 0.6067592359159318,
           "2024": 0.028917292327456226,
           "2025": 0.5602122400868018,
-          "2026": 0.13479089489320767
+          "2026": 0.5858618008496772
         }
       },
       {
@@ -738,7 +738,7 @@ window.factorPanelData = {
           "2023": 1.2278472108804102,
           "2024": 0.6024743248066127,
           "2025": 1.4117280503922727,
-          "2026": 0.27110190905873116
+          "2026": 0.30228805965063105
         }
       },
       {
@@ -758,7 +758,7 @@ window.factorPanelData = {
           "2023": 1.1505173639572321,
           "2024": 0.5655403581267961,
           "2025": 0.7952608263084685,
-          "2026": 0.2978380044152028
+          "2026": 0.3219843304666709
         }
       },
       {
@@ -778,7 +778,7 @@ window.factorPanelData = {
           "2023": 1.2519042401308358,
           "2024": 0.42524865937612977,
           "2025": 0.4819775232768094,
-          "2026": 0.25916705474274787
+          "2026": 0.31499068662825375
         }
       }
     ]
@@ -791,7 +791,7 @@ window.factorPanelData = {
       "factor_b_name": "6个月换手率",
       "style_a": "risk",
       "style_b": "risk",
-      "corr": 0.7828
+      "corr": 0.7829
     },
     {
       "factor_a": "cfp_ttm",
@@ -800,7 +800,7 @@ window.factorPanelData = {
       "factor_b_name": "应计利润率",
       "style_a": "value",
       "style_b": "quality",
-      "corr": 0.6299
+      "corr": 0.63
     },
     {
       "factor_a": "volatility_252d",
@@ -818,7 +818,7 @@ window.factorPanelData = {
       "factor_b_name": "销售收益率",
       "style_a": "value",
       "style_b": "value",
-      "corr": 0.5595
+      "corr": 0.5594
     },
     {
       "factor_a": "ep_ttm",
@@ -836,7 +836,7 @@ window.factorPanelData = {
       "factor_b_name": "股息率",
       "style_a": "value",
       "style_b": "value",
-      "corr": 0.5444
+      "corr": 0.5446
     },
     {
       "factor_a": "profit_growth_yoy",
@@ -854,7 +854,7 @@ window.factorPanelData = {
       "factor_b_name": "换手率",
       "style_a": "risk",
       "style_b": "risk",
-      "corr": 0.4791
+      "corr": 0.4792
     },
     {
       "factor_a": "div_yield_ttm",
@@ -863,7 +863,7 @@ window.factorPanelData = {
       "factor_b_name": "12季平均ROE_TTM",
       "style_a": "value",
       "style_b": "quality",
-      "corr": 0.4589
+      "corr": 0.459
     },
     {
       "factor_a": "bp_mrq",
@@ -878,53 +878,63 @@ window.factorPanelData = {
   "build_manifest": [
     {
       "layer": "universe",
-      "start_date": "2026-07-03",
-      "end_date": "2026-07-03",
-      "row_count": 5218,
-      "valid_count": 4023,
-      "coverage": 0.770985,
+      "start_date": "2026-07-10",
+      "end_date": "2026-07-10",
+      "row_count": 5219,
+      "valid_count": 4021,
+      "coverage": 0.770454,
       "status": "success",
-      "created_at": "2026-07-03T18:03:29"
+      "created_at": "2026-07-12T06:56:24"
     },
     {
       "layer": "raw",
-      "start_date": "2026-07-03",
-      "end_date": "2026-07-03",
-      "row_count": 71790,
-      "valid_count": 71790,
+      "start_date": "2026-07-10",
+      "end_date": "2026-07-10",
+      "row_count": 71767,
+      "valid_count": 71767,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-03T18:04:03"
+      "created_at": "2026-07-12T06:57:26"
     },
     {
       "layer": "exposure",
-      "start_date": "2026-07-03",
-      "end_date": "2026-07-03",
-      "row_count": 71430,
-      "valid_count": 71430,
+      "start_date": "2026-07-10",
+      "end_date": "2026-07-10",
+      "row_count": 71407,
+      "valid_count": 71407,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-03T18:04:26"
+      "created_at": "2026-07-12T06:58:10"
     },
     {
       "layer": "composite",
-      "start_date": "2026-07-03",
-      "end_date": "2026-07-03",
-      "row_count": 4023,
-      "valid_count": 4023,
+      "start_date": "2026-07-10",
+      "end_date": "2026-07-10",
+      "row_count": 4021,
+      "valid_count": 4021,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-03T18:04:36"
+      "created_at": "2026-07-12T06:58:29"
     },
     {
       "layer": "diagnostics",
       "start_date": "2015-01-30",
-      "end_date": "2026-07-03",
+      "end_date": "2026-07-10",
       "row_count": 2502,
       "valid_count": 2502,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-03T18:05:54"
+      "created_at": "2026-07-12T07:01:28"
+    },
+    {
+      "layer": "growth_momentum_daily_rank_ic",
+      "start_date": "2021-04-14",
+      "end_date": "2026-07-02",
+      "row_count": 9072,
+      "valid_count": 9072,
+      "coverage": null,
+      "status": "success",
+      "created_at": "2026-07-03T19:13:57"
     }
   ]
 };

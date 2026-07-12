@@ -1,10 +1,10 @@
 window.portfolioPanelData = {
   "meta": {
-    "generated_at": "2026-07-03T00:11:29",
+    "generated_at": "2026-07-12T07:06:46",
     "portfolio_name": "size5_growth10_quality_disabled_mcap_growth_cap10_1y",
     "calc_version": "v1",
-    "latest_rebalance_date": 20260702,
-    "latest_rebalance_date_text": "2026-07-02",
+    "latest_rebalance_date": 20260710,
+    "latest_rebalance_date_text": "2026-07-10",
     "output_files": {
       "daily_returns": "data/backtest/size5_growth10_quality_disabled_mcap_growth_cap10_1y_daily_returns.csv",
       "holdings": "data/backtest/size5_growth10_quality_disabled_mcap_growth_cap10_1y_holdings.csv",
@@ -24,32 +24,32 @@ window.portfolioPanelData = {
   },
   "performance": {
     "source": "data/backtest/size5_growth10_quality_disabled_mcap_growth_cap10_1y_daily_returns.csv",
-    "start_date": "2025-07-02",
-    "end_date": "2026-07-02",
+    "start_date": "2025-07-10",
+    "end_date": "2026-07-10",
     "trading_days": 243,
     "rebalance_count": 13,
     "holding_rows": 204,
     "avg_holding_count": 15.692307692307692,
-    "total_return": 2.130588297217399,
-    "annual_return": 2.265746532292163,
-    "annual_vol": 0.38652032057537783,
-    "sharpe_0rf": 3.273443818413252,
-    "max_drawdown": -0.16266901501732223,
+    "total_return": 1.8825752467377113,
+    "annual_return": 1.997847703093996,
+    "annual_vol": 0.3956582755463329,
+    "sharpe_0rf": 2.9886180270840814,
+    "max_drawdown": -0.16266901501732212,
     "drawdown_start_date": "2025-10-29",
     "drawdown_end_date": "2025-11-24",
-    "monthly_turnover": 0.2314583659029167,
-    "annual_turnover": 2.7775003908350007
+    "monthly_turnover": 0.2314583041636272,
+    "annual_turnover": 2.7774996499635263
   },
   "metrics": [
     {
       "label": "累计收益",
-      "value": "+213.06%",
+      "value": "+188.26%",
       "value_class": "metric-positive",
-      "note": "2025-07-02 -> 2026-07-02"
+      "note": "2025-07-10 -> 2026-07-10"
     },
     {
       "label": "夏普比率",
-      "value": "3.27",
+      "value": "2.99",
       "value_class": "",
       "note": "年化收益 / 年化波动"
     },
@@ -67,94 +67,88 @@ window.portfolioPanelData = {
     }
   ],
   "sector": {
-    "latest_rebalance_date": 20260702,
-    "latest_rebalance_date_text": "2026-07-02",
+    "latest_rebalance_date": 20260710,
+    "latest_rebalance_date_text": "2026-07-10",
     "top_sector_names": [
       "半导体",
       "通信设备",
       "消费电子"
     ],
-    "top3_weight": 0.7029752435997999,
-    "top3_weight_text": "70.3%",
+    "top3_weight": 0.7175941782783111,
+    "top3_weight_text": "71.8%",
     "description": "",
     "exposure": [
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881319,
         "tdx_sector_name": "半导体",
-        "weight": 0.41053279318838365
+        "weight": 0.42657507578179193
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881338,
         "tdx_sector_name": "通信设备",
-        "weight": 0.15287846374881142
+        "weight": 0.15128573611507767
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881326,
         "tdx_sector_name": "消费电子",
-        "weight": 0.13956398666260483
+        "weight": 0.13973336638144146
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881294,
         "tdx_sector_name": "通用设备",
-        "weight": 0.054173160899137776
+        "weight": 0.05239811226788495
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881094,
         "tdx_sector_name": "玻璃玻纤",
-        "weight": 0.04842790303860584
+        "weight": 0.045418677292897086
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881303,
         "tdx_sector_name": "专用设备",
-        "weight": 0.033713870239577746
+        "weight": 0.03444354633927892
       },
       {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881055,
-        "tdx_sector_name": "农用化工",
-        "weight": 0.029938346503130243
-      },
-      {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881290,
         "tdx_sector_name": "航海装备",
-        "weight": 0.026449393785124523
+        "weight": 0.030655010668465987
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881336,
         "tdx_sector_name": "其他电子",
-        "weight": 0.02572302172262805
+        "weight": 0.028479429487301464
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
+        "tdx_sector_code": 881055,
+        "tdx_sector_name": "农用化工",
+        "weight": 0.027167540802727316
+      },
+      {
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881449,
         "tdx_sector_name": "航运港口",
-        "weight": 0.024285218522165995
+        "weight": 0.024297708111197046
       },
       {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881082,
-        "tdx_sector_name": "稀有金属",
-        "weight": 0.02197332847013989
+        "rebalance_date_id": 20260710,
+        "tdx_sector_code": 881359,
+        "tdx_sector_name": "云服务",
+        "weight": 0.023990497363340677
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260710,
         "tdx_sector_code": 881275,
         "tdx_sector_name": "光伏设备",
-        "weight": 0.016366686331211466
-      },
-      {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881262,
-        "tdx_sector_name": "电池",
-        "weight": 0.015973826888478572
+        "weight": 0.01555529938859558
       }
     ]
   },
@@ -222,7 +216,7 @@ window.portfolioPanelData = {
     {
       "rebalance_date_id": 20260630,
       "rebalance_date": "2026-06-30",
-      "turnover": 0.15416958279517515
+      "turnover": 0.15416884192370095
     }
   ]
 };
