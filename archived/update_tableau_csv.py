@@ -4,9 +4,9 @@
 
 规则：
 1. 仅在「CSV 最新日期 < 今天」时执行更新，不限制运行时间。
-2. 依次尝试三个接口：stock_zh_index_daily_tx -> stock_zh_index_daily_em -> index_zh_a_hist。
+2. 优先尝试腾讯接口和国证指数官方接口，再尝试带总超时的 EastMoney curl 接口；AkShare 接口仅作后备。
    某个接口只要能返回可用数据即停止，并立即把该文件已取到的数据写回 CSV，再继续下一个文件。
-3. 默认每次请求后间隔 15 秒；接口失败时重试间隔依次提升为 30 秒、60 秒；仍然失败则尝试下一个接口。
+3. 所有指数行情请求都有超时；默认每次请求后间隔 15 秒，接口失败时重试间隔依次提升为 30 秒、60 秒。
 4. 仅更新 CSV 中已存在的列，不新增列，并保持原编码（utf-8-sig BOM）、表头与数值格式。
 5. 本地 CSV 更新成功后，自动把该文件完整覆盖同步到对应的 Google Sheet 第一个工作表。
    对于明确标记为不需要同步的指数（000985_中证全指、980080_成长100），则跳过 Google Sheet 同步。
@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlencode
@@ -32,6 +33,7 @@ os.environ.setdefault("TQDM_DISABLE", "1")
 import akshare as ak
 import gspread
 import pandas as pd
+import requests
 from google.oauth2.service_account import Credentials
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -46,6 +48,7 @@ DATE_FMT_FILE = "%Y-%m-%d"
 DATE_FMT_API = "%Y%m%d"
 DEFAULT_START_DATE = "19900101"
 BJ_TZ = ZoneInfo("Asia/Shanghai")
+AKSHARE_REQUEST_TIMEOUT = (5, 10)
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -69,22 +72,42 @@ NO_SYNC_STEMS = {
 }
 
 
+@contextmanager
+def bounded_requests(timeout: tuple[int, int] = AKSHARE_REQUEST_TIMEOUT):
+    """Apply a default connect/read timeout to requests made inside AkShare."""
+    session_class = requests.sessions.Session
+    original_request = session_class.request
+
+    def request_with_timeout(session, method, url, **kwargs):
+        kwargs.setdefault("timeout", timeout)
+        return original_request(session, method, url, **kwargs)
+
+    session_class.request = request_with_timeout
+    try:
+        yield
+    finally:
+        session_class.request = original_request
+
+
 def fetch_tx(code: str, prefix: str, start_date: str, end_date: str) -> pd.DataFrame:
-    return ak.stock_zh_index_daily_tx(
-        symbol=f"{prefix}{code}", start_date=start_date, end_date=end_date
-    )
+    with bounded_requests():
+        return ak.stock_zh_index_daily_tx(
+            symbol=f"{prefix}{code}", start_date=start_date, end_date=end_date
+        )
 
 
 def fetch_em(code: str, prefix: str, start_date: str, end_date: str) -> pd.DataFrame:
-    return ak.stock_zh_index_daily_em(
-        symbol=f"{prefix}{code}", start_date=start_date, end_date=end_date
-    )
+    with bounded_requests():
+        return ak.stock_zh_index_daily_em(
+            symbol=f"{prefix}{code}", start_date=start_date, end_date=end_date
+        )
 
 
 def fetch_hist(code: str, start_date: str, end_date: str) -> pd.DataFrame:
-    return ak.index_zh_a_hist(
-        symbol=code, period="daily", start_date=start_date, end_date=end_date
-    )
+    with bounded_requests():
+        return ak.index_zh_a_hist(
+            symbol=code, period="daily", start_date=start_date, end_date=end_date
+        )
 
 
 def eastmoney_market_candidates(prefix: str) -> tuple[str, ...]:
@@ -124,6 +147,36 @@ def curl_json(request_url: str) -> dict:
         return json.loads(output)
     except json.JSONDecodeError as exc:
         raise RuntimeError(f"解析 JSON 失败: {exc}") from exc
+
+
+def fetch_cni_curl(
+    code: str, _prefix: str, start_date: str, end_date: str
+) -> pd.DataFrame:
+    """CNI's official daily-index endpoint using bounded system curl."""
+    url = "https://hq.cnindex.com.cn/market/market/getIndexDailyDataWithDataFormat"
+    params = {
+        "indexCode": code,
+        "startDate": datetime.strptime(start_date, DATE_FMT_API).strftime(
+            DATE_FMT_FILE
+        ),
+        "endDate": datetime.strptime(end_date, DATE_FMT_API).strftime(DATE_FMT_FILE),
+        "frequency": "day",
+    }
+    data_json = curl_json(f"{url}?{urlencode(params)}")
+    if data_json.get("code") != 200:
+        raise RuntimeError(
+            f"CNI 返回错误: code={data_json.get('code')} "
+            f"message={data_json.get('message', '')}"
+        )
+
+    payload = data_json.get("data") or {}
+    columns = payload.get("item") or []
+    rows = payload.get("data") or []
+    if not rows:
+        return pd.DataFrame(columns=columns)
+    if not columns:
+        raise RuntimeError("CNI 返回数据缺少列定义")
+    return pd.DataFrame(rows, columns=columns)
 
 
 def fetch_em_curl(code: str, prefix: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -238,6 +291,7 @@ API_CONFIGS = [
     {
         "name": "stock_zh_index_daily_tx",
         "fetch": fetch_tx,
+        "unsupported_codes": {"980080"},
         "column_map": {
             "date": "日期",
             "open": "开盘价",
@@ -250,6 +304,36 @@ API_CONFIGS = [
         "conversions": {
             "成交量(万手)": lambda x: x / 10000.0,
         },
+    },
+    {
+        "name": "cnindex_curl",
+        "fetch": fetch_cni_curl,
+        "column_map": {
+            "timestamp": "日期",
+            "open": "开盘价",
+            "close": "收盘价",
+            "high": "最高价",
+            "low": "最低价",
+            "volume": "成交量(万手)",
+        },
+        "conversions": {},
+        "max_attempts": 1,
+    },
+    {
+        "name": "eastmoney_kline_curl",
+        "fetch": fetch_em_curl,
+        "column_map": {
+            "日期": "日期",
+            "开盘": "开盘价",
+            "收盘": "收盘价",
+            "最高": "最高价",
+            "最低": "最低价",
+            "成交量": "成交量(万手)",
+        },
+        "conversions": {
+            "成交量(万手)": lambda x: x / 10000.0,
+        },
+        "max_attempts": 1,
     },
     {
         "name": "stock_zh_index_daily_em",
@@ -280,22 +364,6 @@ API_CONFIGS = [
         "conversions": {
             "成交量(万手)": lambda x: x / 10000.0,
         },
-    },
-    {
-        "name": "eastmoney_kline_curl",
-        "fetch": fetch_em_curl,
-        "column_map": {
-            "日期": "日期",
-            "开盘": "开盘价",
-            "收盘": "收盘价",
-            "最高": "最高价",
-            "最低": "最低价",
-            "成交量": "成交量(万手)",
-        },
-        "conversions": {
-            "成交量(万手)": lambda x: x / 10000.0,
-        },
-        "max_attempts": 1,
     },
     {
         "name": "eastmoney_snapshot_curl",
@@ -452,10 +520,25 @@ def align_volume_scale_to_existing(path: Path, new_df: pd.DataFrame) -> pd.DataF
     return adjusted
 
 
+def is_empty_response_error(exc: Exception) -> bool:
+    """Recognize AkShare's schema error for a provider that returned no rows."""
+    message = str(exc)
+    return (
+        "Length mismatch" in message
+        and "Expected axis has 0 elements" in message
+    )
+
+
 def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_date: str) -> tuple[bool, str]:
-    """依次尝试三个接口更新单个文件，返回 (是否成功, 使用的接口名)。"""
+    """依次尝试可用接口更新单个文件，返回 (是否成功, 使用的接口名)。"""
     file_cols = list(pd.read_csv(path, nrows=0, encoding=ENCODING).columns)
     for api in API_CONFIGS:
+        if code in api.get("unsupported_codes", set()):
+            logging.info(
+                f"{path.name} [{api['name']}] 已知不支持该代码，跳过"
+            )
+            continue
+
         # 若接口明确无法覆盖 CSV 所有列，直接跳过，避免无意义请求
         api_file_cols = set(api["column_map"].values())
         if not set(file_cols).issubset(api_file_cols):
@@ -474,6 +557,7 @@ def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_dat
                 if api["name"] in (
                     "stock_zh_index_daily_tx",
                     "stock_zh_index_daily_em",
+                    "cnindex_curl",
                     "eastmoney_kline_curl",
                     "eastmoney_snapshot_curl",
                 ):
@@ -484,8 +568,10 @@ def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_dat
                 if raw_df is None:
                     raise ValueError("返回 None")
                 if raw_df.empty:
-                    logging.info(f"{path.name} [{api['name']}] 返回空数据，视为已是最新")
-                    return True, api["name"]
+                    logging.info(
+                        f"{path.name} [{api['name']}] 返回空数据，尝试下一个接口"
+                    )
+                    break
 
                 mapper = {k: v for k, v in api["column_map"].items() if k in raw_df.columns}
                 if not mapper:
@@ -513,6 +599,11 @@ def try_update_file(path: Path, code: str, prefix: str, start_date: str, end_dat
                 time.sleep(15)
                 return True, api["name"]
             except Exception as e:
+                if is_empty_response_error(e):
+                    logging.info(
+                        f"{path.name} [{api['name']}] 返回空数据，尝试下一个接口"
+                    )
+                    break
                 logging.warning(
                     f"{path.name} [{api['name']}] 第 {attempt + 1} 次尝试失败: {e}"
                 )
