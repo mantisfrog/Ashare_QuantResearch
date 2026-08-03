@@ -1,10 +1,10 @@
 window.portfolioPanelData = {
   "meta": {
-    "generated_at": "2026-07-03T00:11:29",
+    "generated_at": "2026-07-31T23:26:05",
     "portfolio_name": "size5_growth10_quality_disabled_mcap_growth_cap10_1y",
     "calc_version": "v1",
-    "latest_rebalance_date": 20260702,
-    "latest_rebalance_date_text": "2026-07-02",
+    "latest_rebalance_date": 20260731,
+    "latest_rebalance_date_text": "2026-07-31",
     "output_files": {
       "daily_returns": "data/backtest/size5_growth10_quality_disabled_mcap_growth_cap10_1y_daily_returns.csv",
       "holdings": "data/backtest/size5_growth10_quality_disabled_mcap_growth_cap10_1y_holdings.csv",
@@ -24,40 +24,40 @@ window.portfolioPanelData = {
   },
   "performance": {
     "source": "data/backtest/size5_growth10_quality_disabled_mcap_growth_cap10_1y_daily_returns.csv",
-    "start_date": "2025-07-02",
-    "end_date": "2026-07-02",
+    "start_date": "2025-07-31",
+    "end_date": "2026-07-31",
     "trading_days": 243,
     "rebalance_count": 13,
     "holding_rows": 204,
     "avg_holding_count": 15.692307692307692,
-    "total_return": 2.130588297217399,
-    "annual_return": 2.265746532292163,
-    "annual_vol": 0.38652032057537783,
-    "sharpe_0rf": 3.273443818413252,
-    "max_drawdown": -0.16266901501732223,
-    "drawdown_start_date": "2025-10-29",
-    "drawdown_end_date": "2025-11-24",
-    "monthly_turnover": 0.2314583659029167,
-    "annual_turnover": 2.7775003908350007
+    "total_return": 0.7721126229883124,
+    "annual_return": 0.8100672110945508,
+    "annual_vol": 0.45367839326090076,
+    "sharpe_0rf": 1.541104108069014,
+    "max_drawdown": -0.4172826546928985,
+    "drawdown_start_date": "2026-06-25",
+    "drawdown_end_date": "2026-07-30",
+    "monthly_turnover": 0.2314583041636272,
+    "annual_turnover": 2.7774996499635263
   },
   "metrics": [
     {
       "label": "累计收益",
-      "value": "+213.06%",
+      "value": "+77.21%",
       "value_class": "metric-positive",
-      "note": "2025-07-02 -> 2026-07-02"
+      "note": "2025-07-31 -> 2026-07-31"
     },
     {
       "label": "夏普比率",
-      "value": "3.27",
+      "value": "1.54",
       "value_class": "",
       "note": "年化收益 / 年化波动"
     },
     {
       "label": "最大回撤",
-      "value": "16.27%",
+      "value": "41.73%",
       "value_class": "metric-negative",
-      "note": "2025-10-29 -> 2025-11-24"
+      "note": "2026-06-25 -> 2026-07-30"
     },
     {
       "label": "年化换手率",
@@ -67,94 +67,88 @@ window.portfolioPanelData = {
     }
   ],
   "sector": {
-    "latest_rebalance_date": 20260702,
-    "latest_rebalance_date_text": "2026-07-02",
+    "latest_rebalance_date": 20260731,
+    "latest_rebalance_date_text": "2026-07-31",
     "top_sector_names": [
       "半导体",
       "通信设备",
       "消费电子"
     ],
-    "top3_weight": 0.7029752435997999,
-    "top3_weight_text": "70.3%",
+    "top3_weight": 0.6555053599627527,
+    "top3_weight_text": "65.6%",
     "description": "",
     "exposure": [
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881319,
         "tdx_sector_name": "半导体",
-        "weight": 0.41053279318838365
+        "weight": 0.3694625925614845
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881338,
         "tdx_sector_name": "通信设备",
-        "weight": 0.15287846374881142
+        "weight": 0.1457498736203993
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881326,
         "tdx_sector_name": "消费电子",
-        "weight": 0.13956398666260483
+        "weight": 0.14029289378086898
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
+        "tdx_sector_code": 881333,
+        "tdx_sector_name": "元器件",
+        "weight": 0.05428230944039497
+      },
+      {
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881294,
         "tdx_sector_name": "通用设备",
-        "weight": 0.054173160899137776
+        "weight": 0.05252838471417037
       },
       {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881094,
-        "tdx_sector_name": "玻璃玻纤",
-        "weight": 0.04842790303860584
-      },
-      {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881303,
-        "tdx_sector_name": "专用设备",
-        "weight": 0.033713870239577746
-      },
-      {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881055,
         "tdx_sector_name": "农用化工",
-        "weight": 0.029938346503130243
+        "weight": 0.03862420997015594
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881290,
         "tdx_sector_name": "航海装备",
-        "weight": 0.026449393785124523
+        "weight": 0.0385353257674168
       },
       {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881336,
-        "tdx_sector_name": "其他电子",
-        "weight": 0.02572302172262805
+        "rebalance_date_id": 20260731,
+        "tdx_sector_code": 881094,
+        "tdx_sector_name": "玻璃玻纤",
+        "weight": 0.037523380947030185
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
+        "tdx_sector_code": 881359,
+        "tdx_sector_name": "云服务",
+        "weight": 0.03603768422276939
+      },
+      {
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881449,
         "tdx_sector_name": "航运港口",
-        "weight": 0.024285218522165995
+        "weight": 0.03507179686277693
       },
       {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881082,
-        "tdx_sector_name": "稀有金属",
-        "weight": 0.02197332847013989
+        "rebalance_date_id": 20260731,
+        "tdx_sector_code": 881303,
+        "tdx_sector_name": "专用设备",
+        "weight": 0.03186491286284619
       },
       {
-        "rebalance_date_id": 20260702,
+        "rebalance_date_id": 20260731,
         "tdx_sector_code": 881275,
         "tdx_sector_name": "光伏设备",
-        "weight": 0.016366686331211466
-      },
-      {
-        "rebalance_date_id": 20260702,
-        "tdx_sector_code": 881262,
-        "tdx_sector_name": "电池",
-        "weight": 0.015973826888478572
+        "weight": 0.020026635249686394
       }
     ]
   },
@@ -222,7 +216,7 @@ window.portfolioPanelData = {
     {
       "rebalance_date_id": 20260630,
       "rebalance_date": "2026-06-30",
-      "turnover": 0.15416958279517515
+      "turnover": 0.15416884192370095
     }
   ]
 };
