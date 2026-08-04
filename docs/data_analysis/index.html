@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="基金零售经营分析静态演示：覆盖经营总览、风险预警、渠道、客户、产品、营销与月报。"
+    />
+    <title>Retail Analytics — 基金零售经营看板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside id="sidebar" class="sidebar reveal d1" aria-label="数据分析主导航">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">R</div>
+          <div class="brand-copy">
+            <div class="brand-name">Retail Analytics</div>
+            <div class="brand-subtitle">基金零售经营看板</div>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="页面导航">
+          <button class="nav-item active" data-page="overview" type="button">
+            <span class="nav-index">01</span>
+            <span>经营总览</span>
+          </button>
+          <button class="nav-item" data-page="alerts" type="button">
+            <span class="nav-index">02</span>
+            <span>预警与行动</span>
+          </button>
+          <button class="nav-item" data-page="channels" type="button">
+            <span class="nav-index">03</span>
+            <span>渠道经营</span>
+          </button>
+          <button class="nav-item" data-page="customers" type="button">
+            <span class="nav-index">04</span>
+            <span>客户与留存</span>
+          </button>
+          <button class="nav-item" data-page="products" type="button">
+            <span class="nav-index">05</span>
+            <span>产品与竞品</span>
+          </button>
+          <button class="nav-item" data-page="marketing" type="button">
+            <span class="nav-index">06</span>
+            <span>营销复盘</span>
+          </button>
+          <button class="nav-item" data-page="report" type="button">
+            <span class="nav-index">07</span>
+            <span>经营月报</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-note">
+          <strong>数据说明</strong>
+          <span>页面使用模拟客户经营数据与静态快照，仅用于分析原型和交互逻辑展示。</span>
+        </div>
+
+        <nav class="site-links" aria-label="作品集导航">
+          <a href="../index.html">&#8592; 主页</a>
+          <a href="../factor.html">多因子</a>
+          <a href="../wealthops_frontend/index.html">财富管理 &#8594;</a>
+        </nav>
+      </aside>
+
+      <button
+        id="sidebar-overlay"
+        class="sidebar-overlay"
+        type="button"
+        aria-label="关闭导航菜单"
+        tabindex="-1"
+      ></button>
+
+      <main class="workspace">
+        <header class="topbar reveal d2">
+          <div class="title-cluster">
+            <button
+              id="menu-toggle"
+              class="menu-toggle"
+              type="button"
+              aria-label="打开导航菜单"
+              aria-controls="sidebar"
+              aria-expanded="false"
+            >
+              <span aria-hidden="true"></span>
+              <span aria-hidden="true"></span>
+              <span aria-hidden="true"></span>
+            </button>
+            <div>
+              <p id="page-kicker" class="eyebrow">Retail Business Intelligence</p>
+              <h1 id="page-title">基金零售经营总览</h1>
+            </div>
+          </div>
+
+          <div class="top-actions" aria-label="全局切片">
+            <label class="control" for="month-select">
+              <span>数据月份</span>
+              <select id="month-select" aria-label="选择数据月份">
+                <option value="">加载中…</option>
+              </select>
+            </label>
+            <label class="control product-control" for="product-select">
+              <span>产品切片</span>
+              <select id="product-select" aria-label="选择产品">
+                <option value="ALL">全部产品</option>
+              </select>
+            </label>
+            <button id="reset-filters" class="button reset-button" type="button">
+              重置
+            </button>
+          </div>
+        </header>
+
+        <section id="context-bar" class="context-bar reveal d3" aria-live="polite">
+          <div class="context-main">
+            <span class="context-label">当前分析上下文</span>
+            <strong id="context-text">正在载入最新经营快照…</strong>
+          </div>
+          <div class="context-meta">
+            <span id="snapshot-badge" class="context-chip">快照加载中</span>
+            <span class="context-chip muted">模拟数据</span>
+          </div>
+        </section>
+
+        <section id="page-root" class="page-root reveal d4" aria-live="polite">
+          <div class="loading-state" role="status">
+            <span class="loading-mark" aria-hidden="true"></span>
+            <span>正在加载经营分析数据…</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="./data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
