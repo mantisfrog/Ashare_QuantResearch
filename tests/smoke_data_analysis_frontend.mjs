@@ -31,6 +31,10 @@ assert.ok(Math.abs(snapshot.direct_app_retention - 11 / 12) < 1e-12, "direct ret
 assert.ok(cssSource.includes("@media (max-width: 820px)"), "mobile breakpoint is missing");
 assert.ok(cssSource.includes("body.menu-open .sidebar"), "mobile sidebar state is missing");
 assert.ok(cssSource.includes(".heatmap-cell.selected"), "heatmap selection styling is missing");
+assert.ok(cssSource.includes("@media (max-width: 520px)"), "single-column mobile filters are missing");
+assert.ok(cssSource.includes(".alert-editor td::before"), "mobile alert cards are missing field labels");
+assert.ok(cssSource.includes("grid-template-columns: 54px repeat(6, minmax(42px, 1fr))"), "compact migration matrix is missing");
+assert.ok(cssSource.includes(".legend-symbol.diamond"), "channel shape legend styling is missing");
 assert.ok(homeSource.includes("Quant Research · Data Analysis"), "home kicker is missing");
 assert.ok(homeSource.includes("毕闻博作品集"), "home title is missing");
 assert.ok(homeSource.includes("./data_analysis/index.html"), "data-analysis entry is missing");
@@ -80,14 +84,15 @@ function element(id = "") {
     appendChild() {},
     remove() {},
     click() {},
+    focus() { this.focused = true; },
   };
 }
 
-function render(page) {
+function render(page, options = {}) {
   const ids = [
     "page-root", "page-title", "page-kicker", "month-select", "product-select",
     "context-text", "snapshot-badge", "reset-filters", "menu-toggle",
-    "sidebar-overlay", "toast",
+    "sidebar", "sidebar-overlay", "toast",
   ];
   const elements = Object.fromEntries(ids.map((id) => [id, element(id)]));
   const productControl = element("product-control");
@@ -124,6 +129,7 @@ function render(page) {
     Blob,
     URL,
     scrollTo() {},
+    innerWidth: options.width || 1280,
     addEventListener(type, handler) { windowListeners[type] = handler; },
   };
   context.window = context;
@@ -135,7 +141,7 @@ function render(page) {
   assert.ok(elements["page-root"].innerHTML.length > 500, `${page} rendered too little content`);
   assert.ok(!elements["page-root"].innerHTML.includes("error-state"), `${page} rendered its error state`);
   assert.ok(elements["page-root"].innerHTML.includes(expected[page]), `${page} is missing its primary content anchor`);
-  return { elements, documentListeners, errors };
+  return { elements, documentListeners, windowListeners, context, errors };
 }
 
 for (const page of Object.keys(expected)) render(page);
@@ -155,6 +161,7 @@ function actionEvent(action, value, extra = {}) {
 const customers = render("customers");
 customers.documentListeners.click(actionEvent("customer-tab", "retention"));
 assert.ok(customers.elements["page-root"].innerHTML.includes("流失前兆三轨回放"), "customer retention tab did not render");
+assert.ok(customers.elements["page-root"].innerHTML.includes("蚂蚁财富（互联网）"), "cohort channel legend is not human-readable");
 
 const products = render("products");
 products.documentListeners.click(actionEvent("product-tab", "benchmark"));
@@ -165,16 +172,44 @@ report.documentListeners.click(actionEvent("report-tab", "facts"));
 assert.ok(report.elements["page-root"].innerHTML.includes("月报事实表"), "report facts tab did not render");
 
 const overview = render("overview");
+assert.ok(overview.elements["page-root"].innerHTML.includes("从多源零售数据到经营增量机会"), "overview capability story is missing");
+assert.ok(overview.elements["page-root"].innerHTML.includes("领导摘要：结论、归因、对象与动作"), "executive brief is missing");
+assert.ok(overview.elements["page-root"].innerHTML.includes("零售全业务场景分析体系"), "scenario capability map is missing");
 overview.documentListeners.change({ target: { id: "product-select", value: "017560.OF", dataset: {}, matches: () => false } });
 assert.ok(overview.elements["page-root"].innerHTML.includes("产品持有流失率"), "overview product scope did not apply");
 assert.ok(overview.elements["page-root"].innerHTML.includes("61.1%"), "overview product churn anchor is missing");
+overview.documentListeners.click(actionEvent("navigate", "products", { view: "benchmark" }));
+assert.ok(overview.elements["page-root"].innerHTML.includes("AMAC 销售机构排名"), "capability-map deep link did not open the requested subview");
 
 const alerts = render("alerts");
 alerts.documentListeners.click(actionEvent("drill-alert", "AL_R1_02"));
 assert.ok(alerts.elements["page-root"].innerHTML.includes("预警窗口的产品贡献"), "alert-to-channel drill did not apply");
 assert.ok(alerts.elements["page-root"].innerHTML.includes("040038.OF"), "drill product contribution anchor is missing");
 
-for (const result of [customers, products, report, overview, alerts]) {
+const channels = render("channels");
+assert.ok(channels.elements["page-root"].innerHTML.includes("aria-label=\"渠道类型图例\""), "channel type legend is missing");
+assert.ok(channels.elements["page-root"].innerHTML.includes("legend-symbol square"), "internet channel square encoding is missing");
+assert.ok(channels.elements["page-root"].innerHTML.includes("legend-symbol diamond"), "direct channel diamond encoding is missing");
+assert.ok(channels.elements["page-root"].innerHTML.includes("金色描边＝当前重点"), "selected-channel legend is missing");
+
+const mobileChannels = render("channels", { width: 390 });
+assert.ok(mobileChannels.elements["page-root"].innerHTML.includes('viewBox="0 0 420'), "mobile charts did not switch to compact geometry");
+assert.equal(mobileChannels.elements.sidebar.attributes["aria-hidden"], "true", "closed mobile sidebar remains exposed to assistive technology");
+assert.equal(mobileChannels.elements.sidebar.inert, true, "closed mobile sidebar remains keyboard-focusable");
+mobileChannels.context.innerWidth = 1024;
+mobileChannels.windowListeners.resize();
+assert.equal(mobileChannels.elements.sidebar.attributes["aria-hidden"], "false", "sidebar accessibility state did not follow the 820px desktop breakpoint");
+assert.equal(mobileChannels.elements.sidebar.inert, false, "desktop sidebar stayed inert after crossing the 820px breakpoint");
+mobileChannels.context.innerWidth = 768;
+mobileChannels.windowListeners.resize();
+assert.equal(mobileChannels.elements.sidebar.attributes["aria-hidden"], "true", "sidebar accessibility state did not return to mobile mode");
+const mobileAlerts = render("alerts", { width: 390 });
+assert.ok(mobileAlerts.elements["page-root"].innerHTML.includes('data-label="Owner"'), "mobile alert editor labels are missing");
+const marketing = render("marketing");
+assert.ok(marketing.elements["page-root"].innerHTML.includes("条形颜色区分活动渠道类型"), "campaign channel encoding note is missing");
+assert.ok(marketing.elements["page-root"].innerHTML.includes("补贴活动"), "campaign subsidy status is missing");
+
+for (const result of [customers, products, report, overview, alerts, channels, mobileChannels, mobileAlerts, marketing]) {
   assert.deepEqual(result.errors, [], `interaction logged a render error: ${result.errors.join(" | ")}`);
 }
 

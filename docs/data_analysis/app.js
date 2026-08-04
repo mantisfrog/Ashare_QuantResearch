@@ -8,7 +8,7 @@
   }
 
   const PAGE_CONFIG = {
-    overview: { title: "经营总览", eyebrow: "Executive overview", productScope: true },
+    overview: { title: "零售业务数据洞察与分析", eyebrow: "Executive overview", productScope: true },
     alerts: { title: "预警与行动", eyebrow: "Signals & actions", productScope: false },
     channels: { title: "渠道经营", eyebrow: "Channel operations", productScope: true },
     customers: { title: "客户与留存", eyebrow: "Customer retention", productScope: false },
@@ -27,7 +27,17 @@
   };
 
   const COLORS = ["#24523f", "#a5822f", "#2563a8", "#6952a8", "#a86405", "#22714f"];
+  const CHANNEL_STYLES = {
+    "银行": { color: "#24523f", shape: "circle" },
+    "互联网": { color: "#2563a8", shape: "square" },
+    "直销": { color: "#a86405", shape: "diamond" },
+    "混合": { color: "#6952a8", shape: "triangle" },
+  };
   const productMap = new Map(D.products.map((row) => [row.fund_code, row]));
+  const channelMap = new Map(D.channels.map((row) => [row.channel_code, {
+    name: row.channel_name,
+    type: row.channel_type_cn,
+  }]));
   const validPages = Object.keys(PAGE_CONFIG);
   const initialHash = location.hash.replace("#", "");
   const latestMonth = D.months[D.months.length - 1];
@@ -112,10 +122,10 @@
   }
 
   function shortNumber(value) {
-    const v = Math.abs(num(value));
-    if (v >= 1e8) return `${(v / 1e8).toFixed(1)}亿`;
-    if (v >= 1e4) return `${(v / 1e4).toFixed(v >= 1e6 ? 0 : 1)}万`;
-    return Math.round(v).toLocaleString("zh-CN");
+    const n = num(value), v = Math.abs(n), sign = n < 0 ? "−" : "";
+    if (v >= 1e8) return `${sign}${(v / 1e8).toFixed(1)}亿`;
+    if (v >= 1e4) return `${sign}${(v / 1e4).toFixed(v >= 1e6 ? 0 : 1)}万`;
+    return `${sign}${Math.round(v).toLocaleString("zh-CN")}`;
   }
 
   function monthOf(value) {
@@ -126,6 +136,46 @@
     if (code === "ALL") return "全部产品";
     const product = productMap.get(code);
     return product ? `${product.fund_name} · ${code}` : code;
+  }
+
+  function channelStyle(type) {
+    return CHANNEL_STYLES[type] || CHANNEL_STYLES["混合"];
+  }
+
+  function channelInfo(code) {
+    return channelMap.get(code) || { name: code, type: "混合" };
+  }
+
+  function campaignChannelType(row) {
+    const types = [...new Set(String(row.channel_code || "").split("+").filter(Boolean).map((code) => channelInfo(code).type))];
+    return types.length === 1 ? types[0] : "混合";
+  }
+
+  function channelBadge(type) {
+    const style = channelStyle(type);
+    return `<span class="channel-badge"><i class="legend-symbol ${esc(style.shape)}" style="--legend-color:${esc(style.color)}"></i>${esc(type)}</span>`;
+  }
+
+  function channelLegend(types = ["银行", "互联网", "直销"], includeSelected = false) {
+    const unique = [...new Set(types)].filter(Boolean);
+    return `<div class="chart-legend channel-type-legend" role="list" aria-label="渠道类型图例">
+      <span class="legend-title" role="listitem">渠道类型：</span>
+      ${unique.map((type) => {
+        const style = channelStyle(type);
+        return `<span role="listitem"><i class="legend-symbol ${esc(style.shape)}" style="--legend-color:${esc(style.color)}" aria-hidden="true"></i>${esc(type)}</span>`;
+      }).join("")}
+      ${includeSelected ? '<span role="listitem"><i class="legend-symbol selected-ring" aria-hidden="true"></i>金色描边＝当前重点</span><span role="listitem"><i class="legend-symbol bubble-size" aria-hidden="true"></i>点大小＝月末保有</span><span role="listitem"><i class="legend-symbol median-line" aria-hidden="true"></i>虚线＝样本中位数</span>' : ""}
+    </div>`;
+  }
+
+  function chartLegend(items, label = "图例", extraClass = "") {
+    return `<div class="chart-legend ${esc(extraClass)}" role="list" aria-label="${esc(label)}">${items.map((item) => `<span role="listitem"><i class="legend-symbol ${esc(item.kind || "swatch")}" style="--legend-color:${esc(item.color || "#24523f")}" aria-hidden="true"></i>${esc(item.label)}</span>`).join("")}</div>`;
+  }
+
+  function cohortLabel(value) {
+    const [month, code] = String(value || "").split(" × ");
+    const info = channelInfo(code);
+    return `${month} · ${info.name}（${info.type}）`;
   }
 
   function kpi(scope = currentScope(), month = state.month) {
@@ -205,11 +255,11 @@
 
   function table(rows, columns, className = "") {
     if (!rows.length) return empty("当前筛选没有可展示的数据。");
-    return `<div class="table-wrap ${esc(className)}"><table><thead><tr>${columns.map((col) => `<th>${esc(col.label)}</th>`).join("")}</tr></thead>
+    return `<div class="table-wrap ${esc(className)}" tabindex="0" role="region" aria-label="数据表，可横向滚动"><table><thead><tr>${columns.map((col) => `<th>${esc(col.label)}</th>`).join("")}</tr></thead>
       <tbody>${rows.map((row) => `<tr>${columns.map((col) => {
         const value = typeof col.value === "function" ? col.value(row) : row[col.key];
         const rendered = col.html ? col.html(value, row) : esc(col.format ? col.format(value, row) : value == null ? "—" : value);
-        return `<td${col.className ? ` class="${esc(col.className)}"` : ""}>${rendered}</td>`;
+        return `<td data-label="${esc(col.label)}"${col.className ? ` class="${esc(col.className)}"` : ""}>${rendered}</td>`;
       }).join("")}</tr>`).join("")}</tbody></table></div>`;
   }
 
@@ -218,11 +268,16 @@
   }
 
   function tabs(active, items, action) {
-    return `<div class="tabs" role="tablist">${items.map((item) => `<button type="button" class="tab-button${active === item.id ? " active" : ""}" data-action="${esc(action)}" data-value="${esc(item.id)}">${esc(item.label)}</button>`).join("")}</div>`;
+    return `<div class="tabs" role="tablist">${items.map((item) => `<button type="button" role="tab" aria-selected="${active === item.id ? "true" : "false"}" class="tab-button${active === item.id ? " active" : ""}" data-action="${esc(action)}" data-value="${esc(item.id)}">${esc(item.label)}</button>`).join("")}</div>`;
   }
 
   function segmented(active, items, action) {
-    return `<div class="segmented">${items.map((item) => `<button type="button" class="${active === item.id ? "active" : ""}" data-action="${esc(action)}" data-value="${esc(item.id)}">${esc(item.label)}</button>`).join("")}</div>`;
+    return `<div class="segmented" role="group">${items.map((item) => `<button type="button" aria-pressed="${active === item.id ? "true" : "false"}" class="${active === item.id ? "active" : ""}" data-action="${esc(action)}" data-value="${esc(item.id)}">${esc(item.label)}</button>`).join("")}</div>`;
+  }
+
+  function isCompactViewport() {
+    const width = Number(window.innerWidth);
+    return Number.isFinite(width) && width > 0 && width <= 620;
   }
 
   function svgFrame(width, height, content, label) {
@@ -231,7 +286,8 @@
 
   function lineChart(rows, series, labelKey, options = {}) {
     if (!rows.length) return empty("暂无趋势数据。");
-    const W = 820, H = options.height || 300, L = 58, R = 18, T = 24, B = 44;
+    const compact = isCompactViewport();
+    const W = compact ? 420 : 820, H = options.height || (compact ? 260 : 300), L = compact ? 48 : 58, R = compact ? 12 : 18, T = compact ? 20 : 24, B = compact ? 40 : 44;
     const pw = W - L - R, ph = H - T - B;
     const values = rows.flatMap((row) => series.map((s) => Number(row[s.key])).filter(Number.isFinite));
     let min = options.zeroBase ? Math.min(0, ...values) : Math.min(...values);
@@ -247,7 +303,7 @@
       const py = y(value);
       out += `<line class="chart-grid" x1="${L}" y1="${py}" x2="${W - R}" y2="${py}"/><text class="chart-axis" x="${L - 8}" y="${py + 4}" text-anchor="end">${esc(options.axisFormat ? options.axisFormat(value) : shortNumber(value))}</text>`;
     }
-    const labelStep = Math.max(1, Math.ceil(rows.length / 6));
+    const labelStep = Math.max(1, Math.ceil(rows.length / (compact ? 4 : 6)));
     rows.forEach((row, index) => {
       if (index % labelStep === 0 || index === rows.length - 1) out += `<text class="chart-axis" x="${x(index)}" y="${H - 14}" text-anchor="middle">${esc(String(row[labelKey]).slice(2))}</text>`;
     });
@@ -261,13 +317,14 @@
         out += `<circle class="chart-point" cx="${x(index)}" cy="${y(raw)}" r="3.2" fill="${color}"><title>${esc(tip)}</title></circle>`;
       });
     });
-    const legend = series.map((s, i) => `<span><i style="background:${s.color || COLORS[i % COLORS.length]}"></i>${esc(s.label)}</span>`).join("");
-    return svgFrame(W, H, out, options.label || "趋势图") + `<div class="chart-legend">${legend}</div>`;
+    const legend = series.map((s, i) => ({ label: s.label, color: s.color || COLORS[i % COLORS.length], kind: "line" }));
+    return svgFrame(W, H, out, options.label || "趋势图") + chartLegend(legend, `${options.label || "趋势图"}图例`);
   }
 
   function barChart(rows, valueKey, labelKey, options = {}) {
     if (!rows.length) return empty("暂无分布数据。");
-    const W = 820, H = options.height || 300, L = 54, R = 16, T = 20, B = 56;
+    const compact = isCompactViewport();
+    const W = compact ? 420 : 820, H = options.height || (compact ? 260 : 300), L = compact ? 46 : 54, R = compact ? 12 : 16, T = 20, B = compact ? 50 : 56;
     const pw = W - L - R, ph = H - T - B;
     const values = rows.map((row) => num(row[valueKey]));
     const min = Math.min(0, ...values), max = Math.max(0, ...values, 1);
@@ -276,11 +333,13 @@
     let out = `<line class="chart-zero" x1="${L}" y1="${zeroY}" x2="${W - R}" y2="${zeroY}"/>`;
     rows.forEach((row, index) => {
       const value = num(row[valueKey]), py = y(value), top = Math.min(py, zeroY), height = Math.max(1, Math.abs(zeroY - py));
-      const color = options.color ? options.color(row, value) : value < 0 ? "#b42318" : "#24523f";
+      const color = options.color ? options.color(row, value) : value < 0 ? "#b42318" : "#22714f";
       out += `<rect class="chart-bar" x="${L + index * band + (band - bw) / 2}" y="${top}" width="${bw}" height="${height}" rx="2" fill="${color}"><title>${esc(`${row[labelKey]} · ${options.valueFormat ? options.valueFormat(value) : value}`)}</title></rect>`;
-      if (rows.length <= 14 || index % Math.ceil(rows.length / 7) === 0) out += `<text class="chart-axis" x="${L + (index + 0.5) * band}" y="${H - 16}" text-anchor="middle">${esc(String(row[labelKey]).slice(options.trimLabel ? options.trimLabel : 0))}</text>`;
+      const labelEvery = Math.max(1, Math.ceil(rows.length / (compact ? 4 : 7)));
+      if ((!compact && rows.length <= 14) || index % labelEvery === 0 || index === rows.length - 1) out += `<text class="chart-axis" x="${L + (index + 0.5) * band}" y="${H - 16}" text-anchor="middle">${esc(String(row[labelKey]).slice(options.trimLabel ? options.trimLabel : 0))}</text>`;
     });
-    return svgFrame(W, H, out, options.label || "柱状图");
+    const legend = options.legend?.length ? chartLegend(options.legend, `${options.label || "柱状图"}图例`) : "";
+    return svgFrame(W, H, out, options.label || "柱状图") + legend;
   }
 
   function horizontalBars(rows, valueKey, labelKey, options = {}) {
@@ -294,9 +353,27 @@
     }).join("")}</div>`;
   }
 
+  function scatterMark(shape, cx, cy, radius, className, color) {
+    const common = `class="${esc(className)}" fill="${esc(color)}" aria-hidden="true"`;
+    if (shape === "square") {
+      const side = radius * 1.68;
+      return `<rect ${common} x="${cx - side / 2}" y="${cy - side / 2}" width="${side}" height="${side}" rx="2"/>`;
+    }
+    if (shape === "diamond") {
+      const rr = radius * 1.2;
+      return `<path ${common} d="M ${cx} ${cy - rr} L ${cx + rr} ${cy} L ${cx} ${cy + rr} L ${cx - rr} ${cy} Z"/>`;
+    }
+    if (shape === "triangle") {
+      const rr = radius * 1.3;
+      return `<path ${common} d="M ${cx} ${cy - rr} L ${cx + rr} ${cy + rr * 0.78} L ${cx - rr} ${cy + rr * 0.78} Z"/>`;
+    }
+    return `<circle ${common} cx="${cx}" cy="${cy}" r="${radius}"/>`;
+  }
+
   function scatterChart(rows, config) {
     if (!rows.length) return empty("暂无可比较样本。");
-    const W = 820, H = config.height || 330, L = 64, R = 24, T = 24, B = 50;
+    const compact = isCompactViewport();
+    const W = compact ? 420 : 820, H = config.height || (compact ? 290 : 330), L = compact ? 52 : 64, R = compact ? 14 : 24, T = 24, B = compact ? 46 : 50;
     const pw = W - L - R, ph = H - T - B;
     const xs = rows.map((row) => num(row[config.xKey])), ys = rows.map((row) => num(row[config.yKey]));
     let xmin = Math.min(...xs), xmax = Math.max(...xs), ymin = Math.min(...ys), ymax = Math.max(...ys);
@@ -321,8 +398,13 @@
       const color = config.color ? config.color(row, index) : COLORS[index % COLORS.length];
       const selected = config.selected && config.selected(row);
       const tip = config.tip ? config.tip(row) : row[config.labelKey];
-      out += `<circle class="chart-bubble${selected ? " selected" : ""}" cx="${x(num(row[config.xKey]))}" cy="${y(num(row[config.yKey]))}" r="${radius}" fill="${color}"><title>${esc(tip)}</title></circle>`;
-      if (selected) out += `<text class="chart-label" x="${x(num(row[config.xKey])) + radius + 4}" y="${y(num(row[config.yKey])) + 4}">${esc(row[config.labelKey])}</text>`;
+      const shape = config.shape ? config.shape(row, index) : "circle";
+      const cx = x(num(row[config.xKey])), cy = y(num(row[config.yKey]));
+      out += `<g class="chart-symbol" tabindex="0" role="img" aria-label="${esc(tip)}"><title>${esc(tip)}</title>${scatterMark(shape, cx, cy, radius, `chart-bubble${selected ? " selected" : ""}`, color)}</g>`;
+      if (selected || config.labelAll) {
+        const placeLeft = cx > W - R - 92;
+        out += `<text class="chart-label${selected ? " selected" : ""}" x="${placeLeft ? cx - radius - 5 : cx + radius + 5}" y="${cy + 4}" text-anchor="${placeLeft ? "end" : "start"}">${esc(row[config.labelKey])}</text>`;
+      }
     });
     out += `<text class="chart-axis-title" x="${L + pw / 2}" y="${H - 3}" text-anchor="middle">${esc(config.xLabel)}</text><text class="chart-axis-title" x="14" y="${T + ph / 2}" transform="rotate(-90 14 ${T + ph / 2})" text-anchor="middle">${esc(config.yLabel)}</text>`;
     return svgFrame(W, H, out, config.label || "散点图");
@@ -338,7 +420,8 @@
       { label: "净值变动", start: opening + num(values.net), end: closing, value: nav, color: nav >= 0 ? "#22714f" : "#a86405" },
       { label: "期末", start: 0, end: closing, value: closing, color: "#a5822f" },
     ];
-    const W = 820, H = 330, L = 42, R = 16, T = 28, B = 62, pw = W - L - R, ph = H - T - B;
+    const compact = isCompactViewport();
+    const W = compact ? 420 : 820, H = compact ? 280 : 330, L = compact ? 28 : 42, R = compact ? 10 : 16, T = compact ? 24 : 28, B = compact ? 52 : 62, pw = W - L - R, ph = H - T - B;
     const max = Math.max(...points.flatMap((p) => [p.start, p.end]), 1) * 1.08;
     const y = (v) => T + (max - v) * ph / max;
     const band = pw / points.length, bw = band * 0.55;
@@ -382,6 +465,88 @@
     });
   }
 
+  function capabilityHero() {
+    const channelCount = new Set(D.channels.map((row) => row.channel_code)).size;
+    return `<section class="capability-hero" aria-labelledby="capability-title">
+      <header class="capability-intro">
+        <span class="section-kicker">Retail data analytics portfolio</span>
+        <h2 id="capability-title">从多源零售数据到经营增量机会</h2>
+        <p>整合渠道代销、线上直销、客户持仓交易、净值规模、营销活动与外部排名数据，完成清洗映射、跨表整合与指标建模，统一产品、渠道、客户与时间口径；围绕渠道效能、客户分层与流失、产品销售与竞品、营销效果，形成“监控—诊断—名单—行动—复盘”的经营分析闭环。</p>
+        <div class="capability-tags" aria-label="岗位能力覆盖">
+          <span>多源数据治理</span><span>零售经营监控</span><span>专题诊断</span><span>竞品对标</span><span>客户留存</span><span>决策报告</span>
+        </div>
+      </header>
+      <div class="capability-flow" aria-label="分析能力链">
+        <article>
+          <span>01 · Data foundation</span>
+          <strong>${integer(D.months.length)}个月 × ${integer(D.products.length)}只产品 × ${integer(channelCount)}个渠道</strong>
+          <p>只读整合 DuckDB 与 PBI 快照，处理主数据映射、跨表粒度、缺失值和口径核验，并保留事实来源与边界。</p>
+        </article>
+        <article>
+          <span>02 · Business diagnosis</span>
+          <strong>六类零售经营场景</strong>
+          <p>从总量监控下钻到渠道、客户、产品、竞品、活动与留存，区分经营变化和市场影响。</p>
+        </article>
+        <article>
+          <span>03 · Decision delivery</span>
+          <strong>${integer(D.alert_rules.length)}条规则 × 预警工作台 × 管理月报</strong>
+          <p>把异常聚合为对象级事件，连接责任人、处置备注、客户名单、验证指标和可下载事实表。</p>
+        </article>
+      </div>
+    </section>`;
+  }
+
+  function leadershipBrief(values, channels, judgment) {
+    const weakest = [...channels].sort((a, b) => num(a.net_inflow) - num(b.net_inflow))[0];
+    const impactBase = Math.abs(num(values.net)) + Math.abs(num(values.nav));
+    const businessShare = impactBase ? Math.abs(num(values.net)) / impactBase : 0;
+    const what = `${currentScope() === "ALL" ? "月末" : "产品"} AUM ${money(values.aum)}，环比 ${pct(values.aum_mom, 1, true)}；经营净申购 ${money(values.net, true)}。`;
+    const why = values.net < 0 && values.nav < 0
+      ? `经营净流出与净值下跌共同拖累，按绝对影响估算，经营因素约占 ${pct(businessShare, 0)}。`
+      : judgment.replace(/<[^>]+>/g, "");
+    const where = weakest
+      ? `${weakest.channel_name}当月净申购最低（${money(weakest.net_inflow, true)}），月流失率 ${pct(weakest["月流失率"])}。`
+      : "当前筛选没有渠道层结果，先检查映射与快照完整性。";
+    const act = weakest
+      ? `先拆解${weakest.channel_name}的产品贡献，再按客户层级生成跟进名单。`
+      : "补齐渠道映射后再开展产品与客户归因。";
+    return `<section class="management-brief" aria-labelledby="management-brief-title">
+      <header>
+        <div><span class="section-kicker">Executive brief · ${esc(state.month)}</span><h2 id="management-brief-title">领导摘要：结论、归因、对象与动作</h2></div>
+        <p>首屏固定回答四个管理问题；下方各工作区保留趋势、对比、名单与口径证据。</p>
+      </header>
+      <div class="brief-grid">
+        <article><span>What · 发生什么</span><strong>${esc(what)}</strong><small>验证：AUM、净申购、环比</small></article>
+        <article><span>Why · 为什么</span><strong>${esc(why)}</strong><small>方法：申赎与净值影响拆分</small></article>
+        <article><span>Where · 影响哪里</span><strong>${esc(where)}</strong><small>定位：渠道 → 产品 → 客户层级</small></article>
+        <article class="action"><span>Act · 下一步</span><strong>${esc(act)}</strong><small>协同：渠道经营 × 产品 × 客户运营；复盘：次月净保有、流失率、90日留存</small></article>
+      </div>
+    </section>`;
+  }
+
+  function scenarioCapabilityMap() {
+    const scenarios = [
+      { page: "channels", title: "渠道效能", data: "AUM、净申购、户均、流失、尾随成本", insight: "识别规模质量、渠道依赖与资源效率", output: "渠道拓展与维护优先级" },
+      { page: "customers", view: "migration", title: "客户分层画像", data: "价值层级、迁移路径、主渠道、交易产品", insight: "识别升级机会与降级原因", output: "分层经营与客户名单" },
+      { page: "products", view: "operations", title: "产品销售复盘", data: "净值、周度净申购、规模、风险收益", insight: "区分行情驱动与真实销售动能", output: "产品推广与货架动作" },
+      { page: "products", view: "benchmark", title: "竞品对标", data: "同类规模、风险收益、AMAC销售机构排名", insight: "判断产品位置与渠道覆盖差距", output: "竞品专题与渠道策略" },
+      { page: "marketing", title: "营销活动效果", data: "曝光链路、转化、基线、30日赎回、90日留存", insight: "识别补贴依赖与增长可持续性", output: "活动复盘与预算建议" },
+      { page: "customers", view: "retention", title: "客户留存流失", data: "Cohort、层级迁移、行为前兆、历史流失样本", insight: "定位流失窗口与主要赎回产品", output: "挽留名单与触达时点" },
+    ];
+    return panel("Capability map", "零售全业务场景分析体系", "每个工作区都从关键数据出发，形成可解释洞察并落到经营输出。", `<div class="scenario-grid">${scenarios.map((item) => `<button type="button" class="scenario-card" data-action="navigate" data-value="${esc(item.page)}"${item.view ? ` data-view="${esc(item.view)}"` : ""} aria-label="打开${esc(item.title)}分析">
+      <span>${esc(item.title)}</span><strong>${esc(item.data)}</strong><p>${esc(item.insight)}</p><small>${esc(item.output)} <b aria-hidden="true">→</b></small>
+    </button>`).join("")}</div>`);
+  }
+
+  function productionDataGaps() {
+    return `<details class="panel details-panel production-gaps"><summary>生产化补数与验证计划</summary><div class="gap-grid">
+      <article><strong>渠道目标与成本</strong><p>补充目标值、资源投入、获客成本和净收入，评估达成率与净贡献。</p></article>
+      <article><strong>客户完整画像</strong><p>补充风险偏好、服务触点和授权行为数据，再扩展偏好、LTV与流失概率。</p></article>
+      <article><strong>竞品货架信息</strong><p>补充上架覆盖、费率、曝光与同类产品明细，定位渠道覆盖和转化差距。</p></article>
+      <article><strong>活动增量评估</strong><p>补充完整成本、对照组与留存后AUM，计算增量净AUM和留存客户成本。</p></article>
+    </div></details>`;
+  }
+
   function renderOverview() {
     const scope = currentScope(), scoped = scope !== "ALL", values = kpi(scope);
     const productName = scoped ? productMap.get(scope)?.fund_name : null;
@@ -415,6 +580,8 @@
     const channels = channelRows(scope).sort((a, b) => num(b.aum_end) - num(a.aum_end));
     const worst = [...channels].sort((a, b) => num(a.net_inflow) - num(b.net_inflow))[0];
     return `
+      ${capabilityHero()}
+      ${leadershipBrief(values, channels, judgment)}
       ${metricGrid(metrics)}
       <div class="content-grid split-main">
         ${panel("Why", `${productName ? `${productName} · ` : ""}AUM经营归因瀑布`, "首尾是绝对总量，中间仅累计申购、赎回和净值变动。", waterfallChart(values))}
@@ -423,7 +590,7 @@
       </div>
       ${panel("Trend", "AUM 与净申购的同轴时间对照", "上下两个面板共享月份：上看结果，下看经营流量。", `<div class="chart-stack">${lineChart(trend, [{ key: "aum", label: "月末AUM", color: "#24523f", format: money }], "month", { axisFormat: shortNumber, label: "AUM趋势" })}${barChart(trend, "net", "month", { valueFormat: (v) => money(v, true), trimLabel: 2, label: "净申购趋势" })}</div>`)}
       ${channels.length ? `${panel("Where", scoped ? "产品渠道分布与当月贡献" : "渠道结构与当月贡献", scoped ? "所选产品在各渠道的保有、净申购和持有流失率。" : "按所选月末 AUM 排序，同时保留净申购、户均和流失率。", table(channels, [
-        { key: "channel_name", label: "渠道" }, { key: "channel_type_cn", label: "类型" },
+        { key: "channel_name", label: "渠道" }, { key: "channel_type_cn", label: "类型", html: (v) => channelBadge(v) },
         { key: "aum_share", label: scoped ? "产品份额" : "AUM份额", format: pct },
         { key: "net_inflow", label: "当月净申购", format: (v) => money(v, true), className: "numeric" },
         { key: "客户数", label: "持仓客户", format: integer, className: "numeric" },
@@ -435,6 +602,8 @@
         <article class="action-card"><span>客户动作</span><strong>${values.new_customers ? "验证新增质量" : "先核查数据完整性"}</strong><p>${values.new_customers ? "继续观察次月复购和90日持有，避免只看首购。" : "新增首购为 0，再决定是否启动拉新专项。"}</p></article>
         <article class="action-card"><span>风险动作</span><strong>按对象合并事件</strong><p>红色日志涉及 ${integer(values.red_alert_entities)} 个对象，避免逐日命中造成工单膨胀。</p></article>
       </div>` : ""}
+      ${scenarioCapabilityMap()}
+      ${productionDataGaps()}
       ${dataNote(`数据源：持仓快照、日度AUM归因、交易与预警日志。自有产品年化管理费粗估为 ${money(values.fee_annual)}，仅用于经营估算，不等同财务确认收入。`)}`;
   }
 
@@ -475,12 +644,12 @@
       { key: "entity_name", label: "对象" }, { key: "records", label: "命中记录", format: integer },
       { key: "earliest", label: "开始", format: (v) => String(v).slice(0, 10) }, { key: "latest", label: "最近", format: (v) => String(v).slice(0, 10) },
     ]);
-    const editor = rows.length ? `<div class="table-wrap alert-editor"><table><thead><tr><th>ID / 规则</th><th>对象与事实</th><th>状态</th><th>Owner</th><th>处置备注</th></tr></thead><tbody>${rows.map((row) => `<tr>
-      <td><strong>${esc(row.alert_id)}</strong><span>${esc(row.rule_id)} · ${esc(row.level)} · ${esc(String(row.window_end).slice(0, 10))}</span></td>
-      <td><strong>${esc(row.entity_name)}</strong><span>${esc(row.summary_text)}</span></td>
-      <td><select data-alert-id="${esc(row.alert_id)}" data-alert-field="status"><option${row.status === "未处理" ? " selected" : ""}>未处理</option><option${row.status === "跟进中" ? " selected" : ""}>跟进中</option><option${row.status === "已闭环" ? " selected" : ""}>已闭环</option></select></td>
-      <td><input data-alert-id="${esc(row.alert_id)}" data-alert-field="owner" value="${esc(row.owner)}" placeholder="负责人"></td>
-      <td><input data-alert-id="${esc(row.alert_id)}" data-alert-field="note" value="${esc(row.note)}" placeholder="处置备注"></td>
+    const editor = rows.length ? `<div class="table-wrap alert-editor" tabindex="0" role="region" aria-label="预警处置工作台"><table><thead><tr><th>ID / 规则</th><th>对象与事实</th><th>状态</th><th>Owner</th><th>处置备注</th></tr></thead><tbody>${rows.map((row) => `<tr>
+      <td data-label="ID / 规则"><strong>${esc(row.alert_id)}</strong><span>${esc(row.rule_id)} · ${esc(row.level)} · ${esc(String(row.window_end).slice(0, 10))}</span></td>
+      <td data-label="对象与事实"><strong>${esc(row.entity_name)}</strong><span>${esc(row.summary_text)}</span></td>
+      <td data-label="状态"><select aria-label="${esc(`${row.alert_id}处置状态`)}" data-alert-id="${esc(row.alert_id)}" data-alert-field="status"><option${row.status === "未处理" ? " selected" : ""}>未处理</option><option${row.status === "跟进中" ? " selected" : ""}>跟进中</option><option${row.status === "已闭环" ? " selected" : ""}>已闭环</option></select></td>
+      <td data-label="Owner"><input aria-label="${esc(`${row.alert_id}负责人`)}" data-alert-id="${esc(row.alert_id)}" data-alert-field="owner" value="${esc(row.owner)}" placeholder="负责人"></td>
+      <td data-label="处置备注"><input aria-label="${esc(`${row.alert_id}处置备注`)}" data-alert-id="${esc(row.alert_id)}" data-alert-field="note" value="${esc(row.note)}" placeholder="处置备注"></td>
     </tr>`).join("")}</tbody></table></div><div class="panel-actions"><button type="button" class="button primary" data-action="save-alerts">保存处置状态</button><span>演示状态仅保存在当前浏览器，不修改原始日志。</span></div>` : empty("当前筛选没有命中记录。");
     const drill = selected ? `<div class="drill-card"><div><span class="level-badge ${selected.level === "红" ? "red" : "yellow"}">${esc(selected.level)}</span><strong>${esc(selected.rule_id)} · ${esc(selected.entity_name)}</strong><p>${esc(selected.summary_text)}</p><small>阈值：${esc(selected.threshold_desc)} · 窗口：${esc(String(selected.window_start).slice(0, 10))} 至 ${esc(String(selected.window_end).slice(0, 10))}</small></div>${TARGET_PAGE[selected.target_page] ? `<button type="button" class="button primary" data-action="drill-alert" data-value="${esc(selected.alert_id)}">下钻到「${esc(PAGE_CONFIG[TARGET_PAGE[selected.target_page]].title)}」</button>` : ""}</div>` : empty("暂无可下钻记录。");
     return `${filters}${metricGrid([
@@ -517,6 +686,7 @@
     if (num(selected.net_3m) < 0) messages.push("近3月净流出，资源考核应从销量切换到净保有与留存");
     if (!messages.length) messages.push("当前规模与质量没有明显异常，维持监控并用客户留存验证增长质量");
     const contribution = state.drill?.entity_type === "渠道" && state.drill.entity_id === state.selectedChannel ? D.channel_alert_flows[state.drill.alert_id] || [] : [];
+    const contributionRanked = [...contribution].sort((a, b) => num(a.net_inflow) - num(b.net_inflow));
     const controls = `<div class="filter-panel compact"><label class="control"><span>重点渠道</span><select data-control="selected-channel">${rows.map((row) => `<option value="${esc(row.channel_code)}"${row.channel_code === state.selectedChannel ? " selected" : ""}>${esc(row.channel_name)} · ${esc(row.channel_code)}</option>`).join("")}</select></label></div>`;
     return `${drillBanner("渠道")}${controls}${metricGrid([
       { label: scoped ? "渠道产品 AUM" : "渠道 AUM", value: money(selected.aum_end), delta: `份额 ${pct(selected.aum_share)}` },
@@ -525,20 +695,24 @@
       { label: scoped ? "产品持有流失率" : "月流失率", value: pct(selected["月流失率"]) },
       { label: "年化尾随成本粗估", value: money(annualTrail), delta: `费率 ${integer(selected["尾随佣金_bps"])} bps` },
     ])}
-    ${contribution.length ? panel("Drill", "预警窗口的产品贡献", "这里真正应用了预警中的渠道与日期筛选，按产品拆解净申购。", `${barChart([...contribution].sort((a, b) => num(a.net_inflow) - num(b.net_inflow)), "net_inflow", "product_code", { valueFormat: (v) => money(v, true), label: "预警窗口产品贡献" })}${insight(`窗口内流出贡献最大的产品是 <strong>${esc(contribution[0].fund_name)}（${esc(contribution[0].product_code)}）</strong>，净申购 ${esc(money(contribution[0].net_inflow, true))}。`, num(contribution[0].net_inflow) < 0 ? "risk" : "normal")}`) : ""}
-    ${panel("Portfolio", `${scoped ? `${productMap.get(scope)?.fund_name} · ` : ""}渠道价值地图`, "中位线只用于分区导航；点大小为渠道保有。", scatterChart(rows, {
+    ${contributionRanked.length ? panel("Drill", "预警窗口的产品贡献", "这里真正应用了预警中的渠道与日期筛选，按产品拆解净申购。", `${barChart(contributionRanked, "net_inflow", "product_code", { valueFormat: (v) => money(v, true), label: "预警窗口产品贡献", legend: [{ label: "净流入", color: "#22714f", kind: "bar" }, { label: "净流出", color: "#b42318", kind: "bar" }] })}${insight(`窗口内流出贡献最大的产品是 <strong>${esc(contributionRanked[0].fund_name)}（${esc(contributionRanked[0].product_code)}）</strong>，净申购 ${esc(money(contributionRanked[0].net_inflow, true))}。`, num(contributionRanked[0].net_inflow) < 0 ? "risk" : "normal")}`) : ""}
+    ${panel("Portfolio", `${scoped ? `${productMap.get(scope)?.fund_name} · ` : ""}渠道价值地图`, "颜色与形状区分渠道类型；金色描边为当前重点，点大小为渠道保有，虚线仅用于分区导航。", `${channelLegend(rows.map((row) => row.channel_type_cn), true)}${scatterChart(rows, {
       xKey: "net_3m", yKey: "户均_aum", rKey: "aum_end", labelKey: "channel_name", xLabel: "近3月净申购", yLabel: scoped ? "户均产品保有" : "户均AUM",
       xFormat: (v) => shortNumber(v), yFormat: (v) => shortNumber(v), xMid: median(rows.map((r) => num(r.net_3m))), yMid: medAvg,
-      selected: (row) => row.channel_code === state.selectedChannel, color: (row) => row.channel_code === state.selectedChannel ? "#a5822f" : "#24523f",
-      tip: (row) => `${row.channel_name} · AUM ${money(row.aum_end)} · 近3月 ${money(row.net_3m, true)} · 流失 ${pct(row["月流失率"])}`,
-    }))}
+      selected: (row) => row.channel_code === state.selectedChannel,
+      color: (row) => channelStyle(row.channel_type_cn).color,
+      shape: (row) => channelStyle(row.channel_type_cn).shape,
+      labelAll: true,
+      tip: (row) => `${row.channel_name} · ${row.channel_type_cn} · AUM ${money(row.aum_end)} · 近3月 ${money(row.net_3m, true)} · 流失 ${pct(row["月流失率"])}`,
+      label: "渠道价值地图：横轴近3月净申购，纵轴户均AUM，点大小为渠道保有，颜色与形状为渠道类型",
+    })}`)}
     <div class="content-grid two-col">
-      ${panel("Trend", `${selected.channel_name}：AUM与净申购`, "共享月份的上下分面，比双轴叠图更容易判断先后关系。", `<div class="chart-stack">${lineChart(history, [{ key: "aum_end", label: "AUM", color: "#24523f", format: money }], "month", { axisFormat: shortNumber, label: "渠道AUM趋势" })}${barChart(history, "net_inflow", "month", { valueFormat: (v) => money(v, true), trimLabel: 2, label: "渠道净申购趋势" })}</div>`)}
+      ${panel("Trend", `${selected.channel_name}：AUM与净申购`, "共享月份的上下分面，比双轴叠图更容易判断先后关系。", `<div class="chart-stack">${lineChart(history, [{ key: "aum_end", label: "AUM", color: "#24523f", format: money }], "month", { axisFormat: shortNumber, label: "渠道AUM趋势" })}${barChart(history, "net_inflow", "month", { valueFormat: (v) => money(v, true), trimLabel: 2, label: "渠道净申购趋势", legend: [{ label: "净流入", color: "#22714f", kind: "bar" }, { label: "净流出", color: "#b42318", kind: "bar" }] })}</div>`)}
       ${panel("Mix", scoped ? "产品持有人公司层级" : "渠道客户层级结构", "层级按客户总AUM计算；同一客户可在多个渠道分别计数。", tierStackedBars(mixRows))}
     </div>
     ${insight(`<strong>建议：</strong>${messages.map(esc).join("；")}。`, num(selected["月流失率"]) > medChurn ? "warn" : "normal")}
     <details class="panel details-panel"><summary>查看全渠道明细</summary>${table(rows.sort((a, b) => num(b.aum_end) - num(a.aum_end)), [
-      { key: "channel_name", label: "渠道" }, { key: "channel_type_cn", label: "类型" }, { key: "aum_share", label: "AUM份额", format: pct },
+      { key: "channel_name", label: "渠道" }, { key: "channel_type_cn", label: "类型", html: (v) => channelBadge(v) }, { key: "aum_share", label: "AUM份额", format: pct },
       { key: "net_inflow", label: "净申购", format: (v) => money(v, true) }, { key: "户均_aum", label: "户均AUM", format: money },
       { key: "月流失率", label: "流失率", format: pct }, { key: "尾随佣金_bps", label: "尾随bps", format: integer },
     ])}</details>
@@ -564,10 +738,11 @@
       const name = D.channels.find((row) => row.channel_code === channel)?.channel_name || channel;
       const segments = D.tier_order.slice(1).map((tier, index) => {
         const count = num(values.find((row) => row.tier === tier)?.customers);
-        return `<i style="width:${total ? count / total * 100 : 0}%;background:${COLORS[index % COLORS.length]}" title="${esc(`${D.tier_labels[tier]} · ${integer(count)}人`)}"></i>`;
+        return `<i style="width:${total ? count / total * 100 : 0}%;background:${COLORS[index % COLORS.length]}" title="${esc(`${D.tier_labels[tier]} · ${integer(count)}人`)}" aria-hidden="true"></i>`;
       }).join("");
-      return `<div class="stacked-row"><span>${esc(name)}</span><div>${segments}</div><strong>${integer(total)}</strong></div>`;
-    }).join("")}</div><div class="chart-legend">${D.tier_order.slice(1).map((tier, index) => `<span><i style="background:${COLORS[index % COLORS.length]}"></i>${esc(D.tier_labels[tier])}</span>`).join("")}</div>`;
+      const summary = D.tier_order.slice(1).map((tier) => `${D.tier_labels[tier]}${integer(num(values.find((row) => row.tier === tier)?.customers))}人`).join("，");
+      return `<div class="stacked-row" role="img" aria-label="${esc(`${name}：${summary}`)}"><span>${esc(name)}</span><div>${segments}</div><strong>${integer(total)}</strong></div>`;
+    }).join("")}</div>${chartLegend(D.tier_order.slice(1).map((tier, index) => ({ label: D.tier_labels[tier], color: COLORS[index % COLORS.length], kind: "swatch" })), "客户层级图例")}`;
   }
 
   function maskCustomer(value) {
@@ -601,13 +776,14 @@
         cells.push(`<button type="button" class="heatmap-cell${selected ? " selected" : ""}" data-action="migration-cell" data-prev="${esc(prev)}" data-curr="${esc(curr)}" style="background:${background}" title="${esc(`${prev}→${curr} · ${integer(row.customer_cnt)}人 · 净AUM ${money(row.net_aum_change, true)}`)}"><strong>${integer(row.customer_cnt)}</strong><span>${state.migrationMetric === "净AUM" ? esc(money(row.net_aum_change, true).replace("¥", "")) : "人"}</span></button>`);
       });
     });
-    return `<div class="heatmap-grid" style="grid-template-columns:84px repeat(6,minmax(64px,1fr))">${cells.join("")}</div>`;
+    return `<div class="heatmap-scroll" tabindex="0" role="region" aria-label="客户层级迁移矩阵，可横向滚动"><div class="heatmap-grid">${cells.join("")}</div></div>`;
   }
 
   function cohortChart(rows) {
     if (!rows.length) return empty("至少选择一条 cohort。");
     const groups = [...new Set(rows.map((row) => row.cohort))].map((cohort) => ({ cohort, rows: rows.filter((row) => row.cohort === cohort).sort((a, b) => num(a.months_since) - num(b.months_since)) }));
-    const W = 820, H = 330, L = 56, R = 20, T = 22, B = 48, pw = W - L - R, ph = H - T - B;
+    const compact = isCompactViewport();
+    const W = compact ? 420 : 820, H = compact ? 280 : 330, L = compact ? 46 : 56, R = compact ? 12 : 20, T = 22, B = compact ? 42 : 48, pw = W - L - R, ph = H - T - B;
     const xmax = Math.max(...rows.map((row) => num(row.months_since)), 1);
     const x = (v) => L + v / xmax * pw, y = (v) => T + (1 - v) * ph;
     let out = "";
@@ -615,22 +791,27 @@
       const v = i / 4;
       out += `<line class="chart-grid" x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}"/><text class="chart-axis" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${pct(v, 0)}</text>`;
     }
-    for (let i = 0; i <= xmax; i += Math.max(1, Math.ceil(xmax / 6))) out += `<text class="chart-axis" x="${x(i)}" y="${H - 16}" text-anchor="middle">M${i}</text>`;
+    for (let i = 0; i <= xmax; i += Math.max(1, Math.ceil(xmax / (compact ? 4 : 6)))) out += `<text class="chart-axis" x="${x(i)}" y="${H - 16}" text-anchor="middle">M${i}</text>`;
     groups.forEach((group, index) => {
       const color = COLORS[index % COLORS.length];
       out += `<polyline class="chart-line" points="${group.rows.map((row) => `${x(num(row.months_since))},${y(num(row.retention_rate))}`).join(" ")}" fill="none" stroke="${color}"/>`;
-      group.rows.forEach((row) => { out += `<circle class="chart-point" cx="${x(num(row.months_since))}" cy="${y(num(row.retention_rate))}" r="3" fill="${color}"><title>${esc(`${group.cohort} · M${row.months_since} · ${pct(row.retention_rate)}`)}</title></circle>`; });
+      group.rows.forEach((row) => { out += `<circle class="chart-point" cx="${x(num(row.months_since))}" cy="${y(num(row.retention_rate))}" r="3" fill="${color}"><title>${esc(`${cohortLabel(group.cohort)} · M${row.months_since} · ${pct(row.retention_rate)}`)}</title></circle>`; });
     });
-    return svgFrame(W, H, out, "首购 cohort 持有留存") + `<div class="chart-legend">${groups.map((group, index) => `<span><i style="background:${COLORS[index % COLORS.length]}"></i>${esc(group.cohort)}</span>`).join("")}</div>`;
+    return svgFrame(W, H, out, "首购 cohort 持有留存") + chartLegend(groups.map((group, index) => ({ label: cohortLabel(group.cohort), color: COLORS[index % COLORS.length], kind: "line" })), "首购月份与渠道图例");
   }
 
   function precursorChart(rows) {
     if (!rows.length) return empty("暂无该客户的历史事件。");
     const sorted = [...rows].sort((a, b) => String(a.date).localeCompare(String(b.date)));
     const dates = [...new Set(sorted.map((row) => row.date))];
-    const W = 820, H = 410, L = 58, R = 18, T = 18, B = 44, pw = W - L - R;
+    const compact = isCompactViewport();
+    const W = compact ? 420 : 820, H = compact ? 350 : 410, L = compact ? 46 : 58, R = compact ? 12 : 18, T = 18, B = compact ? 36 : 44, pw = W - L - R;
     const x = (date) => L + (dates.length === 1 ? pw / 2 : dates.indexOf(date) * pw / (dates.length - 1));
-    const tracks = [
+    const tracks = compact ? [
+      { type: "AUM", top: 18, bottom: 118 },
+      { type: "交易", top: 140, bottom: 238 },
+      { type: "APP", top: 266, bottom: 312 },
+    ] : [
       { type: "AUM", top: 20, bottom: 145 },
       { type: "交易", top: 170, bottom: 285 },
       { type: "APP", top: 315, bottom: 370 },
@@ -649,9 +830,12 @@
         out += `<rect x="${x(row.date) - 3}" y="${tracks[1].bottom - height}" width="6" height="${height}" fill="${color}"><title>${esc(`${row.date} · ${row.event_type} · ${row.event_detail} · ${money(row.amount)}`)}</title></rect>`;
       }
     });
-    const labelStep = Math.max(1, Math.ceil(dates.length / 7));
+    const labelStep = Math.max(1, Math.ceil(dates.length / (compact ? 4 : 7)));
     dates.forEach((date, index) => { if (index % labelStep === 0 || index === dates.length - 1) out += `<text class="chart-axis" x="${x(date)}" y="${H - 14}" text-anchor="middle">${esc(date.slice(5))}</text>`; });
-    return svgFrame(W, H, out, "流失前兆三轨回放") + `<div class="chart-legend"><span><i style="background:#24523f"></i>AUM</span><span><i style="background:#22714f"></i>申购</span><span><i style="background:#b42318"></i>赎回</span><span><i style="background:#6952a8"></i>APP事件</span></div>`;
+    return svgFrame(W, H, out, "流失前兆三轨回放") + chartLegend([
+      { label: "AUM", color: "#24523f", kind: "line" }, { label: "申购", color: "#22714f", kind: "bar" },
+      { label: "赎回", color: "#b42318", kind: "bar" }, { label: "APP事件", color: "#6952a8", kind: "line" },
+    ], "客户行为轨道图例");
   }
 
   function renderCustomers() {
@@ -714,7 +898,7 @@
     const timeline = D.precursor.filter((row) => row.customer_id === state.precursorCustomer);
     const churn = [...D.churn_list].sort((a, b) => num(b["churn前AUM峰值"]) - num(a["churn前AUM峰值"]));
     return `${state.cohortPicks.length > 4 ? `<div class="warning-box">为保证曲线可读，仅展示前4条。</div>` : ""}
-    ${panel("Retention", "首购 cohort 持有留存", "留存定义：目标月末客户总AUM>1,000元；不是复购次数。", `<label class="control multiselect-control"><span>对比 cohort（最多4条）</span><select multiple size="6" data-control="cohort-picks">${cohortOptions.map((option) => `<option${state.cohortPicks.includes(option) ? " selected" : ""}>${esc(option)}</option>`).join("")}</select></label>${cohortChart(selectedRows)}`)}
+    ${panel("Retention", "首购 cohort 持有留存", "留存定义：目标月末客户总AUM>1,000元；不是复购次数。图例同时标明首购月份、渠道名称与渠道类型。", `<label class="control multiselect-control"><span>对比 cohort（最多4条）</span><select multiple size="6" data-control="cohort-picks">${cohortOptions.map((option) => `<option value="${esc(option)}"${state.cohortPicks.includes(option) ? " selected" : ""}>${esc(cohortLabel(option))}</option>`).join("")}</select></label>${cohortChart(selectedRows)}`)}
     ${panel("Precursor", "流失前兆三轨回放", "AUM、申赎、APP行为分轨共享时间轴；赎回使用红色。", `<label class="control inline-control"><span>历史案例客户</span><select data-control="precursor-customer">${precursorCustomers.map((id) => `<option value="${esc(id)}"${id === state.precursorCustomer ? " selected" : ""}>${esc(maskCustomer(id))}</option>`).join("")}</select></label>${precursorChart(timeline)}${state.precursorCustomer === "U102733" ? insight("5月活跃度归零，6月多次浏览赎回页，7月集中赎回。数据没有 CANCEL_DCA 原生事件，因此不展示不存在的前兆。", "warn") : ""}`)}
     ${panel("Evidence", "历史已流失样本", "这份名单用于规则复盘，不是仍可挽留的当前机会名单。", table(churn, [
       { key: "customer_id", label: "客户ID", format: maskCustomer }, { key: "channel", label: "渠道" }, { key: "churn前AUM峰值", label: "流失前AUM峰值", format: money },
@@ -820,7 +1004,8 @@
       { label: "原始转化", value: num(row.observed_conv), color: "#24523f" },
       { label: "行情中性化", value: num(row.neutralized_conv), color: "#a5822f" },
     ];
-    const W = 820, H = 180, L = 130, R = 28, T = 24, B = 40, pw = W - L - R;
+    const compact = isCompactViewport();
+    const W = compact ? 420 : 820, H = compact ? 170 : 180, L = compact ? 76 : 130, R = compact ? 14 : 28, T = 24, B = 40, pw = W - L - R;
     const max = Math.max(...values.map((item) => item.value), 0.01) * 1.14;
     const x = (v) => L + v / max * pw;
     let out = `<line class="chart-connector solid" x1="${x(Math.min(...values.map((i) => i.value)))}" y1="80" x2="${x(Math.max(...values.map((i) => i.value)))}" y2="80"/>`;
@@ -852,8 +1037,8 @@
     const explanation = delta < -0.001 ? "剔除行情系数后转化下降，活动原始表现可能吃到了市场顺风。" : delta > 0.001 ? "剔除行情系数后转化上升，活动在逆风环境下的相对质量更好。" : "行情校准前后接近，市场因子对该活动的方向影响有限。";
     const productOptions = `<option value="ALL">全部推广产品</option>${campaignProducts.map((code) => `<option value="${esc(code)}"${state.marketingProduct === code ? " selected" : ""}>${esc(productLabel(code))}</option>`).join("")}`;
     const filters = `<div class="filter-panel compact"><label class="control"><span>推广产品</span><select data-control="marketing-product">${productOptions}</select></label><div class="control"><span>排行榜口径</span>${segmented(state.campaignMode, [{ id: "原始", label: "原始" }, { id: "行情中性化", label: "行情中性化" }], "campaign-mode")}</div></div>`;
-    return `${filters}<div class="context-inline">${chip(state.marketingProduct === "ALL" ? "全部推广产品" : productLabel(state.marketingProduct))}${chip(`活动 ${campaigns.length} 个`)}</div>
-    ${panel("Compare", "活动转化比较", "橙色为补贴活动；切换后观察排名变化，同时用自然基线判断是否真正超预期。", horizontalBars(ranking.map((row) => ({ ...row, display: `${row.campaign_name} · ${row.campaign_id}` })), valueKey, "display", { format: (v) => pct(v, 2), color: (row) => row.is_subsidy ? "#a86405" : "#24523f" }))}
+    return `${filters}<div class="context-inline">${chip(state.marketingProduct === "ALL" ? "全部推广产品" : productLabel(state.marketingProduct))}${chip(`活动 ${campaigns.length} 个`)}${chip(`${selected.channel_code} · ${campaignChannelType(selected)}`)}${selected.is_subsidy ? chip("补贴活动", "warning") : ""}</div>
+    ${panel("Compare", "活动转化比较", "条形颜色区分活动渠道类型；补贴活动在名称后单独标注。切换口径后观察排名变化，并用自然基线判断是否真正超预期。", `${channelLegend(ranking.map(campaignChannelType))}${horizontalBars(ranking.map((row) => ({ ...row, channel_type_cn: campaignChannelType(row), display: `${row.campaign_name} · ${row.campaign_id}${row.is_subsidy ? " · 补贴" : ""}` })), valueKey, "display", { format: (v) => pct(v, 2), color: (row) => channelStyle(row.channel_type_cn).color })}`)}
     <div class="filter-panel compact"><label class="control"><span>复盘活动</span><select data-control="selected-campaign">${campaigns.map((row) => `<option value="${esc(row.campaign_id)}"${row.campaign_id === selected.campaign_id ? " selected" : ""}>${esc(row.campaign_name)} · ${esc(row.campaign_id)}</option>`).join("")}</select></label></div>
     ${metricGrid([
       { label: "原始转化", value: pct(selected.observed_conv, 2) }, { label: "行情中性化", value: pct(selected.neutralized_conv, 2), delta: `较原始 ${pct(delta, 2, true)}` },
@@ -868,7 +1053,7 @@
     </div>
     ${selected.campaign_id === "CP_C" ? insight("<strong>管理提示：</strong>CP_C带来约4,399万窗口申购，但随后相关产品净流出约1,329万；补贴活动应以净保有和90日留存考核。", "warn") : ""}
     <details class="panel details-panel"><summary>为什么这里不展示“真实ROI”</summary><p class="detail-copy">现有导出ROI使用总申购×年化管理费率，没有使用相对基线的增量申购、实际持有天数、完整成本和对照组，因此最多是情景估计。</p>${table(campaigns, [
-      { key: "campaign_id", label: "活动" }, { key: "campaign_name", label: "名称" }, { key: "observed_conv", label: "原始转化", format: (v) => pct(v, 2) },
+      { key: "campaign_id", label: "活动" }, { key: "campaign_name", label: "名称" }, { key: "channel_code", label: "渠道" }, { key: "observed_conv", label: "原始转化", format: (v) => pct(v, 2) },
       { key: "neutralized_conv", label: "中性化", format: (v) => pct(v, 2) }, { key: "baseline_conv", label: "自然基线", format: (v) => pct(v, 2) },
       { key: "retention_90d", label: "90日留存", format: pct }, { key: "申购金额", label: "申购金额", format: money },
       { key: "30天赎回金额", label: "修正后30天赎回", format: money }, { key: "30天赎回金额_原导出", label: "原导出", format: money },
@@ -1013,23 +1198,38 @@
   function openMobileMenu() {
     document.body.classList.add("menu-open");
     document.getElementById("menu-toggle").setAttribute("aria-expanded", "true");
+    const sidebar = document.getElementById("sidebar");
+    sidebar?.setAttribute("aria-hidden", "false");
+    if (sidebar) sidebar.inert = false;
+    setTimeout(() => document.querySelector('.nav-item.active, .nav-item[aria-current="page"]')?.focus?.(), 0);
   }
 
-  function closeMobileMenu() {
+  function closeMobileMenu(restoreFocus = false) {
     document.body.classList.remove("menu-open");
     document.getElementById("menu-toggle").setAttribute("aria-expanded", "false");
+    const width = Number(window.innerWidth);
+    const isMobile = Number.isFinite(width) && width <= 820;
+    const sidebar = document.getElementById("sidebar");
+    sidebar?.setAttribute("aria-hidden", isMobile ? "true" : "false");
+    if (sidebar) sidebar.inert = isMobile;
+    if (restoreFocus) document.getElementById("menu-toggle")?.focus?.();
   }
 
   document.addEventListener("click", (event) => {
     const nav = event.target.closest(".nav-item[data-page]");
     if (nav) {
       navigate(nav.dataset.page);
+      if (Number(window.innerWidth) <= 820) document.getElementById("menu-toggle")?.focus?.();
       return;
     }
     const actionTarget = event.target.closest("[data-action]");
     if (!actionTarget) return;
     const action = actionTarget.dataset.action, value = actionTarget.dataset.value;
-    if (action === "navigate") navigate(value);
+    if (action === "navigate") {
+      if (value === "customers" && actionTarget.dataset.view) state.customerTab = actionTarget.dataset.view;
+      if (value === "products" && actionTarget.dataset.view) state.productTab = actionTarget.dataset.view;
+      navigate(value);
+    }
     else if (action === "save-alerts") saveAlertOverlay();
     else if (action === "clear-drill") { state.drill = null; renderApp(); }
     else if (action === "drill-alert") {
@@ -1101,13 +1301,30 @@
     toast("全局切片已重置");
   });
   document.getElementById("menu-toggle").addEventListener("click", () => {
-    document.body.classList.contains("menu-open") ? closeMobileMenu() : openMobileMenu();
+    document.body.classList.contains("menu-open") ? closeMobileMenu(true) : openMobileMenu();
   });
-  document.getElementById("sidebar-overlay").addEventListener("click", closeMobileMenu);
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeMobileMenu(); });
+  document.getElementById("sidebar-overlay").addEventListener("click", () => closeMobileMenu(true));
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && document.body.classList.contains("menu-open")) closeMobileMenu(true); });
   window.addEventListener("hashchange", () => {
     const page = location.hash.replace("#", "");
     if (validPages.includes(page) && page !== state.page) { state.page = page; renderApp(); }
+  });
+
+  let compactLayout = isCompactViewport();
+  let mobileNavLayout = Number(window.innerWidth) <= 820;
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    const width = Number(window.innerWidth);
+    const nextMobileNav = Number.isFinite(width) && width <= 820;
+    if (nextMobileNav !== mobileNavLayout) {
+      mobileNavLayout = nextMobileNav;
+      closeMobileMenu(false);
+    }
+    const nextCompact = isCompactViewport();
+    if (nextCompact === compactLayout) return;
+    compactLayout = nextCompact;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderApp, 120);
   });
 
   renderApp();
