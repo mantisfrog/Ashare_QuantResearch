@@ -78,6 +78,15 @@ assert.ok(methodologySource.includes("当前没有接入真实 CRM、交易系�
 assert.ok(methodologySource.includes("localStorage"), "analytics persistence boundary is missing");
 assert.ok(methodologySource.includes("并非七条规则的全量扫描"), "analytics alert-sample boundary is missing");
 assert.ok(methodologySource.includes("不代表因果增量或真实 ROI"), "analytics campaign boundary is missing");
+assert.ok(!methodologySource.includes("严谨性如何落实到 Demo"), "removed rigor section still exists");
+assert.ok(!methodologySource.includes(".quality-grid"), "removed rigor-section styles still exist");
+assert.ok(!methodologySource.includes('class="hero-copy"'), "removed methodology introduction still exists");
+assert.ok(!methodologySource.includes('class="principle-strip"'), "removed methodology principle cards still exist");
+assert.ok(!methodologySource.includes('class="module-index"'), "removed methodology module index still exists");
+assert.ok(!methodologySource.includes("数据有出处"), "removed provenance heading still exists");
+assert.ok(!methodologySource.includes("指标有口径"), "removed methodology heading still exists");
+assert.ok(!methodologySource.includes("结论有边界"), "removed boundary heading still exists");
+assert.match(methodologySource, /<h1>数据与工程说明<\/h1>\s*<\/section>\s*<article class="module" id="factor">/, "factor module must immediately follow the methodology title section");
 assert.ok(methodologySource.includes('href="./index.html"'), "methodology page has no path back home");
 assert.ok(!fs.existsSync(path.join(repo, "docs/weekly_views.html")), "weekly index still exists");
 assert.ok(!fs.existsSync(path.join(repo, "docs/weekly/2026-07-03-weekly-review.html")), "weekly article still exists");
