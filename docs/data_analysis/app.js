@@ -465,37 +465,6 @@
     });
   }
 
-  function capabilityHero() {
-    const channelCount = new Set(D.channels.map((row) => row.channel_code)).size;
-    return `<section class="capability-hero" aria-labelledby="capability-title">
-      <header class="capability-intro">
-        <span class="section-kicker">Retail data analytics portfolio</span>
-        <h2 id="capability-title">从多源零售数据到经营增量机会</h2>
-        <p>整合渠道代销、线上直销、客户持仓交易、净值规模、营销活动与外部排名数据，完成清洗映射、跨表整合与指标建模，统一产品、渠道、客户与时间口径；围绕渠道效能、客户分层与流失、产品销售与竞品、营销效果，形成“监控—诊断—名单—行动—复盘”的经营分析闭环。</p>
-        <div class="capability-tags" aria-label="岗位能力覆盖">
-          <span>多源数据治理</span><span>零售经营监控</span><span>专题诊断</span><span>竞品对标</span><span>客户留存</span><span>决策报告</span>
-        </div>
-      </header>
-      <div class="capability-flow" aria-label="分析能力链">
-        <article>
-          <span>01 · Data foundation</span>
-          <strong>${integer(D.months.length)}个月 × ${integer(D.products.length)}只产品 × ${integer(channelCount)}个渠道</strong>
-          <p>只读整合 DuckDB 与 PBI 快照，处理主数据映射、跨表粒度、缺失值和口径核验，并保留事实来源与边界。</p>
-        </article>
-        <article>
-          <span>02 · Business diagnosis</span>
-          <strong>六类零售经营场景</strong>
-          <p>从总量监控下钻到渠道、客户、产品、竞品、活动与留存，区分经营变化和市场影响。</p>
-        </article>
-        <article>
-          <span>03 · Decision delivery</span>
-          <strong>${integer(D.alert_rules.length)}条规则 × 预警工作台 × 管理月报</strong>
-          <p>把异常聚合为对象级事件，连接责任人、处置备注、客户名单、验证指标和可下载事实表。</p>
-        </article>
-      </div>
-    </section>`;
-  }
-
   function leadershipBrief(values, channels, judgment) {
     const weakest = [...channels].sort((a, b) => num(a.net_inflow) - num(b.net_inflow))[0];
     const impactBase = Math.abs(num(values.net)) + Math.abs(num(values.nav));
@@ -580,7 +549,6 @@
     const channels = channelRows(scope).sort((a, b) => num(b.aum_end) - num(a.aum_end));
     const worst = [...channels].sort((a, b) => num(a.net_inflow) - num(b.net_inflow))[0];
     return `
-      ${capabilityHero()}
       ${leadershipBrief(values, channels, judgment)}
       ${metricGrid(metrics)}
       <div class="content-grid split-main">
@@ -1161,7 +1129,6 @@
       console.error(error);
       root.innerHTML = `<div class="error-state"><strong>页面渲染失败</strong><p>${esc(error.message || error)}</p><button class="button primary" data-action="reload-snapshot">重新加载</button></div>`;
     }
-    closeMobileMenu();
   }
 
   function navigate(page) {
@@ -1195,31 +1162,10 @@
     toast("Markdown 月报已生成");
   }
 
-  function openMobileMenu() {
-    document.body.classList.add("menu-open");
-    document.getElementById("menu-toggle").setAttribute("aria-expanded", "true");
-    const sidebar = document.getElementById("sidebar");
-    sidebar?.setAttribute("aria-hidden", "false");
-    if (sidebar) sidebar.inert = false;
-    setTimeout(() => document.querySelector('.nav-item.active, .nav-item[aria-current="page"]')?.focus?.(), 0);
-  }
-
-  function closeMobileMenu(restoreFocus = false) {
-    document.body.classList.remove("menu-open");
-    document.getElementById("menu-toggle").setAttribute("aria-expanded", "false");
-    const width = Number(window.innerWidth);
-    const isMobile = Number.isFinite(width) && width <= 820;
-    const sidebar = document.getElementById("sidebar");
-    sidebar?.setAttribute("aria-hidden", isMobile ? "true" : "false");
-    if (sidebar) sidebar.inert = isMobile;
-    if (restoreFocus) document.getElementById("menu-toggle")?.focus?.();
-  }
-
   document.addEventListener("click", (event) => {
     const nav = event.target.closest(".nav-item[data-page]");
     if (nav) {
       navigate(nav.dataset.page);
-      if (Number(window.innerWidth) <= 820) document.getElementById("menu-toggle")?.focus?.();
       return;
     }
     const actionTarget = event.target.closest("[data-action]");
@@ -1300,26 +1246,14 @@
     renderApp();
     toast("全局切片已重置");
   });
-  document.getElementById("menu-toggle").addEventListener("click", () => {
-    document.body.classList.contains("menu-open") ? closeMobileMenu(true) : openMobileMenu();
-  });
-  document.getElementById("sidebar-overlay").addEventListener("click", () => closeMobileMenu(true));
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && document.body.classList.contains("menu-open")) closeMobileMenu(true); });
   window.addEventListener("hashchange", () => {
     const page = location.hash.replace("#", "");
     if (validPages.includes(page) && page !== state.page) { state.page = page; renderApp(); }
   });
 
   let compactLayout = isCompactViewport();
-  let mobileNavLayout = Number(window.innerWidth) <= 820;
   let resizeTimer = null;
   window.addEventListener("resize", () => {
-    const width = Number(window.innerWidth);
-    const nextMobileNav = Number.isFinite(width) && width <= 820;
-    if (nextMobileNav !== mobileNavLayout) {
-      mobileNavLayout = nextMobileNav;
-      closeMobileMenu(false);
-    }
     const nextCompact = isCompactViewport();
     if (nextCompact === compactLayout) return;
     compactLayout = nextCompact;
