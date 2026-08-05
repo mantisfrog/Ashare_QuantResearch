@@ -311,10 +311,17 @@
       const color = s.color || COLORS[si % COLORS.length];
       const points = rows.map((row, index) => `${x(index).toFixed(1)},${y(num(row[s.key])).toFixed(1)}`).join(" ");
       out += `<polyline class="chart-line" points="${points}" fill="none" stroke="${color}"/>`;
+      const configuredRadius = Number(options.pointRadius);
+      const pointRadius = Number.isFinite(configuredRadius) && configuredRadius > 0 ? configuredRadius : 3.2;
+      const configuredLimit = Number(compact ? options.compactMaxPoints ?? options.maxPoints : options.maxPoints);
+      const pointLimit = Number.isFinite(configuredLimit) && configuredLimit >= 2 ? Math.floor(configuredLimit) : rows.length;
+      const markerStep = rows.length > pointLimit ? Math.ceil((rows.length - 1) / (pointLimit - 1)) : 1;
+      const pointClass = options.pointClass ? ` ${esc(options.pointClass)}` : "";
       rows.forEach((row, index) => {
+        if (index !== rows.length - 1 && index % markerStep !== 0) return;
         const raw = num(row[s.key]);
         const tip = `${row[labelKey]} · ${s.label} ${s.format ? s.format(raw) : raw}`;
-        out += `<circle class="chart-point" cx="${x(index)}" cy="${y(raw)}" r="3.2" fill="${color}"><title>${esc(tip)}</title></circle>`;
+        out += `<circle class="chart-point${pointClass}" cx="${x(index)}" cy="${y(raw)}" r="${pointRadius}" fill="${color}"><title>${esc(tip)}</title></circle>`;
       });
     });
     const legend = series.map((s, i) => ({ label: s.label, color: s.color || COLORS[i % COLORS.length], kind: "line" }));
@@ -899,7 +906,10 @@
   }
 
   function navFlowChart(navRows, flowRows) {
-    return `<div class="chart-stack">${lineChart(navRows, [{ key: "unit_nav", label: "单位净值", color: "#24523f", format: (v) => v.toFixed(4) }], "date", { axisFormat: (v) => v.toFixed(2), label: "单位净值趋势" })}${barChart(flowRows, "net_flow", "week", { valueFormat: (v) => money(v, true), trimLabel: 5, label: "周度净申购" })}</div>`;
+    return `<div class="chart-stack">${lineChart(navRows, [{ key: "unit_nav", label: "单位净值", color: "#24523f", format: (v) => v.toFixed(4) }], "date", {
+      axisFormat: (v) => v.toFixed(2), label: "单位净值趋势",
+      pointRadius: 1.4, maxPoints: 48, compactMaxPoints: 24, pointClass: "chart-point-dense",
+    })}${barChart(flowRows, "net_flow", "week", { valueFormat: (v) => money(v, true), trimLabel: 5, label: "周度净申购" })}</div>`;
   }
 
   function renderProducts() {

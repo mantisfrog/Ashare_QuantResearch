@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="毕闻博作品集的数据来源、处理方法、验证方式、技术栈与演示边界说明。" />
+  <title>数据与工程说明 — Wenbo Bi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f6f4ee;
+      --panel: #fffefa;
+      --ink: #1e2620;
+      --muted: #66695f;
+      --faint: #6c6f65;
+      --line: #dfdbc9;
+      --accent: #795d18;
+      --accent-soft: rgba(165, 130, 47, 0.1);
+      --green: #24523f;
+      --green-soft: #e7eee9;
+      --charcoal: #18221d;
+      --font-serif: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+      --font-sans: "Inter", "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      --font-mono: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image: linear-gradient(var(--line) 1px, transparent 1px);
+      background-size: 100% 96px;
+      opacity: 0.16;
+      pointer-events: none;
+    }
+    a { color: inherit; }
+    .page { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+
+    .site-header {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 1px solid rgba(165, 130, 47, 0.4);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .brand { font-weight: 700; text-decoration: none; }
+    .brand span { color: var(--accent); }
+    .site-nav { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .site-nav a { color: var(--muted); text-decoration: none; }
+    .site-nav a:hover, .site-nav a:focus-visible { color: var(--accent); }
+
+    .hero { padding: clamp(64px, 10vw, 118px) 0 clamp(42px, 7vw, 76px); }
+    .kicker, .section-kicker {
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { font-family: var(--font-serif); }
+    h1 {
+      max-width: 15ch;
+      margin-top: 18px;
+      font-size: clamp(38px, 6.3vw, 72px);
+      line-height: 1.16;
+      letter-spacing: 0.01em;
+    }
+    .hero-copy {
+      max-width: 72ch;
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: clamp(14px, 1.5vw, 17px);
+      line-height: 1.95;
+    }
+
+    .principle-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .principle-strip article { min-width: 0; padding: 24px; border-right: 1px solid var(--line); }
+    .principle-strip article:first-child { padding-left: 0; }
+    .principle-strip article:last-child { border-right: 0; }
+    .principle-strip span { color: var(--accent); font: 700 10px var(--font-mono); letter-spacing: 0.12em; }
+    .principle-strip strong { display: block; margin-top: 8px; font-family: var(--font-serif); font-size: 18px; }
+    .principle-strip p { margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+    .module-index {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 34px 0;
+    }
+    .module-index a {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 17px;
+      border: 1px solid var(--line);
+      background: rgba(255, 254, 250, 0.55);
+      font-family: var(--font-serif);
+      text-decoration: none;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .module-index a:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .module-index span { color: var(--accent); font: 10px var(--font-mono); }
+
+    .module {
+      scroll-margin-top: 24px;
+      margin-top: 28px;
+      padding: clamp(28px, 4.5vw, 48px);
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--accent);
+      background: rgba(255, 254, 250, 0.72);
+    }
+    .module-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 22px;
+      padding-bottom: 26px;
+      border-bottom: 1px solid var(--line);
+    }
+    .module-number { color: var(--accent); font: 700 10px var(--font-mono); letter-spacing: 0.16em; }
+    .module h2 { margin-top: 7px; font-size: clamp(27px, 4vw, 42px); line-height: 1.25; }
+    .module-summary { max-width: 72ch; margin-top: 12px; color: var(--muted); font-size: 13px; line-height: 1.85; }
+    .data-badge {
+      padding: 7px 10px;
+      border: 1px solid rgba(36, 82, 63, 0.24);
+      background: var(--green-soft);
+      color: var(--green);
+      font: 700 10px var(--font-mono);
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    .data-badge.demo { border-color: rgba(165, 130, 47, 0.32); background: var(--accent-soft); color: #755a1e; }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 24px 0;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      list-style: none;
+    }
+    .pipeline li {
+      position: relative;
+      min-width: 0;
+      padding: 15px 28px 15px 14px;
+      border-right: 1px solid var(--line);
+      color: var(--muted);
+      font: 10px/1.55 var(--font-mono);
+      overflow-wrap: anywhere;
+    }
+    .pipeline li:last-child { border-right: 0; }
+    .pipeline li:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      color: var(--accent);
+      transform: translateY(-50%);
+    }
+
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .detail-card { min-width: 0; padding: 20px; border: 1px solid var(--line); background: var(--panel); }
+    .detail-card h3 { font-size: 16px; }
+    .detail-card ul { margin: 11px 0 0 18px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .detail-card li + li { margin-top: 5px; }
+    .detail-card.boundary { grid-column: 1 / -1; border-left: 3px solid var(--green); }
+    .stack-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+    .stack-list span {
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--muted);
+      font: 10px var(--font-mono);
+    }
+    .module-link {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 15px;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font: 11px var(--font-mono);
+      text-decoration: none;
+    }
+    .module-link:hover { border-color: var(--accent); color: var(--accent); }
+    .module-cta { margin-top: 20px; }
+
+    .quality { padding: clamp(64px, 9vw, 104px) 0; }
+    .quality h2 { max-width: 18ch; margin-top: 12px; font-size: clamp(28px, 4.2vw, 46px); line-height: 1.3; }
+    .quality-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 30px; }
+    .quality-grid article { padding: 20px; border-top: 1px solid var(--accent); background: rgba(255, 254, 250, 0.52); }
+    .quality-grid span { color: var(--accent); font: 10px var(--font-mono); }
+    .quality-grid strong { display: block; margin-top: 10px; font-family: var(--font-serif); font-size: 16px; }
+    .quality-grid p { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.75; }
+
+    .disclosure {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 34px;
+      padding: clamp(30px, 5vw, 52px);
+      background: var(--charcoal);
+      color: #f5f4ec;
+    }
+    .disclosure h2 { margin-top: 10px; font-size: clamp(24px, 3.5vw, 38px); }
+    .disclosure ul { margin-left: 18px; color: rgba(245, 244, 236, 0.68); font-size: 12px; line-height: 1.85; }
+    .disclosure li + li { margin-top: 6px; }
+
+    footer {
+      min-height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      color: var(--faint);
+      font: 10px var(--font-mono);
+      letter-spacing: 0.1em;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    @media (max-width: 820px) {
+      .page { width: min(100% - 32px, 1180px); }
+      .site-header { align-items: flex-start; padding: 18px 0; }
+      .site-nav { justify-content: flex-end; gap: 12px; }
+      .principle-strip, .module-index { grid-template-columns: 1fr; }
+      .principle-strip article, .principle-strip article:first-child { padding: 18px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+      .principle-strip article:last-child { border-bottom: 0; }
+      .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pipeline li:nth-child(2) { border-right: 0; }
+      .pipeline li:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .quality-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .disclosure { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .site-header { display: grid; }
+      .site-nav { justify-content: flex-start; }
+      .hero { padding-top: 54px; }
+      .module { padding: 24px 16px; }
+      .module-head, .detail-grid, .quality-grid { grid-template-columns: 1fr; }
+      .detail-card.boundary { grid-column: auto; }
+      .data-badge { justify-self: start; }
+      .pipeline { grid-template-columns: 1fr; }
+      .pipeline li, .pipeline li:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--line); }
+      .pipeline li:last-child { border-bottom: 0; }
+      footer { align-items: flex-start; flex-direction: column; padding: 24px 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .module-index a { transition: none; }
+      .module-index a:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <a class="brand" href="./index.html">WENBO BI<span> / PORTFOLIO</span></a>
+      <nav class="site-nav" aria-label="作品集导航">
+        <a href="./index.html">主页</a>
+        <a href="./factor.html">多因子</a>
+        <a href="./wealthops_frontend/index.html">财富管理</a>
+        <a href="./data_analysis/index.html">数据分析</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="kicker">Data provenance · Methodology · Engineering</p>
+        <h1>数据与工程说明</h1>
+        <p class="hero-copy">这些页面不仅展示结果，也说明结果如何产生。每个模块都区分数据属性、处理链路、验证方法、技术栈与演示边界，让指标口径可以追溯、分析过程可以解释、Demo 能力与生产系统之间的差距可以被清楚识别。</p>
+      </section>
+
+      <section class="principle-strip" aria-label="工程说明原则">
+        <article><span>01 · PROVENANCE</span><strong>数据有出处</strong><p>真实、模拟与混合数据分别标注，不把演示样本包装成生产数据。</p></article>
+        <article><span>02 · METHOD</span><strong>指标有口径</strong><p>从原始粒度、清洗映射到聚合与归因，说明关键转换和假设。</p></article>
+        <article><span>03 · VALIDATION</span><strong>结论有边界</strong><p>使用结构校验、业务不变量和回归锚点，同时披露静态快照限制。</p></article>
+      </section>
+
+      <nav class="module-index" aria-label="模块说明索引">
+        <a href="#factor"><strong>多因子研究</strong><span>01 →</span></a>
+        <a href="#wealth"><strong>财富管理</strong><span>02 →</span></a>
+        <a href="#data-analysis"><strong>数据分析</strong><span>03 →</span></a>
+      </nav>
+
+      <article class="module" id="factor">
+        <header class="module-head">
+          <div>
+            <span class="module-number">MODULE 01</span>
+            <h2>多因子研究</h2>
+            <p class="module-summary">从本地行情与财务归档开始，构建可重复执行的 A 股因子研究流水线，并把点时数据、18 个因子、6 类风格、诊断和组合回测组织为可查询的数据模型与静态研究快照。</p>
+          </div>
+          <span class="data-badge">真实市场数据 · 静态快照</span>
+        </header>
+        <ol class="pipeline" aria-label="多因子处理链路">
+          <li>TDX / tqcenter / 指数源</li><li>CSV ETL / PostgreSQL</li><li>因子计算 / 预处理 / 中性化</li><li>诊断 / 回测 / 展示快照</li>
+        </ol>
+        <div class="detail-grid">
+          <section class="detail-card"><h3>数据来源</h3><ul><li>通达信日线与财务归档文件；tqcenter 提供证券信息、股本与分红等补充数据。</li><li>本地基准指数种子及 AkShare 补充数据。</li><li>财务指标定义表与版本化因子目录作为计算元数据。</li></ul></section>
+          <section class="detail-card"><h3>处理链路</h3><ul><li>Python 将原始文件解析为维表、事实表与桥表 CSV，再装载 PostgreSQL 星型模型。</li><li>月度股票池与财务桥表采用 point-in-time 口径，降低前视偏差。</li><li>因子按方向对齐、MAD×3 缩尾、Z-score 标准化，并对市值与行业做截面中性化。</li></ul></section>
+          <section class="detail-card"><h3>验证方法</h3><ul><li>CSV 表头预检、主外键与 CHECK 约束、行数及业务不变量校验。</li><li>跟踪覆盖率、Spearman Rank IC、1/3/6 月前瞻收益和因子相关性。</li><li>组合与风格回测独立生成快照，流水线任一阶段失败即停止。</li></ul></section>
+          <section class="detail-card"><h3>技术栈</h3><div class="stack-list"><span>Python 3.13</span><span>pandas</span><span>NumPy</span><span>PostgreSQL</span><span>PowerShell</span><span>Tableau Public</span><span>Google Sheets</span><span>HTML / CSS / JS</span></div></section>
+          <section class="detail-card boundary"><h3>演示边界</h3><ul><li>网页消费生成后的静态 JS/CSV 快照，不在浏览器中运行全量因子流水线，也不是实时行情终端。</li><li>组合回测未计交易费、滑点、税费与市场冲击；历史 ST 仅能按当前名称近似识别。</li><li>外部 Tableau 视图依赖网络可用性；研究结果仅用于方法展示，不构成投资建议。</li></ul></section>
+        </div>
+        <p class="module-cta"><a class="module-link" href="./factor.html">进入多因子研究 <span aria-hidden="true">→</span></a></p>
+      </article>
+
+      <article class="module" id="wealth">
+        <header class="module-head">
+          <div>
+            <span class="module-number">MODULE 02</span>
+            <h2>财富管理</h2>
+            <p class="module-summary">用可解释的规则原型串联总行资产配置、客群机会、单客户诊断、产品适配、受控解读与智能体治理，重点展示业务流程、合规约束和反馈闭环，而不是伪装成已接入的生产系统。</p>
+          </div>
+          <span class="data-badge demo">合成业务数据 · 规则原型</span>
+        </header>
+        <ol class="pipeline" aria-label="财富管理处理链路">
+          <li>模拟客户 / 产品 / 行为</li><li>画像与配置缺口</li><li>适当性硬约束 / 匹配评分</li><li>受控解读 / 反馈 / 治理</li>
+        </ol>
+        <div class="detail-grid">
+          <section class="detail-card"><h3>数据来源</h3><ul><li>客户、产品、持仓、反馈和治理指标均为前端合成演示数据，不含真实客户或银行数据。</li><li>配置缺口与治理趋势由离线脚本生成展示快照；策略页嵌入个人 Tableau Public 作品。</li><li>产品说明书字段以受控演示摘要呈现，用于展示引用与风险揭示方式。</li></ul></section>
+          <section class="detail-card"><h3>处理链路</h3><ul><li>根据 KYC、风险等级、期限、流动性、集中度与历史反馈构建客户画像。</li><li>先执行适当性硬拦截，再计算配置缺口、产品匹配理由、风险提示与建议金额。</li><li>受控知识摘要与客户变量进入模板，经必含句式与禁止词扫描，并附人工复核状态后展示。</li></ul></section>
+          <section class="detail-card"><h3>验证方法</h3><ul><li>页面展示逐条规则轨迹、拦截原因、引用来源、版本号和复核状态。</li><li>通过反馈回流、采纳率、引用率、人工复核率与阻断数量展示治理闭环。</li><li>生产化接口边界在文档中显式列出，便于替换为客户、产品和反馈 API。</li></ul></section>
+          <section class="detail-card"><h3>技术栈</h3><div class="stack-list"><span>HTML5</span><span>CSS Grid</span><span>Vanilla JavaScript</span><span>SVG</span><span>Tableau Public</span><span>静态快照</span><span>规则引擎原型</span></div></section>
+          <section class="detail-card boundary"><h3>演示边界</h3><ul><li>当前没有接入真实 CRM、交易系统、后端 API 或生成式模型；页面中的“AI”内容是可审计的规则与模板原型。</li><li>静态发布包不包含展示快照的上游生成项目，当前数据不应被理解为可在本仓库独立刷新。</li><li>所有建议仅用于流程演示，实际客户触达仍需完成 KYC、适当性确认与人工复核。</li></ul></section>
+        </div>
+        <p class="module-cta"><a class="module-link" href="./wealthops_frontend/index.html">进入财富管理 <span aria-hidden="true">→</span></a></p>
+      </article>
+
+      <article class="module" id="data-analysis">
+        <header class="module-head">
+          <div>
+            <span class="module-number">MODULE 03</span>
+            <h2>数据分析</h2>
+            <p class="module-summary">将 Streamlit 零售经营看板迁移为可静态托管的交互式前端，通过只读导出器固化语义层，覆盖渠道、客户、产品、竞品、营销、留存与行动闭环。</p>
+          </div>
+          <span class="data-badge">市场/产品数据 + 模拟经营数据</span>
+        </header>
+        <ol class="pipeline" aria-label="数据分析处理链路">
+          <li>DuckDB / PBI CSV</li><li>SQL 聚合 / pandas 清洗</li><li>版本化 data.js 快照</li><li>7 个经营工作区 / 月报</li>
+        </ol>
+        <div class="detail-grid">
+          <section class="detail-card"><h3>数据来源</h3><ul><li>导出器以只读方式读取相邻项目的 DuckDB 语义层和 Power BI 展示 CSV。</li><li>多数净值来自 AkShare；源库的产品与季度规模口径标记为 iFinD，展示快照按产品和季度聚合；AMAC 排名来自基金业协会。</li><li>ETF 使用前复权收盘价代理，3 只货币基金及部分字段按标记为模拟；客户交易、持仓、迁移、留存与营销行为均为模拟数据。</li><li>快照记录 schema_version、生成时间与最新业务快照日。</li></ul></section>
+          <section class="detail-card"><h3>处理链路</h3><ul><li>SQL 统一产品、渠道、客户与时间粒度，pandas/NumPy 完成拼接、缺失值处理、分层与滚动指标。</li><li>聚合 AUM、申赎、净值影响、渠道效率、客户迁移、留存、活动转化与预警案例。</li><li>仅将分析所需语义快照导出为 data.js，浏览器不加载 DuckDB 或原始交易明细。</li></ul></section>
+          <section class="detail-card"><h3>验证方法</h3><ul><li>Node 冒烟测试覆盖 7 个工作区、核心二级页签、产品切片、预警下钻与移动端结构和交互。</li><li>对 AUM、净申购、客户数、预警、迁移和活动等关键业务数值设置回归锚点。</li><li>渠道采用颜色与形状双重编码并配显式图例；客户编号默认掩码。</li></ul></section>
+          <section class="detail-card"><h3>技术栈</h3><div class="stack-list"><span>Python</span><span>DuckDB</span><span>SQL</span><span>pandas</span><span>NumPy</span><span>HTML / CSS / JS</span><span>Inline SVG</span><span>localStorage</span><span>Node.js Smoke Tests</span></div></section>
+          <section class="detail-card boundary"><h3>演示边界</h3><ul><li>处置状态、Owner 与备注只保存在当前浏览器 localStorage，不写回源库，也不跨设备同步。</li><li>预警日志是 50 条精选历史案例，并非七条规则的全量扫描；营销情景校准不代表因果增量或真实 ROI。</li><li>月报在浏览器端按当前切片生成 Markdown；竞品为精选样本，不能解释为全市场份额或行业分位。</li></ul></section>
+        </div>
+        <p class="module-cta"><a class="module-link" href="./data_analysis/index.html">进入数据分析 <span aria-hidden="true">→</span></a></p>
+      </article>
+
+      <section class="quality" id="quality">
+        <p class="section-kicker">Engineering discipline</p>
+        <h2>严谨性如何落实到 Demo</h2>
+        <div class="quality-grid">
+          <article><span>01</span><strong>数据属性显式标注</strong><p>市场/产品数据、模拟业务数据与混合快照采用不同标签，不混淆可信范围。</p></article>
+          <article><span>02</span><strong>计算口径可回溯</strong><p>保留源表、粒度、时间窗口、公式和版本信息，关键指标可定位到处理链路。</p></article>
+          <article><span>03</span><strong>验证不是装饰</strong><p>结构约束、业务不变量、数值锚点、诊断统计与页面冒烟测试共同覆盖。</p></article>
+          <article><span>04</span><strong>隐私与发布隔离</strong><p>源数据库与凭据不进入浏览器；快照仅发布展示所需字段，客户标识在界面掩码且当前客户数据均为模拟。</p></article>
+        </div>
+      </section>
+
+      <section class="disclosure" aria-labelledby="disclosure-title">
+        <div><p class="section-kicker">Scope & limitations</p><h2 id="disclosure-title">统一披露</h2></div>
+        <ul>
+          <li>所有页面均为研究与产品原型展示，不构成投资建议、销售承诺或生产系统输出。</li>
+          <li>静态快照反映生成时点的数据与口径，不代表实时状态；外部数据源与 Tableau Public 可能受网络可用性影响。</li>
+          <li>客户相关数据均为模拟，标识默认掩码；生产应用仍需权限控制、审计、数据质量 SLA 与合规审批。</li>
+          <li>页面同时说明已实现能力与生产化缺口，避免把可交互 Demo 等同于已上线系统。</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <span>WENBO BI · DATA &amp; ENGINEERING NOTES</span>
+      <span><a href="./index.html">返回作品集首页</a> · 微信 wtydad299 · wenbo-bi@foxmail.com</span>
+    </footer>
+  </div>
+</body>
+</html>

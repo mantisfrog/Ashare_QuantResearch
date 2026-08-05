@@ -199,6 +199,72 @@
     .entry:hover .arrow { transform: translateX(10px); color: var(--accent); }
     .entry:hover .num { color: var(--accent-bright); }
 
+    /* ---------- 工程说明 ---------- */
+    .engineering-note {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: clamp(20px, 4vw, 42px);
+      padding: clamp(24px, 4vh, 38px) 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .engineering-kicker {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: #795d18;
+      text-transform: uppercase;
+    }
+
+    .engineering-note h2 {
+      margin-top: 9px;
+      font-family: var(--font-serif);
+      font-size: clamp(20px, 2.5vw, 28px);
+      line-height: 1.35;
+    }
+
+    .engineering-copy {
+      max-width: 66ch;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .engineering-link {
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+      padding: 0 18px;
+      border: 1px solid var(--gold-line);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: border-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    }
+
+    .engineering-link span {
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .engineering-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateX(4px);
+    }
+
+    .engineering-link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
     /* ---------- 页脚 ---------- */
     .footer {
       position: relative;
@@ -234,6 +300,7 @@
     .reveal.d3 { animation-delay: 0.42s; }
     .reveal.d4 { animation-delay: 0.58s; }
     .reveal.d5 { animation-delay: 0.72s; }
+    .reveal.d6 { animation-delay: 0.86s; }
 
     @keyframes rise {
       to { opacity: 1; transform: translateY(0); }
@@ -241,12 +308,15 @@
 
     @media (prefers-reduced-motion: reduce) {
       .reveal { animation: none; opacity: 1; transform: none; }
-      .entry .title, .entry .arrow, .entry .title::after { transition: none; }
+      .entry .title, .entry .arrow, .entry .title::after, .engineering-link { transition: none; }
     }
 
     @media (max-width: 640px) {
       .entry { flex-wrap: wrap; gap: 12px; }
       .entry .arrow { margin-left: auto; }
+
+      .engineering-note { grid-template-columns: 1fr; }
+      .engineering-link { width: 100%; white-space: normal; }
     }
   </style>
 </head>
@@ -295,6 +365,17 @@
         <span class="arrow">&#8594;</span>
       </a>
     </nav>
+
+    <section class="engineering-note reveal d6" aria-labelledby="engineering-title">
+      <div>
+        <p class="engineering-kicker">Data provenance · Methods · Validation · Stack</p>
+        <h2 id="engineering-title">从数据到结论，可追溯、可验证</h2>
+        <p class="engineering-copy">三个 Demo 均明确标注数据属性、处理链路、验证方法与演示边界，并区分真实数据、模拟数据和静态快照。</p>
+      </div>
+      <a class="engineering-link" href="./methodology.html">
+        查看数据与工程说明 <span aria-hidden="true">&#8594;</span>
+      </a>
+    </section>
 
     <footer class="footer">
       <div>Quant Research &middot; Data Analysis</div>

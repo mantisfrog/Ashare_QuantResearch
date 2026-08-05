@@ -1634,6 +1634,15 @@ details[open] summary::after {
   stroke-width: 2px;
 }
 
+.chart-point-dense {
+  stroke-width: 0;
+}
+
+.chart-point-dense:hover {
+  r: 3px;
+  stroke-width: 1.2px;
+}
+
 .chart-bar {
   transition: opacity 0.16s ease;
 }

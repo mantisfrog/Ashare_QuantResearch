@@ -11,6 +11,7 @@ const appSource = fs.readFileSync(path.join(repo, "docs/data_analysis/app.js"), 
 const cssSource = fs.readFileSync(path.join(repo, "docs/data_analysis/styles.css"), "utf8");
 const pageSource = fs.readFileSync(path.join(repo, "docs/data_analysis/index.html"), "utf8");
 const homeSource = fs.readFileSync(path.join(repo, "docs/index.html"), "utf8");
+const methodologySource = fs.readFileSync(path.join(repo, "docs/methodology.html"), "utf8");
 const snapshot = JSON.parse(
   dataSource.trim().slice("window.RETAIL_DATA=".length).replace(/;$/, ""),
 );
@@ -54,6 +55,30 @@ assert.ok(homeSource.includes("毕闻博作品集"), "home title is missing");
 assert.ok(homeSource.includes("UWA商业分析硕士（荣誉），具有金融和数据复合背景"), "user-updated home introduction is missing");
 assert.ok(homeSource.includes("./data_analysis/index.html"), "data-analysis entry is missing");
 assert.equal((homeSource.match(/class="entry"/g) || []).length, 3, "home must expose exactly three entries");
+assert.ok(homeSource.includes('href="./methodology.html"'), "home methodology entry is missing");
+assert.ok(homeSource.includes("数据属性、处理链路、验证方法与演示边界"), "home methodology summary is missing");
+assert.ok(homeSource.indexOf('class="engineering-note') > homeSource.lastIndexOf('class="entry"'), "home methodology entry must follow the three portfolio entries");
+assert.ok(homeSource.indexOf('class="engineering-note') < homeSource.indexOf('class="footer"'), "home methodology entry must precede the footer");
+assert.match(homeSource, /@media \(max-width: 640px\)[\s\S]*?\.engineering-note\s*\{\s*grid-template-columns:\s*1fr;/, "home methodology entry is not mobile responsive");
+assert.ok(methodologySource.includes('name="viewport"'), "methodology page has no mobile viewport");
+assert.match(methodologySource, /@media \(max-width: 600px\)[\s\S]*?\.module-head,[\s\S]*?grid-template-columns:\s*1fr;/, "methodology details do not collapse on mobile");
+assert.equal((methodologySource.match(/<article class="module"/g) || []).length, 3, "methodology page must document exactly three modules");
+for (const id of ["factor", "wealth", "data-analysis"]) {
+  assert.ok(methodologySource.includes(`id="${id}"`), `methodology page is missing ${id}`);
+}
+for (const label of ["数据来源", "处理链路", "验证方法", "技术栈", "演示边界"]) {
+  assert.ok(methodologySource.includes(label), `methodology page is missing ${label}`);
+}
+assert.ok(methodologySource.includes("真实市场数据 · 静态快照"), "factor data property is not disclosed");
+assert.ok(methodologySource.includes("合成业务数据 · 规则原型"), "wealth demo data property is not disclosed");
+assert.ok(methodologySource.includes("市场/产品数据 + 模拟经营数据"), "analytics mixed data property is not disclosed");
+assert.equal((methodologySource.match(/<ol class="pipeline"/g) || []).length, 3, "module pipelines are not exposed as semantic lists");
+assert.ok(methodologySource.includes("MAD×3 缩尾"), "factor preprocessing method is missing");
+assert.ok(methodologySource.includes("当前没有接入真实 CRM、交易系统、后端 API 或生成式模型"), "wealth AI boundary is missing");
+assert.ok(methodologySource.includes("localStorage"), "analytics persistence boundary is missing");
+assert.ok(methodologySource.includes("并非七条规则的全量扫描"), "analytics alert-sample boundary is missing");
+assert.ok(methodologySource.includes("不代表因果增量或真实 ROI"), "analytics campaign boundary is missing");
+assert.ok(methodologySource.includes('href="./index.html"'), "methodology page has no path back home");
 assert.ok(!fs.existsSync(path.join(repo, "docs/weekly_views.html")), "weekly index still exists");
 assert.ok(!fs.existsSync(path.join(repo, "docs/weekly/2026-07-03-weekly-review.html")), "weekly article still exists");
 
@@ -178,6 +203,19 @@ assert.ok(customers.elements["page-root"].innerHTML.includes("流失前兆三轨
 assert.ok(customers.elements["page-root"].innerHTML.includes("蚂蚁财富（互联网）"), "cohort channel legend is not human-readable");
 
 const products = render("products");
+const productOperationsHtml = products.elements["page-root"].innerHTML;
+const desktopNavMarkers = [...productOperationsHtml.matchAll(/class="chart-point chart-point-dense"[^>]*r="1\.4"/g)];
+assert.ok(desktopNavMarkers.length >= 2 && desktopNavMarkers.length <= 48, "desktop NAV markers were not reduced to the dense-series limit");
+const navSvg = productOperationsHtml.match(/<svg[^>]*aria-label="单位净值趋势"[^>]*>([\s\S]*?)<\/svg>/);
+assert.ok(navSvg, "NAV trend SVG is missing");
+const navPolyline = navSvg[1].match(/<polyline[^>]*points="([^"]+)"/);
+assert.ok(navPolyline, "NAV trend polyline is missing");
+const latestNavMonth = snapshot.months.at(-1);
+const [latestNavYear, latestNavMonthNumber] = latestNavMonth.split("-").map(Number);
+const navWindowStartDate = new Date(Date.UTC(latestNavYear, latestNavMonthNumber - 1 - 13, 1));
+const navWindowStart = `${navWindowStartDate.getUTCFullYear()}-${String(navWindowStartDate.getUTCMonth() + 1).padStart(2, "0")}`;
+const expectedNavPoints = snapshot.nav.filter((row) => row.fund_code === "017560.OF" && row.date.slice(0, 7) >= navWindowStart && row.date.slice(0, 7) <= latestNavMonth).length;
+assert.equal(navPolyline[1].trim().split(/\s+/).length, expectedNavPoints, "NAV line was downsampled together with its markers");
 products.documentListeners.click(actionEvent("product-tab", "benchmark"));
 assert.ok(products.elements["page-root"].innerHTML.includes("AMAC 销售机构排名"), "product benchmark tab did not render");
 
@@ -186,6 +224,7 @@ report.documentListeners.click(actionEvent("report-tab", "facts"));
 assert.ok(report.elements["page-root"].innerHTML.includes("月报事实表"), "report facts tab did not render");
 
 const overview = render("overview");
+assert.match(overview.elements["page-root"].innerHTML, /class="chart-point"[^>]*r="3\.2"/, "standard monthly chart markers were changed globally");
 assert.ok(!overview.elements["page-root"].innerHTML.includes("从多源零售数据到经营增量机会"), "ability chain still renders");
 assert.ok(overview.elements["page-root"].innerHTML.includes("领导摘要：结论、归因、对象与动作"), "executive brief is missing");
 assert.ok(overview.elements["page-root"].innerHTML.includes("零售全业务场景分析体系"), "scenario capability map is missing");
@@ -208,6 +247,10 @@ assert.ok(channels.elements["page-root"].innerHTML.includes("金色描边＝当�
 
 const mobileChannels = render("channels", { width: 390 });
 assert.ok(mobileChannels.elements["page-root"].innerHTML.includes('viewBox="0 0 420'), "mobile charts did not switch to compact geometry");
+const mobileProducts = render("products", { width: 390 });
+const mobileNavMarkers = [...mobileProducts.elements["page-root"].innerHTML.matchAll(/class="chart-point chart-point-dense"[^>]*r="1\.4"/g)];
+assert.ok(mobileNavMarkers.length >= 2 && mobileNavMarkers.length <= 24, "mobile NAV markers were not reduced to the compact limit");
+assert.ok(mobileProducts.elements["page-root"].innerHTML.includes('viewBox="0 0 420 260"'), "mobile NAV chart did not use compact geometry");
 const mobileOverview = render("overview", { width: 390 });
 mobileOverview.documentListeners.click({
   target: {
@@ -227,7 +270,7 @@ const marketing = render("marketing");
 assert.ok(marketing.elements["page-root"].innerHTML.includes("条形颜色区分活动渠道类型"), "campaign channel encoding note is missing");
 assert.ok(marketing.elements["page-root"].innerHTML.includes("补贴活动"), "campaign subsidy status is missing");
 
-for (const result of [customers, products, report, overview, alerts, channels, mobileChannels, mobileOverview, mobileAlerts, marketing]) {
+for (const result of [customers, products, report, overview, alerts, channels, mobileChannels, mobileProducts, mobileOverview, mobileAlerts, marketing]) {
   assert.deepEqual(result.errors, [], `interaction logged a render error: ${result.errors.join(" | ")}`);
 }
 
