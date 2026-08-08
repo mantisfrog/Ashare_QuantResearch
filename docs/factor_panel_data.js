@@ -1,85 +1,85 @@
 window.factorPanelData = {
   "meta": {
-    "generated_at": "2026-07-13T22:41:12",
+    "generated_at": "2026-08-07T23:05:09",
     "factor_count": 18,
     "style_count": 6,
     "calc_version": "v1",
-    "latest_coverage_date": 20260713,
-    "latest_coverage_date_text": "2026-07-13",
-    "latest_ic_date": 20260630,
-    "latest_ic_date_text": "2026-06-30",
-    "latest_universe_count": 4024,
-    "latest_avg_coverage": 0.986622
+    "latest_coverage_date": 20260807,
+    "latest_coverage_date_text": "2026-08-07",
+    "latest_ic_date": 20260731,
+    "latest_ic_date_text": "2026-07-31",
+    "latest_universe_count": 4033,
+    "latest_avg_coverage": 0.9865002222222223
   },
   "styles": [
     {
       "style": "value",
       "style_name": "价值",
       "factor_count": 5,
-      "latest_coverage": 0.9940358,
-      "latest_ic_1m": 0.22199720000000003,
-      "ic_mean": 0.044250542028985505,
-      "ir": 0.5850640067591092,
-      "win_rate": 0.7260869565217392,
-      "months": 690,
-      "recent_12m_ir": 0.5005652004745845,
-      "recent_6m_ir": 0.3324525717376219,
+      "latest_coverage": 0.9940490000000001,
+      "latest_ic_1m": -0.22694540000000002,
+      "ic_mean": 0.04263761582733813,
+      "ir": 0.534541678435517,
+      "win_rate": 0.720863309352518,
+      "months": 695,
+      "recent_12m_ir": 0.2378676066350551,
+      "recent_6m_ir": 0.010208650621598215,
       "label": "稳健"
     },
     {
       "style": "quality",
       "style_name": "质量",
       "factor_count": 4,
-      "latest_coverage": 0.9667,
-      "latest_ic_1m": 0.031532,
-      "ic_mean": 0.016326976449275363,
-      "ir": 0.35375229895138793,
-      "win_rate": 0.6485507246376812,
-      "months": 552,
-      "recent_12m_ir": 0.34353556428114024,
-      "recent_6m_ir": 0.30736605778650894,
+      "latest_coverage": 0.9661540000000001,
+      "latest_ic_1m": -0.0299735,
+      "ic_mean": 0.01601225,
+      "ir": 0.34535050459331434,
+      "win_rate": 0.64568345323741,
+      "months": 556,
+      "recent_12m_ir": 0.23101659360932636,
+      "recent_6m_ir": 0.15379396898902795,
       "label": "可观察"
     },
     {
       "style": "growth",
       "style_name": "成长",
       "factor_count": 3,
-      "latest_coverage": 0.9920476666666667,
-      "latest_ic_1m": -0.046003666666666665,
-      "ic_mean": 0.018354787439613527,
-      "ir": 0.32421608141660796,
-      "win_rate": 0.6642512077294686,
-      "months": 414,
-      "recent_12m_ir": 0.3143119067763308,
-      "recent_6m_ir": 0.33953175421744247,
+      "latest_coverage": 0.9916523333333332,
+      "latest_ic_1m": 0.09436533333333334,
+      "ic_mean": 0.018789781774580336,
+      "ir": 0.33006417276700095,
+      "win_rate": 0.6666666666666666,
+      "months": 417,
+      "recent_12m_ir": 0.31751621356850407,
+      "recent_6m_ir": 0.5256508318656106,
       "label": "可观察"
     },
     {
       "style": "momentum",
       "style_name": "动量",
       "factor_count": 1,
-      "latest_coverage": 0.999503,
-      "latest_ic_1m": -0.235808,
-      "ic_mean": -0.015061739130434787,
-      "ir": -0.17051921696308162,
-      "win_rate": 0.4420289855072464,
-      "months": 138,
-      "recent_12m_ir": -0.17881705660488034,
-      "recent_6m_ir": -0.12391072650516358,
+      "latest_coverage": 0.999504,
+      "latest_ic_1m": 0.392422,
+      "ic_mean": -0.012915158273381296,
+      "ir": -0.13335645317558692,
+      "win_rate": 0.4460431654676259,
+      "months": 139,
+      "recent_12m_ir": 0.021756546395984545,
+      "recent_6m_ir": 0.12583252663720126,
       "label": "需复核"
     },
     {
       "style": "reversal",
       "style_name": "反转",
       "factor_count": 2,
-      "latest_coverage": 0.9732855,
-      "latest_ic_1m": 0.1461985,
-      "ic_mean": 0.03778476086956522,
-      "ir": 0.4275176612009448,
-      "win_rate": 0.6847826086956522,
-      "months": 276,
-      "recent_12m_ir": 0.3168235243692811,
-      "recent_6m_ir": 0.2149703242638236,
+      "latest_coverage": 0.973841,
+      "latest_ic_1m": 0.1667885,
+      "ic_mean": 0.039251607913669065,
+      "ir": 0.413145432559521,
+      "win_rate": 0.6834532374100719,
+      "months": 278,
+      "recent_12m_ir": 0.3049024742940707,
+      "recent_6m_ir": 0.2644264447655891,
       "label": "可观察"
     },
     {
@@ -87,14 +87,14 @@ window.factorPanelData = {
       "style_name": "风险",
       "factor_count": 3,
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.288092,
-      "ic_mean": 0.0752674420289855,
-      "ir": 0.7825112040260774,
-      "win_rate": 0.7753623188405797,
-      "months": 414,
-      "recent_12m_ir": 0.6066829043586534,
-      "recent_6m_ir": 0.3527976410375616,
-      "label": "强"
+      "latest_ic_1m": -0.3716896666666667,
+      "ic_mean": 0.07245518465227818,
+      "ir": 0.6951587364880847,
+      "win_rate": 0.7697841726618705,
+      "months": 417,
+      "recent_12m_ir": 0.2313405287461387,
+      "recent_6m_ir": -0.021692750549209366,
+      "label": "稳健"
     }
   ],
   "factors": [
@@ -105,14 +105,14 @@ window.factorPanelData = {
       "style_name": "价值",
       "direction": 1,
       "unit": "ratio",
-      "latest_coverage": 0.970179,
-      "latest_ic_1m": 0.205693,
-      "ic_mean": 0.04078339855072464,
-      "ir": 0.6783015997012581,
-      "win_rate": 0.7318840579710145,
-      "months": 138,
-      "recent_12m_ir": 0.5346958036263877,
-      "recent_6m_ir": 0.2968340059660088,
+      "latest_coverage": 0.970245,
+      "latest_ic_1m": -0.188756,
+      "ic_mean": 0.039466143884892085,
+      "ir": 0.6166897596690328,
+      "win_rate": 0.7266187050359713,
+      "months": 139,
+      "recent_12m_ir": 0.2861002143617912,
+      "recent_6m_ir": 0.011584033514744647,
       "label": "稳健"
     },
     {
@@ -123,13 +123,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.177397,
-      "ic_mean": 0.03866320289855072,
-      "ir": 0.6358628210027832,
-      "win_rate": 0.7898550724637681,
-      "months": 138,
-      "recent_12m_ir": 0.6229997427889001,
-      "recent_6m_ir": 0.43979712938947996,
+      "latest_ic_1m": -0.213575,
+      "ic_mean": 0.03706116546762589,
+      "ir": 0.5722350840549341,
+      "win_rate": 0.7841726618705036,
+      "months": 139,
+      "recent_12m_ir": 0.23362620077178195,
+      "recent_6m_ir": 0.03591427447235858,
       "label": "稳健"
     },
     {
@@ -140,13 +140,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.272726,
-      "ic_mean": 0.05579405797101449,
-      "ir": 0.6144942266965109,
-      "win_rate": 0.6956521739130435,
-      "months": 138,
-      "recent_12m_ir": 0.5161567959843238,
-      "recent_6m_ir": 0.3360303260458288,
+      "latest_ic_1m": -0.286142,
+      "ic_mean": 0.05381094244604317,
+      "ir": 0.5589614514196888,
+      "win_rate": 0.6906474820143885,
+      "months": 139,
+      "recent_12m_ir": 0.2726155075007816,
+      "recent_6m_ir": 0.010397775115363871,
       "label": "稳健"
     },
     {
@@ -157,13 +157,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.194403,
-      "ic_mean": 0.04493760144927536,
-      "ir": 0.5771191843695959,
-      "win_rate": 0.7681159420289855,
-      "months": 138,
-      "recent_12m_ir": 0.5033481299158513,
-      "recent_6m_ir": 0.32832423301304436,
+      "latest_ic_1m": -0.188594,
+      "ic_mean": 0.04350425179856115,
+      "ir": 0.539810574246244,
+      "win_rate": 0.762589928057554,
+      "months": 139,
+      "recent_12m_ir": 0.22888985644255266,
+      "recent_6m_ir": 0.056316389506611636,
       "label": "稳健"
     },
     {
@@ -174,14 +174,14 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "ratio",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.259767,
-      "ic_mean": 0.04107444927536232,
-      "ir": 0.49228792459150483,
-      "win_rate": 0.644927536231884,
-      "months": 138,
-      "recent_12m_ir": 0.3487931703816828,
-      "recent_6m_ir": 0.21820458488796418,
-      "label": "稳健"
+      "latest_ic_1m": -0.25766,
+      "ic_mean": 0.03934557553956834,
+      "ir": 0.4465136372460199,
+      "win_rate": 0.6402877697841727,
+      "months": 139,
+      "recent_12m_ir": 0.151523438591173,
+      "recent_6m_ir": -0.0456943629654207,
+      "label": "可观察"
     },
     {
       "factor_code": "roe_stability_12q",
@@ -190,14 +190,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": -1,
       "unit": "std",
-      "latest_coverage": 0.963221,
-      "latest_ic_1m": 0.033878,
-      "ic_mean": 0.019228891304347826,
-      "ir": 0.446791783356424,
-      "win_rate": 0.6521739130434783,
-      "months": 138,
-      "recent_12m_ir": 0.499587011203923,
-      "recent_6m_ir": 0.4862734591755675,
+      "latest_coverage": 0.962063,
+      "latest_ic_1m": -0.025867,
+      "ic_mean": 0.01887963309352518,
+      "ir": 0.43861206413616716,
+      "win_rate": 0.6474820143884892,
+      "months": 139,
+      "recent_12m_ir": 0.4357317787929477,
+      "recent_6m_ir": 0.5442299887131729,
       "label": "可观察"
     },
     {
@@ -207,14 +207,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": 1,
       "unit": "ratio",
-      "latest_coverage": 0.963221,
-      "latest_ic_1m": 0.100711,
-      "ic_mean": 0.024729028985507245,
-      "ir": 0.3885754144251061,
-      "win_rate": 0.6956521739130435,
-      "months": 138,
-      "recent_12m_ir": 0.5649052856235453,
-      "recent_6m_ir": 0.5260134018362257,
+      "latest_coverage": 0.962063,
+      "latest_ic_1m": -0.107224,
+      "ic_mean": 0.02385605035971223,
+      "ir": 0.36993318731917385,
+      "win_rate": 0.6906474820143885,
+      "months": 139,
+      "recent_12m_ir": 0.256176666151657,
+      "recent_6m_ir": 0.16967089494320775,
       "label": "可观察"
     },
     {
@@ -224,14 +224,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": -1,
       "unit": "ratio",
-      "latest_coverage": 0.970179,
-      "latest_ic_1m": 0.00499,
-      "ic_mean": 0.014836108695652174,
-      "ir": 0.3599900263520275,
-      "win_rate": 0.6666666666666666,
-      "months": 138,
-      "recent_12m_ir": 0.09500907575080059,
-      "recent_6m_ir": -0.12659846154670937,
+      "latest_coverage": 0.970245,
+      "latest_ic_1m": -0.003752,
+      "ic_mean": 0.014759093525179857,
+      "ir": 0.35923177082394186,
+      "win_rate": 0.6618705035971223,
+      "months": 139,
+      "recent_12m_ir": 0.11262649087896315,
+      "recent_6m_ir": -0.5126171193063571,
       "label": "可观察"
     },
     {
@@ -241,14 +241,14 @@ window.factorPanelData = {
       "style_name": "质量",
       "direction": 1,
       "unit": "ratio",
-      "latest_coverage": 0.970179,
-      "latest_ic_1m": -0.013451,
-      "ic_mean": 0.006513876811594203,
-      "ir": 0.2320954894229159,
-      "win_rate": 0.5797101449275363,
-      "months": 138,
-      "recent_12m_ir": 0.12839532868564604,
-      "recent_6m_ir": 0.26312226139277284,
+      "latest_coverage": 0.970245,
+      "latest_ic_1m": 0.016949,
+      "ic_mean": 0.0065542230215827335,
+      "ir": 0.23403198461656594,
+      "win_rate": 0.5827338129496403,
+      "months": 139,
+      "recent_12m_ir": 0.1233593154344235,
+      "recent_6m_ir": 0.43999566377719856,
       "label": "可观察"
     },
     {
@@ -258,14 +258,14 @@ window.factorPanelData = {
       "style_name": "成长",
       "direction": 1,
       "unit": "zscore",
-      "latest_coverage": 0.976143,
-      "latest_ic_1m": -0.050229,
-      "ic_mean": 0.018106927536231887,
-      "ir": 0.3782965292105905,
-      "win_rate": 0.6884057971014492,
-      "months": 138,
-      "recent_12m_ir": 0.35934127406438,
-      "recent_6m_ir": 0.33831831273350854,
+      "latest_coverage": 0.974957,
+      "latest_ic_1m": 0.079144,
+      "ic_mean": 0.018554402877697843,
+      "ir": 0.3868817599550604,
+      "win_rate": 0.6906474820143885,
+      "months": 139,
+      "recent_12m_ir": 0.4181606517965657,
+      "recent_6m_ir": 0.5193605026670878,
       "label": "可观察"
     },
     {
@@ -276,13 +276,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "pct",
       "latest_coverage": 1.0,
-      "latest_ic_1m": -0.034422,
-      "ic_mean": 0.020001036231884057,
-      "ir": 0.31193495320606596,
-      "win_rate": 0.6521739130434783,
-      "months": 138,
-      "recent_12m_ir": 0.24061607666315307,
-      "recent_6m_ir": 0.2462228873708268,
+      "latest_ic_1m": 0.098648,
+      "ic_mean": 0.020379223021582734,
+      "ir": 0.3162835691379868,
+      "win_rate": 0.6546762589928058,
+      "months": 139,
+      "recent_12m_ir": 0.2294465462612108,
+      "recent_6m_ir": 0.41906431142365014,
       "label": "可观察"
     },
     {
@@ -293,13 +293,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "pct",
       "latest_coverage": 1.0,
-      "latest_ic_1m": -0.05336,
-      "ic_mean": 0.016956398550724637,
-      "ir": 0.29721620211367705,
-      "win_rate": 0.6521739130434783,
-      "months": 138,
-      "recent_12m_ir": 0.33116407950342,
-      "recent_6m_ir": 0.3730621248638923,
+      "latest_ic_1m": 0.105304,
+      "ic_mean": 0.01743571942446043,
+      "ir": 0.3029170167667957,
+      "win_rate": 0.6546762589928058,
+      "months": 139,
+      "recent_12m_ir": 0.3096788692203838,
+      "recent_6m_ir": 0.5634040617166534,
       "label": "可观察"
     },
     {
@@ -309,14 +309,14 @@ window.factorPanelData = {
       "style_name": "动量",
       "direction": 1,
       "unit": "return",
-      "latest_coverage": 0.999503,
-      "latest_ic_1m": -0.235808,
-      "ic_mean": -0.015061739130434787,
-      "ir": -0.17051921696308162,
-      "win_rate": 0.4420289855072464,
-      "months": 138,
-      "recent_12m_ir": -0.17881705660488034,
-      "recent_6m_ir": -0.12391072650516358,
+      "latest_coverage": 0.999504,
+      "latest_ic_1m": 0.392422,
+      "ic_mean": -0.012915158273381296,
+      "ir": -0.13335645317558692,
+      "win_rate": 0.4460431654676259,
+      "months": 139,
+      "recent_12m_ir": 0.021756546395984545,
+      "recent_6m_ir": 0.12583252663720126,
       "label": "需复核"
     },
     {
@@ -327,13 +327,13 @@ window.factorPanelData = {
       "direction": 1,
       "unit": "return",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.240327,
-      "ic_mean": 0.06095754347826087,
-      "ir": 0.6311507690831809,
-      "win_rate": 0.7753623188405797,
-      "months": 138,
-      "recent_12m_ir": 0.24103506181277268,
-      "recent_6m_ir": 0.14252414288759363,
+      "latest_ic_1m": 0.520491,
+      "ic_mean": 0.06518361870503597,
+      "ir": 0.6152786654772082,
+      "win_rate": 0.7769784172661871,
+      "months": 139,
+      "recent_12m_ir": 0.39125265067304577,
+      "recent_6m_ir": 0.4678819993822373,
       "label": "稳健"
     },
     {
@@ -343,15 +343,15 @@ window.factorPanelData = {
       "style_name": "反转",
       "direction": 1,
       "unit": "return",
-      "latest_coverage": 0.946571,
-      "latest_ic_1m": 0.05207,
-      "ic_mean": 0.014611978260869567,
-      "ir": 0.20128356748300402,
-      "win_rate": 0.5942028985507246,
-      "months": 138,
-      "recent_12m_ir": 0.6155759024105235,
-      "recent_6m_ir": 0.6480573736359749,
-      "label": "可观察"
+      "latest_coverage": 0.947682,
+      "latest_ic_1m": -0.186914,
+      "ic_mean": 0.013319597122302159,
+      "ir": 0.17895727313225251,
+      "win_rate": 0.5899280575539568,
+      "months": 139,
+      "recent_12m_ir": 0.1870505232252874,
+      "recent_6m_ir": -0.1874347155718212,
+      "label": "偏弱"
     },
     {
       "factor_code": "turnover_21d",
@@ -361,13 +361,13 @@ window.factorPanelData = {
       "direction": -1,
       "unit": "turnover",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.300408,
-      "ic_mean": 0.0877453043478261,
-      "ir": 0.9591722187732238,
-      "win_rate": 0.8115942028985508,
-      "months": 138,
-      "recent_12m_ir": 0.6931154065522896,
-      "recent_6m_ir": 0.3161158638661828,
+      "latest_ic_1m": -0.336596,
+      "ic_mean": 0.08522869784172662,
+      "ir": 0.8576031800230284,
+      "win_rate": 0.8057553956834532,
+      "months": 139,
+      "recent_12m_ir": 0.28894450746590933,
+      "recent_6m_ir": 0.019718153928639386,
       "label": "强"
     },
     {
@@ -378,13 +378,13 @@ window.factorPanelData = {
       "direction": -1,
       "unit": "turnover",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.236932,
-      "ic_mean": 0.066985615942029,
-      "ir": 0.7853519979970381,
-      "win_rate": 0.7608695652173914,
-      "months": 138,
-      "recent_12m_ir": 0.5954465078964452,
-      "recent_6m_ir": 0.3436777915000311,
+      "latest_ic_1m": -0.298806,
+      "ic_mean": 0.0646268273381295,
+      "ir": 0.7097946487490085,
+      "win_rate": 0.7553956834532374,
+      "months": 139,
+      "recent_12m_ir": 0.23286344549624485,
+      "recent_6m_ir": 0.001888891080798969,
       "label": "强"
     },
     {
@@ -395,13 +395,13 @@ window.factorPanelData = {
       "direction": -1,
       "unit": "std",
       "latest_coverage": 1.0,
-      "latest_ic_1m": 0.326936,
-      "ic_mean": 0.07107140579710144,
-      "ir": 0.6486930902484005,
-      "win_rate": 0.7536231884057971,
-      "months": 138,
-      "recent_12m_ir": 0.5153257887477842,
-      "recent_6m_ir": 0.34690574592975904,
+      "latest_ic_1m": -0.479667,
+      "ic_mean": 0.0675100287769784,
+      "ir": 0.5639399669749572,
+      "win_rate": 0.7482014388489209,
+      "months": 139,
+      "recent_12m_ir": 0.17309129346886634,
+      "recent_6m_ir": -0.0685093558905943,
       "label": "稳健"
     }
   ],
@@ -438,7 +438,7 @@ window.factorPanelData = {
           "2023": 1.2404893287906558,
           "2024": 0.5901499546886144,
           "2025": 0.48500038135946755,
-          "2026": 0.2968340059660088
+          "2026": 0.03390771168636556
         }
       },
       {
@@ -458,7 +458,7 @@ window.factorPanelData = {
           "2023": 0.8885902581033146,
           "2024": 0.33237404553656574,
           "2025": 0.3413561806474888,
-          "2026": 0.43979712938947996
+          "2026": 0.024028861717995127
         }
       },
       {
@@ -478,7 +478,7 @@ window.factorPanelData = {
           "2023": 1.1152695205988319,
           "2024": 0.6290058316995846,
           "2025": 0.7825392013087661,
-          "2026": 0.3360303260458288
+          "2026": 0.02846875030490424
         }
       },
       {
@@ -498,7 +498,7 @@ window.factorPanelData = {
           "2023": 0.6698785868777679,
           "2024": 0.3870202411701793,
           "2025": 0.16227427334443262,
-          "2026": 0.32832423301304436
+          "2026": 0.029798399153276405
         }
       },
       {
@@ -518,7 +518,7 @@ window.factorPanelData = {
           "2023": 0.9355940536291472,
           "2024": 0.5823571643915431,
           "2025": 0.6701237089079866,
-          "2026": 0.21820458488796418
+          "2026": -0.029282971150477156
         }
       },
       {
@@ -538,7 +538,7 @@ window.factorPanelData = {
           "2023": 0.7060326656030134,
           "2024": 0.44461132464040637,
           "2025": 0.11982914254752518,
-          "2026": 0.4862734591755675
+          "2026": 0.25697849004364737
         }
       },
       {
@@ -558,7 +558,7 @@ window.factorPanelData = {
           "2023": 0.11078900767936653,
           "2024": 0.21357343938341225,
           "2025": 0.11114323704792885,
-          "2026": 0.5260134018362257
+          "2026": 0.09044396719470758
         }
       },
       {
@@ -578,7 +578,7 @@ window.factorPanelData = {
           "2023": 1.0734198438791134,
           "2024": 0.16794414990516335,
           "2025": 0.2984418911571071,
-          "2026": -0.12659846154670937
+          "2026": -0.09371133366071316
         }
       },
       {
@@ -598,7 +598,7 @@ window.factorPanelData = {
           "2023": 0.19227844263436397,
           "2024": 0.18994883547699232,
           "2025": 0.2681479209295695,
-          "2026": 0.26312226139277284
+          "2026": 0.32461513673071063
         }
       },
       {
@@ -618,7 +618,7 @@ window.factorPanelData = {
           "2023": 0.07286536953827748,
           "2024": 0.27263005412059965,
           "2025": 0.3558769540433355,
-          "2026": 0.33831831273350854
+          "2026": 0.531589767078404
         }
       },
       {
@@ -638,7 +638,7 @@ window.factorPanelData = {
           "2023": -0.017520165578078423,
           "2024": 0.4250629761704373,
           "2025": 0.13189600977106006,
-          "2026": 0.2462228873708268
+          "2026": 0.34009938887232627
         }
       },
       {
@@ -658,7 +658,7 @@ window.factorPanelData = {
           "2023": -0.40807746161425773,
           "2024": 0.419084072652579,
           "2025": 0.265566548500484,
-          "2026": 0.3730621248638923
+          "2026": 0.45113380964818095
         }
       },
       {
@@ -678,7 +678,7 @@ window.factorPanelData = {
           "2023": -0.06260504112592968,
           "2024": -0.3022721837771838,
           "2025": -0.3637021844235151,
-          "2026": -0.12391072650516358
+          "2026": 0.12494292372665702
         }
       },
       {
@@ -698,7 +698,7 @@ window.factorPanelData = {
           "2023": 0.296701292205084,
           "2024": 0.5164883224315348,
           "2025": 0.8008618827535938,
-          "2026": 0.14252414288759363
+          "2026": 0.44682512414316317
         }
       },
       {
@@ -718,7 +718,7 @@ window.factorPanelData = {
           "2023": 0.6067592359159318,
           "2024": 0.028917292327456226,
           "2025": 0.5602122400868018,
-          "2026": 0.6480573736359749
+          "2026": -0.06793260720559303
         }
       },
       {
@@ -738,7 +738,7 @@ window.factorPanelData = {
           "2023": 1.2278472108804102,
           "2024": 0.6024743248066127,
           "2025": 1.4117280503922727,
-          "2026": 0.3161158638661828
+          "2026": 0.0026669224452668776
         }
       },
       {
@@ -758,7 +758,7 @@ window.factorPanelData = {
           "2023": 1.1505173639572321,
           "2024": 0.5655403581267961,
           "2025": 0.7952608263084685,
-          "2026": 0.3436777915000311
+          "2026": -0.028725934016849183
         }
       },
       {
@@ -778,7 +778,7 @@ window.factorPanelData = {
           "2023": 1.2519042401308358,
           "2024": 0.42524865937612977,
           "2025": 0.4819775232768094,
-          "2026": 0.34690574592975904
+          "2026": -0.05197494996340033
         }
       }
     ]
@@ -791,7 +791,7 @@ window.factorPanelData = {
       "factor_b_name": "6个月换手率",
       "style_a": "risk",
       "style_b": "risk",
-      "corr": 0.7829
+      "corr": 0.7835
     },
     {
       "factor_a": "cfp_ttm",
@@ -800,7 +800,7 @@ window.factorPanelData = {
       "factor_b_name": "应计利润率",
       "style_a": "value",
       "style_b": "quality",
-      "corr": 0.63
+      "corr": 0.6294
     },
     {
       "factor_a": "volatility_252d",
@@ -809,7 +809,7 @@ window.factorPanelData = {
       "factor_b_name": "6个月换手率",
       "style_a": "risk",
       "style_b": "risk",
-      "corr": 0.5868
+      "corr": 0.5867
     },
     {
       "factor_a": "bp_mrq",
@@ -818,16 +818,7 @@ window.factorPanelData = {
       "factor_b_name": "销售收益率",
       "style_a": "value",
       "style_b": "value",
-      "corr": 0.5594
-    },
-    {
-      "factor_a": "ep_ttm",
-      "factor_b": "roe_ttm_12q_avg",
-      "factor_a_name": "盈利收益率",
-      "factor_b_name": "12季平均ROE_TTM",
-      "style_a": "value",
-      "style_b": "quality",
-      "corr": 0.5448
+      "corr": 0.5593
     },
     {
       "factor_a": "ep_ttm",
@@ -836,7 +827,16 @@ window.factorPanelData = {
       "factor_b_name": "股息率",
       "style_a": "value",
       "style_b": "value",
-      "corr": 0.5446
+      "corr": 0.546
+    },
+    {
+      "factor_a": "ep_ttm",
+      "factor_b": "roe_ttm_12q_avg",
+      "factor_a_name": "盈利收益率",
+      "factor_b_name": "12季平均ROE_TTM",
+      "style_a": "value",
+      "style_b": "quality",
+      "corr": 0.5458
     },
     {
       "factor_a": "profit_growth_yoy",
@@ -845,7 +845,7 @@ window.factorPanelData = {
       "factor_b_name": "双季净利加速度均值",
       "style_a": "growth",
       "style_b": "growth",
-      "corr": 0.5201
+      "corr": 0.5198
     },
     {
       "factor_a": "volatility_252d",
@@ -854,7 +854,7 @@ window.factorPanelData = {
       "factor_b_name": "换手率",
       "style_a": "risk",
       "style_b": "risk",
-      "corr": 0.4793
+      "corr": 0.4801
     },
     {
       "factor_a": "div_yield_ttm",
@@ -863,7 +863,7 @@ window.factorPanelData = {
       "factor_b_name": "12季平均ROE_TTM",
       "style_a": "value",
       "style_b": "quality",
-      "corr": 0.459
+      "corr": 0.46
     },
     {
       "factor_a": "bp_mrq",
@@ -872,59 +872,59 @@ window.factorPanelData = {
       "factor_b_name": "波动率",
       "style_a": "value",
       "style_b": "risk",
-      "corr": 0.4459
+      "corr": 0.4464
     }
   ],
   "build_manifest": [
     {
       "layer": "universe",
-      "start_date": "2026-07-13",
-      "end_date": "2026-07-13",
-      "row_count": 5219,
-      "valid_count": 4024,
-      "coverage": 0.771029,
+      "start_date": "2026-08-07",
+      "end_date": "2026-08-07",
+      "row_count": 5222,
+      "valid_count": 4033,
+      "coverage": 0.772309,
       "status": "success",
-      "created_at": "2026-07-13T22:35:08"
+      "created_at": "2026-08-07T22:58:28"
     },
     {
       "layer": "raw",
-      "start_date": "2026-07-13",
-      "end_date": "2026-07-13",
-      "row_count": 71823,
-      "valid_count": 71823,
+      "start_date": "2026-08-07",
+      "end_date": "2026-08-07",
+      "row_count": 71974,
+      "valid_count": 71974,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-13T22:35:46"
+      "created_at": "2026-08-07T22:58:58"
     },
     {
       "layer": "exposure",
-      "start_date": "2026-07-13",
-      "end_date": "2026-07-13",
-      "row_count": 71463,
-      "valid_count": 71463,
+      "start_date": "2026-08-07",
+      "end_date": "2026-08-07",
+      "row_count": 71614,
+      "valid_count": 71614,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-13T22:36:10"
+      "created_at": "2026-08-07T22:59:17"
     },
     {
       "layer": "composite",
-      "start_date": "2026-07-13",
-      "end_date": "2026-07-13",
-      "row_count": 4024,
-      "valid_count": 4024,
+      "start_date": "2026-08-07",
+      "end_date": "2026-08-07",
+      "row_count": 4033,
+      "valid_count": 4033,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-13T22:36:21"
+      "created_at": "2026-08-07T22:59:26"
     },
     {
       "layer": "diagnostics",
       "start_date": "2015-01-30",
-      "end_date": "2026-07-13",
-      "row_count": 2502,
-      "valid_count": 2502,
+      "end_date": "2026-08-07",
+      "row_count": 2520,
+      "valid_count": 2520,
       "coverage": null,
       "status": "success",
-      "created_at": "2026-07-13T22:37:50"
+      "created_at": "2026-08-07T23:00:42"
     },
     {
       "layer": "growth_momentum_daily_rank_ic",
