@@ -179,6 +179,22 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\update_all.ps1
 
 `update_all.ps1` 不接受或转发子脚本参数。它也不是因子历史全量重算入口：若历史基础数据或因子配置发生变化，应单独运行 `update_factors.py --rebuild`，再刷新下游展示。若要跳过数据库、下载或 Google 同步，请直接运行相应 Python 入口并先查看 `--help`；基础 ETL 的参数示例见 [`knowledge/CsvUpdateWorkflow.md`](knowledge/CsvUpdateWorkflow.md)。Google 同步失败会让全流程返回失败，但本地展示 CSV 可能已经成功写出。
 
+### 导出量化研究快照
+
+`scripts/export_quant_snapshot.py` 从当前 PostgreSQL 最终表生成独立、不可变的
+Parquet 交付目录。默认行情范围为 2011-01-01 之后首个交易日至源库最新日；
+财务包含 2010 年起的报告期、67 个固定指标，并保留公告日以支持 point-in-time 研究。
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\export_quant_snapshot.py
+```
+
+默认输出到 `data/deliverables/quant_snapshot_20110101_<YYYYMMDD>_v1/`，包含按年
+分区的 `market/`、`financials/`，三个 `dimensions/*.parquet`、`manifest.json`、
+`checksums.sha256` 和快照说明。已有同名快照不会被覆盖。使用 `--end-date YYYY-MM-DD`
+可固定截止日，使用 `--output-root PATH` 可改变交付根目录。该导出是独立工作流，
+不会运行下载、ETL、因子或 Google Sheets 同步。
+
 <a id="english"></a>
 
 ## English
@@ -276,3 +292,22 @@ You do not need to activate the virtual environment: the script resolves the rep
 On success, the final terminal message is `Pipeline completed.` ETL and factor summary logs are written to `log/etl_*.log` and `log/factor_*.log`.
 
 `update_all.ps1` does not accept or forward child-script flags. It is not a full historical factor rebuild either: after historical base-data or factor-configuration changes, run `update_factors.py --rebuild` separately and then refresh the downstream presentation outputs. To skip database loading, downloads, or Google synchronization, run the relevant Python entry point directly and inspect its `--help`; see [`knowledge/CsvUpdateWorkflow.md`](knowledge/CsvUpdateWorkflow.md) for base ETL examples. A Google sync failure makes the overall run fail even though the local display CSVs may already have been written successfully.
+
+### Export a quant research snapshot
+
+`scripts/export_quant_snapshot.py` reads the current PostgreSQL final tables and creates an
+independent, immutable Parquet delivery directory. By default, market data starts on the first
+trading day on or after 2011-01-01 and ends at the source maximum date. Financial data includes
+report periods from 2010 onward, a fixed 67-metric whitelist, and announcement dates for
+point-in-time research.
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\export_quant_snapshot.py
+```
+
+The default destination is `data/deliverables/quant_snapshot_20110101_<YYYYMMDD>_v1/`.
+It contains yearly `market/` and `financials/` partitions, three dimension Parquet files,
+`manifest.json`, `checksums.sha256`, and snapshot documentation. Existing snapshots are never
+overwritten. Use `--end-date YYYY-MM-DD` to pin the cutoff and `--output-root PATH` to select a
+different delivery root. This standalone export does not run downloads, ETL, factors, or Google
+Sheets synchronization.
